@@ -520,7 +520,7 @@ class GUI:
                 self.critRollLabel2.config(text = "Crítico a partir de: "+str(res.crit/100))
                 self.realRollLabel2.config(text = "")
                 self.ResultLabel2.config(text = "")
-
+                
                 if (res.r > res.p):
                     roundedRealDiceRoll = ceil(res.r/100)
                     if(res.r > res.crit):
@@ -535,7 +535,7 @@ class GUI:
                         resultStr = "FRACASSO"
                 RealDiceRoll=str(res.r/100)        
                 res.p=res.p//5
-                res.r=res.r//5
+                res.r=(res.r+19)//20
                 res.crit=res.crit//5
 
                 if not self.progresswindow.winfo_viewable():
@@ -549,12 +549,13 @@ class GUI:
                 self.barracrit2.place(relwidth=0.0025,x=res.crit+1)
                 self.barrap2.place(relwidth=0.0025,x=res.p+1)
 
-                for i in range(5):
-                    while 4*self.progress['value']+2**(4-i)<=res.r:
-                        self.progress['value']+=2**(2-i)
-                    if self.progress['value']==res.r:
-                        break
-                    sleep(0.1)
+                x=0;
+                n=random.randint(2,15)
+                for i in range(159):
+                    sleep(0.01)
+                    x+=0.00625
+                    y=int(res.r*n*x/(1+(n-1)*x))
+                    self.progress['value']=y
                 
                 self.ResultLabel2.config(text = resultStr)
                 self.realRollLabel2.config(text = "Rolou: "+RealDiceRoll)
@@ -563,7 +564,7 @@ class GUI:
                 self.critRollLabel.config(text = "Crítico a partir de: "+str(res.crit/100))
                 self.realRollLabel.config(text = "")
                 self.ResultLabel.config(text = "")
-                
+
                 if not self.dicewindow.winfo_viewable():
                     self.dicewindow.deiconify()
                 if self.progresswindow.winfo_viewable():
@@ -1465,13 +1466,13 @@ class GUI:
                                     self.createSidebarButtons()
                                 elif type(message).__name__=='res':
                                     self.displayres(message)
-                                elif type(message).__name__=='status':
+                                elif type(message).__name__=='status':                                    
                                     if not self.Window2.winfo_viewable():
                                         self.Window2.deiconify()
                                         self.blocbtt.config(text='<')
                                         self.block_entry.focus() 
                                     else:
-                                        self.Window2.focus()
+                                        self.Window2.deiconify()
                                     self.roll_list=[]
                                     if message.num!=0:
                                         self.label.config(text='Restam '+str(message.num)+" rolagens")
