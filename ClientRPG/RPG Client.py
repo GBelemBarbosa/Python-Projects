@@ -1,9 +1,8 @@
 # import all the required modules 
 import socket 
-import threading 
+import threading
 from tkinter import *
-from tkinter import font 
-from tkinter import ttk 
+from tkinter import font, ttk, filedialog, messagebox
 import random
 from colour import Color
 from time import sleep
@@ -15,12 +14,7 @@ import numpy as np
 from PIL import ImageTk, Image
 from math import exp
 from math import floor, ceil
-
-red=Color('#ff0000')
-violet=Color('#ff00ff')
-colors = list(red.range_to(violet,50))
-colors=colors+list(violet.range_to(red,50))
-rollBg = ('#3ec2fd', '#0c6495')
+import os
 
 __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 
@@ -392,8 +386,13 @@ class res:
 class GUI: 
 
         # constructor method 
-        def __init__(self): 
+        def __init__(self):
+                self.not_closing=1
                 
+                red=Color('#ff0000')
+                violet=Color('#ff00ff')
+                self.colors = list(red.range_to(violet,50))
+                self.colors+=list(violet.range_to(red,50))
                 # chat window which is currently hidden 
                 self.Window = Tk() 
                 self.Window.withdraw() 
@@ -614,13 +613,18 @@ class GUI:
                 self.ResultLabel.config(text = resultStr)
 
         def nextSleepTime(self, currentTime, limitTime): # 3 opcoes de incremento de tempo
-                # return currentTime + currentTime**2 / 2
-                # return currentTime + incrementFraction*currentTime
-                return currentTime+limitTime*(1-exp(-currentTime*self.incrementFraction))
+            # return currentTime + currentTime**2 / 2
+            # return currentTime + incrementFraction*currentTime
+            return currentTime+limitTime*(1-exp(-currentTime*self.incrementFraction))
 
         def on_closing(self):
-                client.close()
-                sys.exit()
+            self.not_closing=0
+            for filename in os.listdir(self.past_dir):
+                print(self.past_dir+filename)
+                os.remove(self.past_dir+filename)
+            self.Window.destroy()
+            client.close()
+            sys.exit()
         
         def blocswitch(self):
             if not self.Window2.winfo_viewable():
@@ -654,8 +658,6 @@ class GUI:
             self.advan_entry.focus()
         
         def antepaste(self, num1, num2):
-            if type(num2)!=str:
-                num2=num2.get()
             bloco_text=self.value_entry.get()
             
             bloco_text=bloco_text.replace(" ", "")
@@ -683,36 +685,118 @@ class GUI:
             self.block_entry.focus()
 
         def goAhead(self, name):
-                my_username = name.encode(FORMAT)
-                my_username_header = f"{len(my_username):<{HEADER_LENGTH}}".encode(FORMAT)
-                client.send(my_username_header + my_username)
-                server_message_header=client.recv(HEADER_LENGTH)
-                server_message_length = int(server_message_header.decode(FORMAT).strip())
-                server_message=client.recv(server_message_length).decode(FORMAT)
-                if server_message=='ok':
-                        try:
-                            self.color=askcolor(title ="Escolha a cor do seu usuário")[1]
-                            color=self.color.encode(FORMAT)
-                        except:
-                            self.on_closing()
-                        color_header=f"{len(color):<{HEADER_LENGTH}}".encode(FORMAT)
-                        client.send(color_header + color)
-                        self.login.destroy()
-                        self.receive()
-                        self.layout(name)
-                        # the thread to receive messages 
-                        rcv = threading.Thread(target=self.receive) 
-                        rcv.start()
-                        clr = threading.Thread(target=self.colorloop)
-                        clr.start()
-                else:
-                        self.pls.config(text=server_message)
+            my_username = name.encode(FORMAT)
+            my_username_header = f"{len(my_username):<{HEADER_LENGTH}}".encode(FORMAT)
+            client.send(my_username_header + my_username)
+            server_message_header=client.recv(HEADER_LENGTH)
+            server_message_length = int(server_message_header.decode(FORMAT).strip())
+            server_message=client.recv(server_message_length).decode(FORMAT)
+            if server_message=='ok':
+                try:
+                    self.color=askcolor(title ="Escolha a cor do seu usuário")[1]
+                    color=self.color.encode(FORMAT)
+                except:
+                    self.on_closing()
+                color_header=f"{len(color):<{HEADER_LENGTH}}".encode(FORMAT)
+                client.send(color_header + color)
+                self.login.destroy()
+                self.receive()
+                self.layout(name)
+                # the thread to receive messages 
+                self.rcv = threading.Thread(target=self.receive) 
+                self.rcv.start()
+                self.clr = threading.Thread(target=self.colorloop)
+                self.clr.start()
+            else:
+                self.pls.config(text=server_message)
+
+        ##-----------------------------------------------
+        def modify(self, a, b, c):
+            self.modified=1
+            
+        def load_content(self, content):
+            content, crit=pickle.loads(content)
+            
+            self.crit.set(str(crit))
+            self.value_entry.delete(0, END)
+            self.value_entry.insert(END, str(content.premod[0]))
+            self.advan_entry.delete(0, END)
+            self.advan_entry.insert(END, str(content.premod[1]))
+            converted_pos=''
+            for i in content.posmod:
+                converted_pos+="("+str(i[0])+", ["
+                for j in i[1]:
+                    if type(j)==list:
+                        converted_pos+="<"+str(j[0])+", "+str(j[1])+">, "
+                    else:
+                        converted_pos+="{"+str(j[0])+", "+str(j[1])+"}, "
+                converted_pos=converted_pos[0:-2]+"]), "
+            converted_pos=converted_pos[0:-2]
+            self.block_entry.delete(0, END)
+            self.block_entry.insert(END, converted_pos)
+            self.block_entry.icursor(self.block_entry.index(INSERT))
+
+        def openfile(self, pre_path):
+            if not self.modified:
+                try:
+                    if pre_path:
+                        self.path=pre_path
+                    else:
+                        self.path = filedialog.askopenfile(parent=self.Window2, filetypes = [("Text files", "*.txt")]).name                              
+                    with open(self.path, 'rb') as file:             
+                        content = file.read()
+                        self.load_content(content)                                      
+                        self.modified=0
+                    self.Window2.title(os.path.basename(os.path.normpath(self.path))[0:-4])
+                    self.past_index=self.past_index_max
+                except Exception:
+                    print(sys.exc_info())
+                    messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
+                    return               
+            else:
+                answer = messagebox.askyesno(parent=self.Window2, title='Confirmação', message='Existem mudanças não salvas. Deseja salvar as configurações atuais primeiro?')
+                if answer:
+                    self.savefileas()                      
+                self.modified=0             
+                self.openfile(pre_path)
+
+        def savefile(self):             
+            if self.path != '':                
+                with open(self.path, 'wb') as file:
+                    content=self.conversao()
+                    if content:
+                        pickle.dump([content, self.critbox.get()], file)
+                        self.modified=0                       
+            else:
+                self.savefileas()                
+
+        def savefileas(self):    
+            try:
+                self.path = filedialog.askopenfile(parent=self.Window2, filetypes = [("Text files", "*.txt")]).name
+                with open(self.path, 'wb') as file:
+                    content=self.conversao()
+                    if content:
+                        pickle.dump([content, self.critbox.get()], file)
+                        self.modified=0
+                self.Window2.title(os.path.basename(os.path.normpath(self.path))[0:-4])
+                self.past_index=self.past_index_max
+            except Exception:
+                print(sys.exc_info())
+                messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
+                return               
 
         # The main layout of the chat 
-        def layout(self,name): 
-
+        def layout(self,name):
+                self.dir=os.path.dirname(os.path.realpath(__file__))
+                self.saved_dir=self.dir+'\\Saved configs\\'
+                self.past_dir=self.dir+'\\Past configs\\'
+                self.path=''
+                self.past_index_max=0
+                self.past_index=0
+                self.modified=0
                 self.who=StringVar(value='we')
                 self.crit=StringVar(value='10')
+                self.crit.trace_variable('w', self.modify)
                 self.res=StringVar(value='0')
                 self.ac=StringVar(value='0')
                 self.ic=StringVar(value='0')
@@ -734,7 +818,7 @@ class GUI:
                 
                 # to show chat window 
                 self.Window.deiconify() 
-                self.Window.title("CHATROOM") 
+                self.Window.title("Chatroom") 
                 self.Window.resizable(width = False, height = False) 
                 self.Window.configure(width = 800, height = 500, bg = 'black')
 
@@ -758,14 +842,28 @@ class GUI:
                                                     font = "Courier 12 bold", 
                                                     fg = self.color,
                                                     bg='black',
-                                                    command = lambda : self.blocswitch())
+                                                    command = lambda: self.blocswitch())
                 self.blocbtt.place(relheight=1,relwidth=1)
                 
                 self.Window2=Toplevel()
-                self.Window2.title("ROLL") 
+                self.Window2.title("Roll") 
                 self.Window2.resizable(width = False, height = False)
                 self.Window2.configure(width = 775, height = 500, bg = 'black')
                 self.Window2.pack_propagate(0)
+
+                self.menubar = Menu(self.Window2)
+                self.Window2.config(menu=self.menubar)
+
+                self.openmenu=Menu(self.menubar, tearoff=0)
+                for filename in os.listdir(self.saved_dir):
+                    self.openmenu.add_command(label=filename[0:-4], command=lambda filepath=self.saved_dir+filename: self.openfile(filepath))
+
+                self.openmenu.add_separator()
+                self.openmenu.add_command(label="Open new", command=lambda: self.openfile(0))
+                self.menubar.add_cascade(label="Open", menu=self.openmenu)
+                
+                self.menubar.add_command(label="Save", command=self.savefile)
+                self.menubar.add_command(label="Save as...", command=self.savefileas)
 
                 self.label = Label(self.Window2,
                                                 text='Select the players to roll',
@@ -787,8 +885,10 @@ class GUI:
 
                 self.labelBottom2 = Label(self.secFrame, bg = 'black', height = 79, width = 562)     
                 self.labelBottom2.place(y=385) 
-                
-                self.block_entry = Entry(self.labelBottom2, bg = 'black', fg="white", font = "Courier 12", insertbackground = "white") 
+
+                self.block=StringVar()
+                self.block.trace_variable('w', self.modify)
+                self.block_entry = Entry(self.labelBottom2, bg = 'black', fg="white", font = "Courier 12", insertbackground = "white", textvariable=self.block) 
                 self.block_entry.place(width = 417, 
                                                 height = 65, 
                                                 y = 5, 
@@ -800,7 +900,7 @@ class GUI:
                                                             width = 10, 
                                                             bg = 'black',
                                                             fg=self.color,
-                                                            command = lambda : self.conversao(self.block_entry.get())) 
+                                                            command = lambda : self.send_block()) 
                 
                 self.button_block.place(x = 428, 
                                             y = 5, 
@@ -847,11 +947,11 @@ class GUI:
                 self.line7.place(relwidth=1,relheight=0.012,rely=0.626)
 
                 self.progresswindow=Toplevel(bg='black')
-                self.progresswindow.title("RESULT")
+                self.progresswindow.title("Result")
                 self.progresswindow.protocol("WM_DELETE_WINDOW", self.progresswindow.withdraw)
 
                 self.dicewindow = Toplevel(bg='black')
-                self.dicewindow.title("RESULT")
+                self.dicewindow.title("Result")
                 self.dicewindow.protocol("WM_DELETE_WINDOW", self.dicewindow.withdraw)
 
                 self.minRollLabel = Label(self.dicewindow, text='', fg='white', bg='black', font=('Courier', 12))
@@ -956,19 +1056,19 @@ class GUI:
 
                 self.valuelabel= Label(self.antebar2,fg="white",text='            Total value: ',bg= 'black', width=25, font = 'Courier 10 bold')           
                 self.valuelabel.pack(side='left')
-
-                self.value_entry = Entry(self.antebar2, bg = 'black', fg="white", font = "Courier 12", width = 4, insertbackground = "white") 
+                
+                self.value=StringVar(value='0')
+                self.value.trace_variable('w', self.modify)
+                self.value_entry = Entry(self.antebar2, bg = 'black', fg="white", font = "Courier 12", width = 4, insertbackground = "white", textvariable=self.value) 
                 self.value_entry.pack(side='left')
-
-                self.value_entry.insert(END, '0')
 
                 self.advanlabel= Label(self.antebar2,fg="white",text='  Total advantage: ',bg= 'black', width=19, font = 'Courier 10 bold')           
                 self.advanlabel.pack(side='left')
 
-                self.advan_entry = Entry(self.antebar2, bg = 'black', fg="white", font = "Courier 12", width = 4, insertbackground = "white") 
+                self.advan=StringVar(value='0')
+                self.advan.trace_variable('w', self.modify)
+                self.advan_entry = Entry(self.antebar2, bg = 'black', fg="white", font = "Courier 12", width = 4, insertbackground = "white", textvariable=self.advan) 
                 self.advan_entry.pack(side='left')
-
-                self.advan_entry.insert(END, '0')
 
                 #----------------------------------------
 
@@ -992,7 +1092,7 @@ class GUI:
                                                             width = 1, 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.antepaste(self.ac, "1")) 
+                                                            command = lambda : self.antepaste(self.ac, 1)) 
                 
                 self.aconbtt.pack(side='left')
 
@@ -1271,7 +1371,7 @@ class GUI:
                                                             width = 12, 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.resourcepaste(self.res)) 
+                                                            command = lambda: self.resourcepaste(self.res)) 
                 
                 self.resbtt.pack(side='bottom')
 
@@ -1384,11 +1484,14 @@ class GUI:
 
                 self.Window.bind_all("<MouseWheel>", self.on_mousewheel)
                 self.Window.bind('<Return>',(lambda event: self.sendButton(self.entryMsg.get())))
-                self.Window.bind("<Up>",self.up_down)
-                self.Window.bind("<Down>",self.up_down)
+                self.Window.bind("<Up>", self.up_down)
+                self.Window.bind("<Down>", self.up_down)
                 self.Window.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-                self.Window2.bind('<Return>',(lambda event: self.conversao(self.block_entry.get())))
+                self.Window2.bind('<Return>',(lambda event: self.send_block()))
+                self.Window2.bind("<Up>", self.up_down2)
+                self.Window2.bind("<Down>", self.up_down2)
+                
 
                 self.s = ttk.Style()
                 self.s.theme_use('alt')
@@ -1397,103 +1500,136 @@ class GUI:
         def on_mousewheel(self, event):
             self.textCons.yview_scroll(-1*int(event.delta/120), "units")
 
-        def up_down(self,event):
+        def up_down2(self, event):
+            if self.past_index_max:
+                alt=1
                 if event.keysym == 'Up':
-                        self.textCons.yview_scroll(-1,'units')
-                if event.keysym == 'Down':
-                        self.textCons.yview_scroll(1,'units')
+                    if self.past_index:
+                        self.past_index-=1
+                        if self.past_index==self.past_index_max-1:
+                            self.path=self.past_dir+str(self.past_index)+'.txt'
+                            self.openfile(self.path)
+                            self.past_index-=1
+                            alt=0
+                            self.Window2.title('#'+str(self.past_index+1))
+                    else:
+                        alt=0
+                else:
+                    if self.past_index<self.past_index_max-1:
+                        self.past_index+=1
+                    else:
+                        alt=0
+                if alt:
+                    self.path=self.past_dir+str(self.past_index)+'.txt'
+                    with open(self.path, 'rb') as file:             
+                        content = file.read()
+                        self.load_content(content)                                      
+                        self.modified=0
+                        self.Window2.title('#'+str(self.past_index+1))
+
+        def up_down(self, event):
+                if event.keysym == 'Up':
+                    self.textCons.yview_scroll(-1,'units')
+                else:
+                    self.textCons.yview_scroll(1,'units')
 
         def colorloop(self):
-            global colors
-            try:
-                while True:
-                    for i in range(len(colors)):
+            while True:
+                try:
+                    for i in range(len(self.colors)):
                         self.changecolor(i)
                         sleep(0.5)
-            except:
-                self.on_closing()
+                except Exception:
+                    print(sys.exc_info())
+                    if self.not_closing:
+                        self.on_closing()
+                    else:
+                        break
 
         def changecolor(self,i):
-            global colors
-            self.buttonMsg.config(fg=colors[(i-10)%100])
-            self.allButton.config(fg=colors[(i-12)%100])
-            self.entryMsg.config(fg=colors[(i-10)%100])
-            self.labelHead.config(fg=colors[i])
-            self.line.config(bg=colors[(i-2)%100])
-            self.line2.config(bg=colors[(i-7)%100])
+            self.buttonMsg.config(fg=self.colors[(i-10)%100])
+            self.allButton.config(fg=self.colors[(i-12)%100])
+            self.entryMsg.config(fg=self.colors[(i-10)%100])
+            self.labelHead.config(fg=self.colors[i])
+            self.line.config(bg=self.colors[(i-2)%100])
+            self.line2.config(bg=self.colors[(i-7)%100])
         
         # function to basically start the thread for sending messages 
         def sendButton(self, msg):
                 self.msg=msg 
                 self.entryMsg.delete(0, END) 
-                snd= threading.Thread(target = self.sendMessage) 
-                snd.start() 
+                self.snd= threading.Thread(target = self.sendMessage) 
+                self.snd.start() 
 
         # function to receive messages 
         def receive(self): 
-                while True: 
-                        try:
-                                message_header = client.recv(HEADER_LENGTH)
-                                message_length = int(message_header.decode(FORMAT).strip())
-                                message = client.recv(message_length)
-                                message=pickle.loads(message)
-                                if type(message).__name__=='msg':
-                                    message_final = message.sender+' > '+message.content
-                                    # insert messages to text box 
-                                    self.textCons.config(state = NORMAL)
-                                    self.textCons.tag_configure(message.cor,foreground=message.cor)
-                                    textlis=wrap(message_final,width=50)
-                                    for u in range(len(textlis)):
-                                        if textlis[u].startswith('\j'):
-                                            textlis[u]=textlis[u].replace('\j','',1)
-                                            textlis[u]=textlis[u].rstrip()
-                                        else:
-                                            textlis[u]=textlis[u].strip()
-                                    textlis.append('')
-                                    for u in range(len(textlis)-1):
-                                        if textlis[u]=='':
-                                            self.textCons.insert(END,'\n')
-                                        elif textlis[u+1]!='' and not textlis[u+1].startswith(' '):
-                                            linha=justify(textlis[u],50)
-                                            self.textCons.insert(END, linha+'\n',message.cor)
-                                        else:
-                                            self.textCons.insert(END, textlis[u]+'\n',message.cor)
-                                    self.textCons.insert(END,'\n')
-                                    self.textCons.see(END)
-                                    self.textCons.config(state = DISABLED)
-                                elif type(message).__name__=='dict':
-                                    playerFlag = True
-                                    for i in range(len(self.players)):
-                                        if self.players[i]['name'] == message['name']:
-                                            self.players.pop(i)
-                                            playerFlag = False
-                                            break
-                                    if playerFlag:
-                                        message['selected'] = False
-                                        self.players.append(message)
-                                    self.createSidebarButtons()
-                                elif type(message).__name__=='res':
-                                    self.displayres(message)
-                                elif type(message).__name__=='status':                                    
-                                    if not self.Window2.winfo_viewable():
-                                        self.Window2.deiconify()
-                                        self.blocbtt.config(text='<')
-                                        self.block_entry.focus() 
-                                    else:
-                                        self.Window2.deiconify()
-                                    self.roll_list=[]
-                                    if message.num!=0:
-                                        self.label.config(text='Restam '+str(message.num)+" rolagens")
-                                    else:
-                                        self.label.config(text='Select the players to roll')
-                                else:
-                                    self.players = []
-                                    for dics in message:
-                                        dics['selected'] = False
-                                        self.players.append(dics)
-                                    break
-                        except:   
-                            self.on_closing()
+            while True: 
+                try:
+                    message_header = client.recv(HEADER_LENGTH)
+                    message_length = int(message_header.decode(FORMAT).strip())
+                    message = client.recv(message_length)
+                    message=pickle.loads(message)
+                    if type(message).__name__=='msg':
+                        message_final = message.sender+' > '+message.content
+                        # insert messages to text box 
+                        self.textCons.config(state = NORMAL)
+                        self.textCons.tag_configure(message.cor,foreground=message.cor)
+                        textlis=wrap(message_final,width=50)
+                        for u in range(len(textlis)):
+                            if textlis[u].startswith('\j'):
+                                textlis[u]=textlis[u].replace('\j','',1)
+                                textlis[u]=textlis[u].rstrip()
+                            else:
+                                textlis[u]=textlis[u].strip()
+                        textlis.append('')
+                        for u in range(len(textlis)-1):
+                            if textlis[u]=='':
+                                self.textCons.insert(END,'\n')
+                            elif textlis[u+1]!='' and not textlis[u+1].startswith(' '):
+                                linha=justify(textlis[u],50)
+                                self.textCons.insert(END, linha+'\n',message.cor)
+                            else:
+                                self.textCons.insert(END, textlis[u]+'\n',message.cor)
+                        self.textCons.insert(END,'\n')
+                        self.textCons.see(END)
+                        self.textCons.config(state = DISABLED)
+                    elif type(message).__name__=='dict':
+                        playerFlag = True
+                        for i in range(len(self.players)):
+                            if self.players[i]['name'] == message['name']:
+                                self.players.pop(i)
+                                playerFlag = False
+                                break
+                        if playerFlag:
+                            message['selected'] = False
+                            self.players.append(message)
+                        self.createSidebarButtons()
+                    elif type(message).__name__=='res':
+                        self.displayres(message)
+                    elif type(message).__name__=='status':                                    
+                        if not self.Window2.winfo_viewable():
+                            self.Window2.deiconify()
+                            self.blocbtt.config(text='<')
+                            self.block_entry.focus() 
+                        else:
+                            self.Window2.deiconify()
+                        self.roll_list=[]
+                        if message.num!=0:
+                            self.label.config(text='Restam '+str(message.num)+" rolagens")
+                        else:
+                            self.label.config(text='Select the players to roll')
+                    else:
+                        self.players = []
+                        for dics in message:
+                            dics['selected'] = False
+                            self.players.append(dics)
+                        break
+                except Exception:
+                    print(sys.exc_info())
+                    if self.not_closing:
+                        self.on_closing()
+                    else:
+                        break
         
         def rolldic(self, dice):
             try:
@@ -1515,19 +1651,33 @@ class GUI:
                 
         # function to send messages 
         def sendMessage(self):
-                destinatários = []
-                self.msg=re.sub("'.+?'", lambda x: self.rolldic(x.group().replace("'","")), self.msg)
-                for player in self.players:
-                    if player['selected']:
-                        destinatários.append(player['name'])
-                message_sent = pickle.dumps(msg(destinatários,self.msg))
+            destinatários = []
+            self.msg=re.sub("'.+?'", lambda x: self.rolldic(x.group().replace("'","")), self.msg)
+            for player in self.players:
+                if player['selected']:
+                    destinatários.append(player['name'])
+            message_sent = pickle.dumps(msg(destinatários,self.msg))
+            message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+            client.send(message_sent_header+message_sent)
+
+        def send_block(self):
+            message_sent = self.conversao()
+            if message_sent:
+                try:
+                    with open(self.past_dir+str(self.past_index_max)+'.txt', 'xb') as file:
+                        pickle.dump([message_sent, self.critbox.get()], file)
+                except:
+                    self.on_closing()
+                self.past_index_max+=1
+                self.past_index=self.past_index_max
+                message_sent=pickle.dumps(message_sent)
                 message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
-                client.send(message_sent_header+message_sent)    
+                client.send(message_sent_header+message_sent)
+                
         
-        def conversao(self, bloco_text):
-            self.block_entry.delete(0, END) 
+        def conversao(self): 
             try:
-                bloco_text=bloco_text.replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
+                bloco_text=self.block_entry.get().replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
 
                 rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get())
 
@@ -1547,14 +1697,11 @@ class GUI:
                         j=re.sub("\{|\}","",j)
                         singular=(int(re.split(",", j)[0]),int(re.split(",", j)[1]))
                         rec.posmod[-1][1].append(singular)
-                message_sent = pickle.dumps(rec)
-                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
-                client.send(message_sent_header+message_sent)
+                return rec
             except:
-                self.textCons.config(state = NORMAL)
-                self.textCons.insert(END, 'Client > Algo deu errado, confira seu envio.\n\n','#ffffff')
-                self.textCons.see(END)
-                self.textCons.config(state = DISABLED)
+                messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
+                return 0
+            
 # create a GUI class object
 g = GUI()
 

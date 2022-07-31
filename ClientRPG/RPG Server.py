@@ -416,8 +416,8 @@ while True:
                                     converted_pos+="<"+str(j[0])+", "+str(j[1])+">, "
                                 else:
                                     converted_pos+="{"+str(j[0])+", "+str(j[1])+"}, "
-                            converted_pos=converted_pos[0:len(converted_pos)-2]+"]), "
-                        converted_pos=converted_pos[0:len(converted_pos)-2]
+                            converted_pos=converted_pos[0:-2]+"]), "
+                        converted_pos=converted_pos[0:-2]
                         
                         notifi='Info:\gValue: '+str(messagepf.premod[0])+".\gAdvantage: "+str(messagepf.premod[1])+".\gResources: "+converted_pos+".\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
