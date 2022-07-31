@@ -80,7 +80,7 @@ def send_new_message(notifi,client_socket):
     client_socket.send(notifi_header+notifi)
 
 def send_rolagem(rolagem,r,crit):
-    notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+str(clients[rolagem['caller']]['data'])
+    notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+str(clients[rolagem['caller']]['data']+":")
     if rolagem['send_type']=='hidden':
         notifi=notifi+'\gNet Advantage: '+str(rolagem['advan'])
         notifi1=pickle.dumps(msg('Server',notifi,colore))
@@ -92,14 +92,15 @@ def send_rolagem(rolagem,r,crit):
         send_new_message(notifi,rolagem['receiver'])
         print((r<=rolagem['p'])*rolagem['hidden_message']+(r>rolagem['p'])*opposite_message)
     else:
+        notifi+="\gResultado: "
         if r<=crit:
-            notifi+='\gCrítico \g'
+            notifi+='crítico'
         elif r<=rolagem['p']:
-            notifi+='\gSucesso \g'
+            notifi+='sucesso'
         else:
-            notifi+='\gFracasso \g'
-        rolagem['p'],crit,r=2000-rolagem['p'],2000-crit,2000-r
-        notifi+='Net Advantage: '+str(rolagem['advan'])+'\gInfo: '+str(r)+' de '+str(rolagem['p'])
+            notifi+='fracasso'
+        rolagem['p'],crit,r=2000-rolagem['p'],2000-crit,2000-r+1
+        notifi+=' ('+str(r)+' de '+str(rolagem['p'])+').\gNet advantage: '+str(rolagem['advan'])+'.'
         print(notifi)
         notifi=pickle.dumps(msg('Server',notifi,colore))
         notifi2=pickle.dumps(res(rolagem['p'],crit,r,rolagem['advan']))
@@ -377,7 +378,7 @@ while True:
                                     user['calling'].append(client_socket)
                                     notifi=pickle.dumps(msg('Server', check+" encontra-se disponível.",colore))
                                     send_new_message(notifi, notified_socket)
-                                    notifi=user['data']+" iniciou "+str(roladas)+" rolagem(ns) com você com a tag "+messagepf.who+(roladas>1)*"\gRecomenda-se ler o resultado anterior para inserir o próximo bloco para evitar repetição de recursos."
+                                    notifi=user['data']+" iniciou "+str(roladas)+" rolagem(ns) com você com a tag "+messagepf.who+'.'+(roladas>1)*"\gRecomenda-se ler o resultado anterior para inserir o próximo bloco para evitar repetição de recursos."
                                     notifi=pickle.dumps(msg('Server', notifi,colore))
                                     send_new_message(notifi, client_socket)
                                     notifi=pickle.dumps(status(roladas))
@@ -409,27 +410,16 @@ while True:
                         
                         converted_pos=''
                         for i in messagepf.posmod:
-                            print(i)
-                            i=str(i)
-                            i=i[1:len(i)-1]
-                            print(i)
-                            quant=re.search("\d+", i).group()
-                            recurso=re.search("(?<=, \[).+(?=\])", i).group()
-                            print(recurso)
-                            pos_pre=re.findall("\[.+?\]", recurso)
-                            res_list=[]
-                            for j in pos_pre:
-                                res_list.append(j.replace("[","<").replace("]",">"))
-                            pos_pos=re.findall("\(.+?\)", recurso)
-                            for j in pos_pos:
-                                res_list.append(j.replace("(","{").replace(")","}"))
-                            converted_pos+="("+quant+", "
-                            print(res_list)
-                            for j in res_list:
-                                converted_pos+=j
-                            converted_pos+=") "
+                            converted_pos+="("+str(i[0])+", ["
+                            for j in i[1]:
+                                if type(j)==list:
+                                    converted_pos+="<"+str(j[0])+", "+str(j[1])+">, "
+                                else:
+                                    converted_pos+="{"+str(j[0])+", "+str(j[1])+"}, "
+                            converted_pos=converted_pos[0:len(converted_pos)-2]+"]), "
+                        converted_pos=converted_pos[0:len(converted_pos)-2]
                         
-                        notifi='Value = '+str(messagepf.premod[0])+"\gAdvantage = "+str(messagepf.premod[1])+"\gResources = "+converted_pos+"\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
+                        notifi='Info:\gValue: '+str(messagepf.premod[0])+".\gAdvantage: "+str(messagepf.premod[1])+".\gResources: "+converted_pos+".\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,notified_socket)
                         if not user['calling']:

@@ -513,7 +513,6 @@ class GUI:
 
                 
         def displayres(self,res):
-            res.r+=1
             if self.displaymode.get()=='bar':
                 self.progress['value']=0
                 self.minRollLabel2.config(text = "Precisa: "+str(res.p/100))
@@ -636,8 +635,8 @@ class GUI:
             index=len(self.block_entry.get())
             self.block_entry.focus()
             self.block_entry.icursor(index)
-            self.block_entry.insert(index, "("+num.get()+",[])")           
-            self.block_entry.icursor(self.block_entry.index(INSERT)-2)
+            self.block_entry.insert(index, "("+num.get()+", []), ")           
+            self.block_entry.icursor(self.block_entry.index(INSERT)-4)
 
         def anteadvpaste(self, num):
             bloco_text=self.advan_entry.get()
@@ -674,13 +673,13 @@ class GUI:
         def interpaste(self, num1, num2):
             if type(num2)!=str:
                 num2=num2.get()
-            self.block_entry.insert(self.block_entry.index(INSERT), "<"+num1.get()+","+num2+">")
+            self.block_entry.insert(self.block_entry.index(INSERT), "<"+num1.get()+","+num2+">, ")
             self.block_entry.focus()
 
         def postpaste(self, num1, num2):
             if type(num2)!=str:
                 num2=num2.get()
-            self.block_entry.insert(self.block_entry.index(INSERT), "{"+num1.get()+","+num2+"}")
+            self.block_entry.insert(self.block_entry.index(INSERT), "{"+num1.get()+","+num2+"}, ")
             self.block_entry.focus()
 
         def goAhead(self, name):
@@ -961,11 +960,15 @@ class GUI:
                 self.value_entry = Entry(self.antebar2, bg = 'black', fg="white", font = "Courier 12", width = 4, insertbackground = "white") 
                 self.value_entry.pack(side='left')
 
+                self.value_entry.insert(END, '0')
+
                 self.advanlabel= Label(self.antebar2,fg="white",text='  Total advantage: ',bg= 'black', width=19, font = 'Courier 10 bold')           
                 self.advanlabel.pack(side='left')
 
                 self.advan_entry = Entry(self.antebar2, bg = 'black', fg="white", font = "Courier 12", width = 4, insertbackground = "white") 
                 self.advan_entry.pack(side='left')
+
+                self.advan_entry.insert(END, '0')
 
                 #----------------------------------------
 
@@ -1512,7 +1515,6 @@ class GUI:
                 
         # function to send messages 
         def sendMessage(self):
-                print("uga")
                 destinatários = []
                 self.msg=re.sub("'.+?'", lambda x: self.rolldic(x.group().replace("'","")), self.msg)
                 for player in self.players:
@@ -1525,7 +1527,7 @@ class GUI:
         def conversao(self, bloco_text):
             self.block_entry.delete(0, END) 
             try:
-                bloco_text=bloco_text.replace(" ", "")
+                bloco_text=bloco_text.replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
 
                 rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get())
 
