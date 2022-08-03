@@ -356,21 +356,23 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDRESS)
 
 class bloco:
-    def __init__(self,premod,posmod,sn):
+    def __init__(self,premod,posmod,sn,crit):
         self.premod=premod
         self.posmod=posmod
         self.sn=sn
+        self.crit=crit
 
 class status:
     def __init__(self,num):
         self.num=num
+
 class msg:
     def __init__(self,destiny,content):
         self.destiny=destiny
         self.content=content
 
 class roll:
-    def __init__(self,receiver,who,crit):
+    def __init__(self,receiver,who):
         self.receiver=receiver
         self.who=who
         self.crit=crit
@@ -383,19 +385,22 @@ class res:
         self.advan=advan
 
 # GUI class for the chat 
-class GUI: 
+class GUI(Tk): 
 
         # constructor method 
         def __init__(self):
+                super().__init__()
+                
                 self.not_closing=1
                 
                 red=Color('#ff0000')
                 violet=Color('#ff00ff')
                 self.colors = list(red.range_to(violet,50))
                 self.colors+=list(violet.range_to(red,50))
+                self.dice_style=' ('+str(random.randint(2,6))+').png'
                 # chat window which is currently hidden 
-                self.Window = Tk() 
-                self.Window.withdraw() 
+
+                self.withdraw() 
                 
                 # login window 
                 self.login = Toplevel() 
@@ -448,8 +453,7 @@ class GUI:
                 self.entryName.bind('<Return>',(lambda event: self.goAhead(self.entryName.get())))
                 self.login.protocol("WM_DELETE_WINDOW", self.on_closing)  
                 self.go.place(relx = 0.4, 
-                                        rely = 0.55) 
-                self.Window.mainloop() 
+                                        rely = 0.55)
 
         def onPlayerClick(self, c):
             self.playerBtts[c].config(bg=self.playerBtts[c].cget('fg'), fg=self.playerBtts[c].cget('bg'))
@@ -466,7 +470,7 @@ class GUI:
                 self.label.config(text=self.label.cget('text')+aux*' - '+nomiz)
 
         def rollerrola(self):
-            message_sent = pickle.dumps(roll(self.roll_list,self.who.get(),float(int(self.crit.get())/100)))
+            message_sent = pickle.dumps(roll(self.roll_list,self.who.get()))
             message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
             client.send(message_sent_header+message_sent)
             self.roll_list=[]
@@ -574,11 +578,11 @@ class GUI:
                 sleepTime = random.randint(self.minST,self.maxST)/100
                 maxSleepTime = random.randint(self.minMST,self.maxMST)/100
                 
-                currentRoll = random.randint(1, 20)
+                currentRoll = random.randint(0, 20)
                 while maxSleepTime-sleepTime > 0.1 and maxSleepTime > sleepTime:
-                    rolagem = random.randint(1, 20)
+                    rolagem = random.randint(0, 20)
                     while rolagem == currentRoll:
-                        rolagem = random.randint(1, 20)
+                        rolagem = random.randint(0, 20)
 
                     currentRoll = rolagem
 
@@ -604,7 +608,10 @@ class GUI:
                         resultStr = "FALHA CRÍTICA"
                     else:
                         resultStr = "FALHA"
-                img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
+                if roundedRealDiceRoll==0 or roundedRealDiceRoll==20:
+                    img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+self.dice_style)
+                else:
+                    img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
                 img = img.resize((250,250), Image.ANTIALIAS)
                 self.img = ImageTk.PhotoImage(img)
                 self.panel.config(image = self.img)
@@ -619,10 +626,10 @@ class GUI:
 
         def on_closing(self):
             self.not_closing=0
-            for filename in os.listdir(self.past_dir):
-                print(self.past_dir+filename)
-                os.remove(self.past_dir+filename)
-            self.Window.destroy()
+            for filename in os.listdir('Past configs/'):
+                print('Past configs/'+filename)
+                os.remove('Past configs/'+filename)
+            self.destroy()
             client.close()
             sys.exit()
         
@@ -711,6 +718,16 @@ class GUI:
                 self.pls.config(text=server_message)
 
         ##-----------------------------------------------
+        def build_menu(self):
+            for filename in os.listdir('Saved configs/'):
+                self.openmenu.add_command(label=filename[0:-4], command=lambda filepath='Saved configs/'+filename: self.openfile(filepath))
+            self.openmenu.add_separator()
+            self.openmenu.add_command(label="Open new", command=lambda: self.openfile(0))
+            self.menubar.add_cascade(label="Open", menu=self.openmenu)            
+
+            self.menubar.add_command(label="Save", command=self.savefile)
+            self.menubar.add_command(label="Save as...", command=self.savefileas)
+                
         def modify(self, a, b, c):
             self.modified=1
             
@@ -779,6 +796,9 @@ class GUI:
                         pickle.dump([content, self.critbox.get()], file)
                         self.modified=0
                 self.Window2.title(os.path.basename(os.path.normpath(self.path))[0:-4])
+                self.menubar.delete(0,"end")
+                self.openmenu.delete(0,"end")
+                self.build_menu()
                 self.past_index=self.past_index_max
             except Exception:
                 print(sys.exc_info())
@@ -787,9 +807,6 @@ class GUI:
 
         # The main layout of the chat 
         def layout(self,name):
-                self.dir=os.path.dirname(os.path.realpath(__file__))
-                self.saved_dir=self.dir+'\\Saved configs\\'
-                self.past_dir=self.dir+'\\Past configs\\'
                 self.path=''
                 self.past_index_max=0
                 self.past_index=0
@@ -817,25 +834,25 @@ class GUI:
                 self.name = name 
                 
                 # to show chat window 
-                self.Window.deiconify() 
-                self.Window.title("Chatroom") 
-                self.Window.resizable(width = False, height = False) 
-                self.Window.configure(width = 800, height = 500, bg = 'black')
+                self.deiconify() 
+                self.title("Chatroom") 
+                self.resizable(width = False, height = False) 
+                self.configure(width = 800, height = 500, bg = 'black')
 
-                self.sidebar = Frame(self.Window, bg = 'black', width=200, height=500)
+                self.sidebar = Frame(self, bg = 'black', width=200, height=500)
                 self.sidebar.pack(expand = False, fill = 'both', side = 'left')
 
                 
-                self.sep = Label(self.Window, bg = self.color)
+                self.sep = Label(self, bg = self.color)
                 self.sep.pack(expand = False, fill = 'both', side = 'left')
 
-                self.mainFrame = Frame(self.Window, width=562, height=500)
+                self.mainFrame = Frame(self, width=562, height=500)
                 self.mainFrame.pack(expand=False, side='left')
 
-                self.sep2 = Label(self.Window, bg=self.color)
+                self.sep2 = Label(self, bg=self.color)
                 self.sep2.pack(expand = False, fill = 'both', side = 'left')
 
-                self.bttframe = Frame(self.Window, width=30, height=500)
+                self.bttframe = Frame(self, width=30, height=500)
                 self.bttframe.pack(expand=False, side='left')
                 self.blocbtt= Button(self.bttframe, 
                                                     text = ">", 
@@ -855,15 +872,7 @@ class GUI:
                 self.Window2.config(menu=self.menubar)
 
                 self.openmenu=Menu(self.menubar, tearoff=0)
-                for filename in os.listdir(self.saved_dir):
-                    self.openmenu.add_command(label=filename[0:-4], command=lambda filepath=self.saved_dir+filename: self.openfile(filepath))
-
-                self.openmenu.add_separator()
-                self.openmenu.add_command(label="Open new", command=lambda: self.openfile(0))
-                self.menubar.add_cascade(label="Open", menu=self.openmenu)
-                
-                self.menubar.add_command(label="Save", command=self.savefile)
-                self.menubar.add_command(label="Save as...", command=self.savefileas)
+                self.build_menu()
 
                 self.label = Label(self.Window2,
                                                 text='Select the players to roll',
@@ -1482,11 +1491,11 @@ class GUI:
                 self.textCons.config(cursor = "arrow") 
                 self.textCons.config(state = DISABLED) 
 
-                self.Window.bind_all("<MouseWheel>", self.on_mousewheel)
-                self.Window.bind('<Return>',(lambda event: self.sendButton(self.entryMsg.get())))
-                self.Window.bind("<Up>", self.up_down)
-                self.Window.bind("<Down>", self.up_down)
-                self.Window.protocol("WM_DELETE_WINDOW", self.on_closing)
+                self.bind_all("<MouseWheel>", self.on_mousewheel)
+                self.bind('<Return>',(lambda event: self.sendButton(self.entryMsg.get())))
+                self.bind("<Up>", self.up_down)
+                self.bind("<Down>", self.up_down)
+                self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
                 self.Window2.bind('<Return>',(lambda event: self.send_block()))
                 self.Window2.bind("<Up>", self.up_down2)
@@ -1507,7 +1516,7 @@ class GUI:
                     if self.past_index:
                         self.past_index-=1
                         if self.past_index==self.past_index_max-1:
-                            self.path=self.past_dir+str(self.past_index)+'.txt'
+                            self.path='Past configs/'+str(self.past_index)+'.txt'
                             self.openfile(self.path)
                             self.past_index-=1
                             alt=0
@@ -1520,7 +1529,7 @@ class GUI:
                     else:
                         alt=0
                 if alt:
-                    self.path=self.past_dir+str(self.past_index)+'.txt'
+                    self.path='Past configs/'+str(self.past_index)+'.txt'
                     with open(self.path, 'rb') as file:             
                         content = file.read()
                         self.load_content(content)                                      
@@ -1540,6 +1549,7 @@ class GUI:
                         self.changecolor(i)
                         sleep(0.5)
                 except Exception:
+                    print('Skoden')
                     print(sys.exc_info())
                     if self.not_closing:
                         self.on_closing()
@@ -1562,8 +1572,8 @@ class GUI:
                 self.snd.start() 
 
         # function to receive messages 
-        def receive(self): 
-            while True: 
+        def receive(self):
+           while True: 
                 try:
                     message_header = client.recv(HEADER_LENGTH)
                     message_length = int(message_header.decode(FORMAT).strip())
@@ -1625,6 +1635,7 @@ class GUI:
                             self.players.append(dics)
                         break
                 except Exception:
+                    print('Ahoo')
                     print(sys.exc_info())
                     if self.not_closing:
                         self.on_closing()
@@ -1664,9 +1675,11 @@ class GUI:
             message_sent = self.conversao()
             if message_sent:
                 try:
-                    with open(self.past_dir+str(self.past_index_max)+'.txt', 'xb') as file:
+                    with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
                         pickle.dump([message_sent, self.critbox.get()], file)
-                except:
+                except Exception:
+                    print("Chachenga")
+                    print(sys.exc_info())
                     self.on_closing()
                 self.past_index_max+=1
                 self.past_index=self.past_index_max
@@ -1679,7 +1692,7 @@ class GUI:
             try:
                 bloco_text=self.block_entry.get().replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
 
-                rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get())
+                rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get(),int(self.crit.get())/100)
 
                 recursos=re.findall("\(.+?\)", bloco_text)
                 rec.posmod=[]
@@ -1704,4 +1717,5 @@ class GUI:
             
 # create a GUI class object
 g = GUI()
+g.mainloop()
 

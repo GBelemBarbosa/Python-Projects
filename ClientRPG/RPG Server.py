@@ -30,16 +30,16 @@ class msg:
         self.cor=cor
 
 class roll:
-    def __init__(self,receiver,who,crit):
+    def __init__(self,receiver,who):
         self.receiver=receiver
         self.who=who
-        self.crit=crit
 
 class bloco:
-    def __init__(self,premod,posmod,sn):
+    def __init__(self,premod,posmod,sn,crit):
         self.premod=premod
         self.posmod=posmod
         self.sn=sn
+        self.crit=crit
 
 # Create a socket
 # socket.AF_INET - address family, IPv4, some other possible are AF_INET6, AF_BLUETOOTH, AF_UNIX
@@ -80,7 +80,10 @@ def send_new_message(notifi,client_socket):
     client_socket.send(notifi_header+notifi)
 
 def send_rolagem(rolagem,r,crit):
-    notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+str(clients[rolagem['caller']]['data']+":")
+    if rolagem['send_type']=='single':
+        notifi="Rolagem solo:"
+    else:
+        notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+clients[rolagem['caller']]['data']+":"
     if rolagem['send_type']=='hidden':
         notifi=notifi+'\gNet Advantage: '+str(rolagem['advan'])
         notifi1=pickle.dumps(msg('Server',notifi,colore))
@@ -107,7 +110,7 @@ def send_rolagem(rolagem,r,crit):
         if rolagem['send_type']=='me':
             send_new_message(notifi,rolagem['caller'])
             send_new_message(notifi2,rolagem['caller'])
-        elif rolagem['send_type']=='you':
+        elif rolagem['send_type']=='you' or rolagem['send_type']=='single':
             send_new_message(notifi,rolagem['receiver'])
             send_new_message(notifi2,rolagem['receiver'])
         elif rolagem['send_type']=='we':
@@ -123,28 +126,32 @@ def apply_posmod_pre(receiver,fonte,rolagem):
         res_index+=1
         pos_res_index=0
         if mod[0]!=0:
-            for i in mod[1]:
+            for i in mod[1]:                
                 pos_res_index+=1
                 #intermediate é []
                 if type(i)==list:
                     #advan intermediate é [número de advan., 0]
+                    usado=0
                     if i[1]!=0:
                         #const. é c*d1 (i[0]=c, i[1]=1)
                         #dado é x*dy (i[0]=x, i[1]=y)
                         rolagem['p']+=i[0]*(i[1]+1)*25
                         if random.randint(1,80)<=i[0]*(i[1]+1):
-                            mod[0]-=1
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
-                            notifi=pickle.dumps(msg('Server',notifi,colore))
-                            send_new_message(notifi,receiver)
+                            usado=1
                     else:
                         rolagem['p']+=adv_mod(rolagem['advan']+i[0])-adv_mod(rolagem['advan'])
                         rolagem['advan']+=i[0]
                         if random.randint(1,20)<=3*abs(i[0]):
-                            mod[0]-=1
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+' advantage intermediate) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
-                            notifi=pickle.dumps(msg('Server',notifi,colore))
-                            send_new_message(notifi,receiver)
+                            usado=1
+                    if usado:
+                        mod[0]-=1
+                        if rolagem['send_type']=='single':
+                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem solo.'
+                        else:
+                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
+                        notifi=pickle.dumps(msg('Server',notifi,colore))
+                        send_new_message(notifi,receiver)
+                        
 
 def apply_posmod_pos(receiver,fonte,rolagem,r):
     res_index=0
@@ -156,55 +163,54 @@ def apply_posmod_pos(receiver,fonte,rolagem,r):
                 pos_res_index+=1
                 #posterior é []
                 if type(i)==tuple:
-                    c=False
                     #advan intermediate é (número de advan., 0)
+                    usado=0
                     if i[1]!=0:
                         #const. é c*d1 (i[0]=c, i[1]=1)
                         #dado é x*dy (i[0]=x, i[1]=y)
                         if r<=rolagem['p'] and i[0]<0:
                             if r-(rolagem['alin']+1)*i[0]*(i[1]+1)*25+50*rolagem['alin']*i[0]>rolagem['p']:
-                                c=True
+                                usado=1
                         elif r>rolagem['p'] and i[0]>0:
                             if r-(rolagem['alin']+1)*i[0]*(i[1]+1)*25+50*rolagem['alin']*i[0]<=rolagem['p']:
-                                c=True
-                        if c:
-                            mod[0]-=1
+                                usado=1
+                        if usado:
+                            usado=1
                             rolagem['p']+=50*i[0]*random.randint(1, i[1])
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' posterior) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
-                            notifi=pickle.dumps(msg('Server',notifi,colore))
-                            send_new_message(notifi,receiver)
-                            rolagem['p']+=i*50
                     else:
-                        check=adv_mod(rolagem['advan'])
-                        check2=adv_mod(rolagem['advan']+i[0])
+                        dif=adv_mod(rolagem['advan']+i[0])-adv_mod(rolagem['advan'])
                         if r<=rolagem['p'] and i[0]<0:
-                            if rolagem['p']-check+check2<r:
-                                c=True
+                            if rolagem['p']+dif<r:
+                                usado=1
                             else:
-                                rolagem['ready']+=i[0]
+                                rolagem['ghost_advan']+=i[0]
                                 i[0]=abs(i[0])*'-'
                         elif r>rolagem['p'] and i[0]>0:
-                            if rolagem['p']-check+check2>=r:
-                                c=True
+                            if rolagem['p']+dif>=r:
+                                usado=1
                             else:
-                                rolagem['ready']+=i[0]
+                                rolagem['ghost_advan']+=i[0]
                                 i[0]=i[0]*'+'
-                        if c:
-                            rolagem['p']+=(check2-check)
-                            mod[0]-=1
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+' advantage posterior) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
-                            notifi=pickle.dumps(msg('Server',notifi,colore))
-                            send_new_message(notifi,receiver)
+                        if usado:
+                            rolagem['p']+=dif
+                    if usado:
+                        mod[0]-=1
+                        if rolagem['send_type']=='single':
+                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem solo.'
+                        else:
+                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
+                        notifi=pickle.dumps(msg('Server',notifi,colore))
+                        send_new_message(notifi,receiver)
                     if mod[0]==0:
                         for i in mod[1]:
                             if type(i[0])==str:
-                                rolagem['ready']-=i[0].count("+")-i[0].count("-")
+                                rolagem['ghost_advan']-=i[0].count("+")-i[0].count("-")
                                 i[0]=i[0].count("+")-i[0].count("-")
 
 def backNforth(fonte1, fonte2, r):
-    if (fonte1['p']-adv_mod(fonte1['advan'])+adv_mod(fonte1['ready'])>=r)!=(fonte1['p']>=r):
-        fonte1+=(adv_mod(fonte1['ready'])-adv_mod(fonte1['advan']))
-        fonte1['advan']=fonte1['ready']
+    if (fonte1['p']-adv_mod(fonte1['advan'])+adv_mod(fonte1['ghost_advan'])>=r)!=(fonte1['p']>=r):
+        fonte1+=(adv_mod(fonte1['ghost_advan'])-adv_mod(fonte1['advan']))
+        fonte1['advan']=fonte1['ghost_advan']
     else:
         return
     for fonte in [fonte1, fonte2]:
@@ -226,21 +232,24 @@ def rola(rolagem):
     global rolls
     if rolagem['ready']!=2:
         return
-    caller=rolagem['caller']
     recibru=rolagem['receiver']
-    rolls[recibru].pop()
-    apply_posmod_pre(recibru,rolagem,rolagem)
-    apply_posmod_pre(caller,rolls[caller],rolagem)
     rolagem['p']+=adv_mod(rolagem['advan'])
     r=random.randint(1,2000)
-    while True:
-        rolagem['ready']=rolagem['advan']
-        confere=rolagem['p']
+    apply_posmod_pre(recibru,rolagem,rolagem)
+    if rolagem['send_type']!='single':
+        rolls[recibru].pop()
+        caller=rolagem['caller']
+        apply_posmod_pre(caller,rolls[caller],rolagem)
+        while True:
+            rolagem['ghost_advan']=rolagem['advan']
+            confere=rolagem['p']
+            apply_posmod_pos(recibru,rolagem,rolagem,r)
+            apply_posmod_pos(caller,rolls[caller],rolagem,r)
+            backNforth(rolagem, rolls[caller], r)
+            if confere==rolagem['p']:
+                break
+    else:
         apply_posmod_pos(recibru,rolagem,rolagem,r)
-        apply_posmod_pos(caller,rolls[caller],rolagem,r)
-        backNforth(rolagem, rolls[caller], r)
-        if confere==rolagem['p']:
-            break
     crit=rolagem['p']*rolagem['crit']+(rolagem['p']>2000)*(rolagem['p']-2000)
     send_rolagem(rolagem,r,crit)
             
@@ -378,15 +387,15 @@ while True:
                                     user['calling'].append(client_socket)
                                     notifi=pickle.dumps(msg('Server', check+" encontra-se disponível.",colore))
                                     send_new_message(notifi, notified_socket)
-                                    notifi=user['data']+" iniciou "+str(roladas)+" rolagem(ns) com você com a tag "+messagepf.who+'.'+(roladas>1)*"\gRecomenda-se ler o resultado anterior para inserir o próximo bloco para evitar repetição de recursos."
+                                    notifi=user['data']+" iniciou "+str(roladas)+" rolagem(ns) com você com a tag "+messagepf.who+'.'+(roladas>1)*"\gRecomenda-se ler o resultado anterior antes de inserir o próximo bloco para evitar repetição de recursos."
                                     notifi=pickle.dumps(msg('Server', notifi,colore))
                                     send_new_message(notifi, client_socket)
                                     notifi=pickle.dumps(status(roladas))
                                     send_new_message(notifi,client_socket)
-                                    dic={'advan': 0,'receiver': client_socket, 'crit': messagepf.crit, 'caller': notified_socket,'ready':0,'p':1000,'send_type': messagepf.who}
+                                    dic={'advan': 0, 'receiver': client_socket, 'caller': notified_socket, 'ready': 0, 'p':1000, 'send_type': messagepf.who}
                                     rolls[client_socket]=[dic]
                                     for i in range(roladas-1):
-                                        dic={'advan': 0,'receiver': client_socket, 'crit': messagepf.crit, 'caller': notified_socket,'ready':0,'p':1000,'send_type': messagepf.who}
+                                        dic={'advan': 0, 'receiver': client_socket, 'caller': notified_socket, 'ready': 0, 'p':1000, 'send_type': messagepf.who}
                                         rolls[client_socket].append(dic)
                                 else:
                                     notifi=check+" encontra-se indisponível."
@@ -439,13 +448,12 @@ while True:
                                     rolls[called_socket][i]['p']+=50*messagepf.premod[0]
                                     rolls[called_socket][i]['advan']+=messagepf.premod[1]
                                     rolls[called_socket][i]['ready']+=1
+                                    rolls[called_socket][i]['crit']=messagepf.crit
                                     rola(rolls[called_socket][i]) 
                         
                         user['calling']=[]
                     else:
-                        notifi="Você não se encontra rolando no momento."
-                        notifi=pickle.dumps(msg('Server',notifi,colore))
-                        send_new_message(notifi,notified_socket)
+                        rola({'advan': messagepf.premod[1], 'receiver': notified_socket, 'crit': messagepf.crit, 'ready': 2, 'p': 1000+50*messagepf.premod[0], 'posmod': messagepf.posmod, 'send_type': 'single'}) 
                             
             elif notified_socket in espera_de_cor:
                 cor=receive_message(notified_socket)
@@ -491,19 +499,19 @@ while True:
                         if login_message=='ok':
                             for socket in clients:
                                 if clients[socket]['data']==user['data']:
-                                    login_message='Username já em uso, tente outro'
+                                    login_message='Username já em uso, tente outro.'
 
                         if login_message=='ok':
                             if user['data']=='Server' or user['data']=='':
-                                login_message='Username não pode ser Server ou ser em branco, tente outro'
+                                login_message='Username não pode ser \'Server\' ou ser em branco, tente outro.'
 
                         if login_message=='ok':
                             if '\\' in user['data']:
-                                login_message='Retire caracteres \ do username'
+                                login_message='Retire caracteres \ do username.'
 
                         if login_message=='ok':
                             if len(user['data'])>12:
-                                login_message='Username pode conter até 12 caracteres, tente outro'
+                                login_message='Username pode conter até 12 caracteres, tente outro.'
                             else:
                                 espera_de_cor[notified_socket]=user
             
