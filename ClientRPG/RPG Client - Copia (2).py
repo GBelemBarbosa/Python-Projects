@@ -1714,7 +1714,7 @@ class GUI(Tk):
             aux_mor=Label(self.possibs, bg='black', width = 80, height = 1)
             aux_mor.pack_propagate(0)
             aux_mor.pack()
-            aux_1=text=Label(aux_mor, bg='black', text='Resultado      |', fg='white', font=('Courier', 12))
+            aux_1=text=Label(aux_mor, bg='black', text='Resultado    |', fg='white', font=('Courier', 12))
             aux_1.pack(side='left')
             aux_2=text=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Courier', 12))
             aux_2.pack(side='left')
@@ -1725,7 +1725,7 @@ class GUI(Tk):
                 aux_mor=Label(self.possibs, bg='black', width = 80, height = 1)
                 aux_mor.pack_propagate(0)
                 aux_mor.pack()
-                aux_1=text=Label(aux_mor, bg='black', text=resultStr+(15-len(resultStr))*' '+'|', fg='white', font=('Courier', 12))
+                aux_1=text=Label(aux_mor, bg='black', text=resultStr+(13-len(resultStr))*' '+'|', fg='white', font=('Courier', 12))
                 aux_1.pack(side='left')
                 aux_2=text=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Courier', 12))
                 aux_2.pack(side='left')
@@ -1750,7 +1750,7 @@ class GUI(Tk):
                 x=x_2
                 y=y_2
             print(mn, mx, r, x, y)
-            if r<=mn*(1+interval):
+            if (r<=mn*(1+interval) and new<old) or (new>old and (r<=mn or (r>mn+interval**2 and r<=mx*(1-interval)))):
                 print(1)
                 prob=x
                 if r>mn:
@@ -1758,7 +1758,7 @@ class GUI(Tk):
                     return [random.random()<=prob, prob, ' (l)']
                 print(1.2)
                 return [random.random()<=1-prob, prob, ' (l)']
-            elif r>mx or (r<=mx-interval**2 and r>mn*(1+interval)):
+            elif (new<old and (r>mx or (r<=mx-interval**2 and r>mn*(1+interval)))) or (r>mx*(1-interval) and new>old):
                 print(2)
                 prob=y
                 if r<=mx:
@@ -1773,19 +1773,17 @@ class GUI(Tk):
             new*=100
             if new!=old:
                 bol, prob, side=self.prob_func(old, new, r)
-                if round(prob,3)==1 and prob!=1:
-                    prob=0.999
-                    print('999!')
-                if side_old==' (r)' and side==' (c)':
-                    prob=0
-                    print('r->c')
-                elif side_old==' (l)' and side==' (r)':
+                if side_old!=side and side_old:
                     prob=1
-                    print('l->r')
                 elif not bol:
                     prob=1-prob
-                    print('switch!')
+                    print(prob)
+                if prob<prob_old:
+                    prob=max(1-prob, prob)
                 print(prob)
+                if round(prob,3)==1 and prob!=1:
+                    prob=0.999
+                    print(prob)
                 return [prob, side, "%.3f"%round(prob,3)+side]
             else:
                 return [prob_old, side_old, '']

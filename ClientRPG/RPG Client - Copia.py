@@ -1645,6 +1645,8 @@ class GUI(Tk):
                             aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                             aux_mor.pack_propagate(0)
                             aux_mor.pack()
+                            aux_0=text=Label(aux_mor, bg='black', text='Net effect|', fg='white', font=('Courier', 12))
+                            aux_0.pack(side='left')
                             aux_1=text=Label(aux_mor, bg='black', text='% reverse|', fg='white', font=('Courier', 12))
                             aux_1.pack(side='left')
                             aux_12=text=Label(aux_mor, bg='black', text='% \'\' crit|', fg='white', font=('Courier', 12))
@@ -1656,6 +1658,8 @@ class GUI(Tk):
                             aux_3=text=Label(aux_mor, bg='black', text='Recursos', fg='white', font=('Courier', 12))
                             aux_3.pack(side='left')
                             p_old, crit_old, r, resultStr=self.transl(message[0])
+                            p_older=p_old
+                            crit_older=crit_old
                             prob_old=0
                             side_old=''
                             prob_old_c=0
@@ -1664,24 +1668,26 @@ class GUI(Tk):
                             side_old_cf=''
                             for i in message:
                                 p, crit, r, resultStr=self.transl(i)
-                                prob_old, side_old, poss_str=self.calc_change(p_old, p, r, prob_old, side_old)
+                                prob_old, side_old, poss_str=self.calc_change(p_older, p_old, p, r, prob_old, side_old)
                                 aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                                 aux_mor.pack_propagate(0)
                                 aux_mor.pack()
-                                aux_1=text=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
+                                aux_0=text=Label(aux_mor, bg='black', text=poss_str[0]+9*' '+'|', fg='white', font=('Courier', 12))
+                                aux_0.pack(side='left')
+                                aux_1=text=Label(aux_mor, bg='black', text=poss_str[1:]+(9-len(poss_str[1:]))*' '+'|', fg='white', font=('Courier', 12))
                                 aux_1.pack(side='left')
-                                prob_old_c, side_old_c, poss_str=self.calc_change(crit_old, crit, r, prob_old_c, side_old_c)
-                                aux_12=text=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
+                                prob_old_c, side_old_c, poss_str=self.calc_change(crit_older, crit_old, crit, r, prob_old_c, side_old_c)
+                                aux_12=text=Label(aux_mor, bg='black', text=poss_str[1:]+(9-len(poss_str[1:]))*' '+'|', fg='white', font=('Courier', 12))
                                 aux_12.pack(side='left')
-                                prob_old_cf, side_old_cf, poss_str=self.calc_change(p_old/10, p/10, r, prob_old_cf, side_old_cf)
-                                aux_13=text=Label(aux_mor, bg='black', text=poss_str+(14-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
+                                prob_old_cf, side_old_cf, poss_str=self.calc_change(p_older/10, p_old/10, p/10, r, prob_old_cf, side_old_cf)
+                                aux_13=text=Label(aux_mor, bg='black', text=poss_str[1:]+(14-len(poss_str[1:]))*' '+'|', fg='white', font=('Courier', 12))
                                 aux_13.pack(side='left')
                                 aux_2=text=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Courier', 12))
                                 aux_2.pack(side='left')
                                 aux_3=text=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Courier', 12))
                                 aux_3.pack(side='left')
-                                p_old=p
-                                crit_old=crit
+                                p_older=p
+                                crit_older=crit
                             aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                             aux_mor.pack()
                             resButton = Button(possibs,
@@ -1714,7 +1720,7 @@ class GUI(Tk):
             aux_mor=Label(self.possibs, bg='black', width = 80, height = 1)
             aux_mor.pack_propagate(0)
             aux_mor.pack()
-            aux_1=text=Label(aux_mor, bg='black', text='Resultado      |', fg='white', font=('Courier', 12))
+            aux_1=text=Label(aux_mor, bg='black', text='Resultado    |', fg='white', font=('Courier', 12))
             aux_1.pack(side='left')
             aux_2=text=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Courier', 12))
             aux_2.pack(side='left')
@@ -1725,14 +1731,14 @@ class GUI(Tk):
                 aux_mor=Label(self.possibs, bg='black', width = 80, height = 1)
                 aux_mor.pack_propagate(0)
                 aux_mor.pack()
-                aux_1=text=Label(aux_mor, bg='black', text=resultStr+(15-len(resultStr))*' '+'|', fg='white', font=('Courier', 12))
+                aux_1=text=Label(aux_mor, bg='black', text=resultStr+(13-len(resultStr))*' '+'|', fg='white', font=('Courier', 12))
                 aux_1.pack(side='left')
                 aux_2=text=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Courier', 12))
                 aux_2.pack(side='left')
                 aux_3=text=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Courier', 12))
                 aux_3.pack(side='left')
 
-        def prob_func(self, old, new, r):
+        def prob_func(self, older, old, new, r):
             mn=min(old, new)/2000
             mx=max(old, new)/2000
             interval=mx-mn
@@ -1750,7 +1756,7 @@ class GUI(Tk):
                 x=x_2
                 y=y_2
             print(mn, mx, r, x, y)
-            if r<=mn*(1+interval):
+            if (r<=mn*(1+interval) and new<older) or (new>older and (r<=mn or (r>mn+interval**2 and r<=mx*(1-interval)))):
                 print(1)
                 prob=x
                 if r>mn:
@@ -1758,7 +1764,7 @@ class GUI(Tk):
                     return [random.random()<=prob, prob, ' (l)']
                 print(1.2)
                 return [random.random()<=1-prob, prob, ' (l)']
-            elif r>mx or (r<=mx-interval**2 and r>mn*(1+interval)):
+            elif (new<older and (r>mx or (r<=mx-interval**2 and r>mn*(1+interval)))) or (r>mx*(1-interval) and new>older):
                 print(2)
                 prob=y
                 if r<=mx:
@@ -1768,27 +1774,25 @@ class GUI(Tk):
                 return [random.random()<=1-prob, prob, ' (r)']
             return [1,1,' (c)']
 
-        def calc_change(self, old, new, r, prob_old, side_old):
+        def calc_change(self, older, old, new, r, prob_old, side_old):
             old*=100
             new*=100
             if new!=old:
-                bol, prob, side=self.prob_func(old, new, r)
-                if round(prob,3)==1 and prob!=1:
-                    prob=0.999
-                    print('999!')
-                if side_old==' (r)' and side==' (c)':
-                    prob=0
-                    print('r->c')
-                elif side_old==' (l)' and side==' (r)':
+                bol, prob, side=self.prob_func(older, old, new, r)
+                if side_old!=side and side_old:
                     prob=1
-                    print('l->r')
                 elif not bol:
                     prob=1-prob
-                    print('switch!')
+                    print(prob)
+                if prob<prob_old:
+                    prob=max(1-prob, prob)
                 print(prob)
-                return [prob, side, "%.3f"%round(prob,3)+side]
+                if new>old:
+                    return [prob, side, '-'+"%.3f"%round(prob,3)+side]
+                else:
+                    return [prob, side, '+'+"%.3f"%round(prob,3)+side]
             else:
-                return [prob_old, side_old, '']
+                return [prob_old, side_old, '  ']
        
         def rolldic(self, dice):
             try:

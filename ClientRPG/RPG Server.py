@@ -19,10 +19,15 @@ class res:
         self.r=r
         self.crit=crit
         self.advan=advan
+        self.mods=''
+
+    def __lt__(self, other):
+         return self.p < other.p
 
 class status:
     def __init__(self,num):
         self.num=num
+
 class msg:
     def __init__(self,sender,content,cor):
         self.sender=sender
@@ -79,13 +84,12 @@ def send_new_message(notifi,client_socket):
     notifi_header = f"{len(notifi):<{HEADER_LENGTH}}".encode('utf-8')
     client_socket.send(notifi_header+notifi)
 
-def send_rolagem(rolagem,r,crit):
+def send_rolagem(rolagem,possib):
     if rolagem['send_type']=='single':
-        notifi="Rolagem solo:"
+        notifi="Rolagem solo finalizada!"
     else:
-        notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+clients[rolagem['caller']]['data']+":"
+        notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+clients[rolagem['caller']]['data']+" finalizada!"
     if rolagem['send_type']=='hidden':
-        notifi=notifi+'\gNet Advantage: '+str(rolagem['advan'])
         notifi1=pickle.dumps(msg('Server',notifi,colore))
         send_new_message(notifi1,rolagem['caller'])
         opposite_message=(rolagem['hidden_message']=='n')*'Sim.'+(rolagem['hidden_message']=='s')*'Não.'
@@ -94,30 +98,18 @@ def send_rolagem(rolagem,r,crit):
         notifi=pickle.dumps(msg('Server',notifi,colore))
         send_new_message(notifi,rolagem['receiver'])
         print((r<=rolagem['p'])*rolagem['hidden_message']+(r>rolagem['p'])*opposite_message)
+        notifi=pickle.dumps(possib)
+        send_new_message(notifi,rolagem['caller'])
+        send_new_message(notifi,rolagem['receiver'])
     else:
-        notifi+="\gResultado: "
-        if r<=crit:
-            notifi+='crítico'
-        elif r<=rolagem['p']:
-            notifi+='sucesso'
-        else:
-            notifi+='fracasso'
-        rolagem['p'],crit,r=2000-rolagem['p'],2000-crit,2000-r+1
-        notifi+=' ('+str(r)+' de '+str(rolagem['p'])+').\gNet advantage: '+str(rolagem['advan'])+'.'
-        print(notifi)
-        notifi=pickle.dumps(msg('Server',notifi,colore))
-        notifi2=pickle.dumps(res(rolagem['p'],crit,r,rolagem['advan']))
+        notifi=pickle.dumps(possib)
         if rolagem['send_type']=='me':
             send_new_message(notifi,rolagem['caller'])
-            send_new_message(notifi2,rolagem['caller'])
         elif rolagem['send_type']=='you' or rolagem['send_type']=='single':
             send_new_message(notifi,rolagem['receiver'])
-            send_new_message(notifi2,rolagem['receiver'])
         elif rolagem['send_type']=='we':
             send_new_message(notifi,rolagem['caller'])
-            send_new_message(notifi2,rolagem['caller'])
             send_new_message(notifi,rolagem['receiver'])
-            send_new_message(notifi2,rolagem['receiver'])        
 
 def apply_posmod_pre(receiver,fonte,rolagem):
     res_index=0
@@ -153,81 +145,42 @@ def apply_posmod_pre(receiver,fonte,rolagem):
                         send_new_message(notifi,receiver)
                         
 
-def apply_posmod_pos(receiver,fonte,rolagem,r):
-    res_index=0
+def apply_posmod_pos(fonte,rolagem,r,possib):
+    l=len(possib)
     for mod in fonte['posmod']:
-        res_index+=1
-        pos_res_index=0
         if mod[0]!=0:
             for i in mod[1]:
-                pos_res_index+=1
                 #posterior é []
                 if type(i)==tuple:
-                    #advan intermediate é (número de advan., 0)
-                    usado=0
+                    #advan posterior é (número de advan., 0)
                     if i[1]!=0:
                         #const. é c*d1 (i[0]=c, i[1]=1)
                         #dado é x*dy (i[0]=x, i[1]=y)
-                        if r<=rolagem['p'] and i[0]<0:
-                            if r-(rolagem['alin']+1)*i[0]*(i[1]+1)*25+50*rolagem['alin']*i[0]>rolagem['p']:
-                                usado=1
-                        elif r>rolagem['p'] and i[0]>0:
-                            if r-(rolagem['alin']+1)*i[0]*(i[1]+1)*25+50*rolagem['alin']*i[0]<=rolagem['p']:
-                                usado=1
-                        if usado:
-                            usado=1
-                            rolagem['p']+=50*i[0]*random.randint(1, i[1])
+                        possib_aux=[]
+                        for j in possib:
+                            poss=res(j.p+i[0]*(1+i[1])*25, 0, j.r, j.advan)
+                            poss.mods=j.mods+str(i).replace('(','{').replace(')','}')+', '
+                            poss.crit=calc_crit(rolagem['crit'], poss.p)
+                            possib_aux.append(poss)
+                        possib+=possib_aux
                     else:
                         dif=adv_mod(rolagem['advan']+i[0])-adv_mod(rolagem['advan'])
-                        if r<=rolagem['p'] and i[0]<0:
-                            if rolagem['p']+dif<r:
-                                usado=1
-                            else:
-                                rolagem['ghost_advan']+=i[0]
-                                i[0]=abs(i[0])*'-'
-                        elif r>rolagem['p'] and i[0]>0:
-                            if rolagem['p']+dif>=r:
-                                usado=1
-                            else:
-                                rolagem['ghost_advan']+=i[0]
-                                i[0]=i[0]*'+'
-                        if usado:
-                            rolagem['p']+=dif
-                    if usado:
-                        mod[0]-=1
-                        if rolagem['send_type']=='single':
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem solo.'
-                        else:
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
-                        notifi=pickle.dumps(msg('Server',notifi,colore))
-                        send_new_message(notifi,receiver)
-                    if mod[0]==0:
-                        for i in mod[1]:
-                            if type(i[0])==str:
-                                rolagem['ghost_advan']-=i[0].count("+")-i[0].count("-")
-                                i[0]=i[0].count("+")-i[0].count("-")
-
-def backNforth(fonte1, fonte2, r):
-    if (fonte1['p']-adv_mod(fonte1['advan'])+adv_mod(fonte1['ghost_advan'])>=r)!=(fonte1['p']>=r):
-        fonte1+=(adv_mod(fonte1['ghost_advan'])-adv_mod(fonte1['advan']))
-        fonte1['advan']=fonte1['ghost_advan']
+                        possib_aux=[]
+                        for j in possib:
+                            poss=res(j.p+dif, 0, j.r, j.advan+i[0])
+                            poss.mods=j.mods+str(i).replace('(','{').replace(')','}')+', '
+                            poss.crit=calc_crit(rolagem['crit'], poss.p)
+                            possib_aux.append(poss)
+                        possib+=possib_aux
+                    mod[1].remove(i)                    
+                    if mod[1]:
+                        possib=possib+apply_posmod_pos(fonte,rolagem,r,possib[:l])
+                    mod[0]-=1
+    if l==1:
+        return possib
     else:
-        return
-    for fonte in [fonte1, fonte2]:
-        for mod in fonte:
-            if mod[0]:
-                for i in mod[1]:
-                    if type(i[0])==str:
-                        if mod[0]:
-                            if (fonte1['p']+adv_mod(fonte1['advan']-i[0].count("+")+i[0].count("-"))-adv_mod(fonte1['advan'])>=r)==(fonte1['p']>=r):
-                                fonte1+=(adv_mod(fonte1['advan']-i[0].count("+")+i[0].count("-"))-adv_mod(fonte1['advan']))
-                                fonte1['advan']-=i[0].count("+")-i[0].count("-")
-                            else:    
-                                mod[0]-=1
-                        else:
-                            fonte1+=(adv_mod(fonte1['advan']-i[0].count("+")+i[0].count("-"))-adv_mod(fonte1['advan']))
-                            fonte1['advan']-=i[0].count("+")-i[0].count("-")
-
+        possib[l:]
+                    
 def rola(rolagem):
     global rolls
     if rolagem['ready']!=2:
@@ -240,19 +193,18 @@ def rola(rolagem):
         rolls[recibru].pop()
         caller=rolagem['caller']
         apply_posmod_pre(caller,rolls[caller],rolagem)
-        while True:
-            rolagem['ghost_advan']=rolagem['advan']
-            confere=rolagem['p']
-            apply_posmod_pos(recibru,rolagem,rolagem,r)
-            apply_posmod_pos(caller,rolls[caller],rolagem,r)
-            backNforth(rolagem, rolls[caller], r)
-            if confere==rolagem['p']:
-                break
+        possib=[res(rolagem['p'], calc_crit(rolagem['crit'], rolagem['p']), r, rolagem['advan'])]
+        possib=apply_posmod_pos(rolagem,rolagem,r,possib)
+        possib=apply_posmod_pos(rolls[caller],rolagem,r,possib)
     else:
-        apply_posmod_pos(recibru,rolagem,rolagem,r)
-    crit=rolagem['p']*rolagem['crit']+(rolagem['p']>2000)*(rolagem['p']-2000)
-    send_rolagem(rolagem,r,crit)
-            
+        possib=[res(rolagem['p'], calc_crit(rolagem['crit'], rolagem['p']), r, rolagem['advan'])]
+        possib=apply_posmod_pos(rolagem,rolagem,r,possib)
+    possib.sort()
+    send_rolagem(rolagem,possib)
+
+def calc_crit(crit_chance, p):
+    return p*crit_chance+(p>2000)*(p-2000)
+
 # Handles message receiving
 def receive_message(client_socket):
 
@@ -425,8 +377,8 @@ while True:
                                     converted_pos+="<"+str(j[0])+", "+str(j[1])+">, "
                                 else:
                                     converted_pos+="{"+str(j[0])+", "+str(j[1])+"}, "
-                            converted_pos=converted_pos[0:-2]+"]), "
-                        converted_pos=converted_pos[0:-2]
+                            converted_pos=converted_pos[:-2]+"]), "
+                        converted_pos=converted_pos[:-2]
                         
                         notifi='Info:\gValue: '+str(messagepf.premod[0])+".\gAdvantage: "+str(messagepf.premod[1])+".\gResources: "+converted_pos+".\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
