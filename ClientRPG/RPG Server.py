@@ -147,9 +147,12 @@ def apply_posmod_pre(receiver,fonte,rolagem):
 
 def apply_posmod_pos(fonte,rolagem,r,possib):
     l=len(possib)
+    print(l)
     for mod in fonte['posmod']:
-        if mod[0]!=0:
+        if mod[0]>0:
             for i in mod[1]:
+                print(i)
+                print(mod[1])
                 #posterior é []
                 if type(i)==tuple:
                     #advan posterior é (número de advan., 0)
@@ -162,7 +165,6 @@ def apply_posmod_pos(fonte,rolagem,r,possib):
                             poss.mods=j.mods+str(i).replace('(','{').replace(')','}')+', '
                             poss.crit=calc_crit(rolagem['crit'], poss.p)
                             possib_aux.append(poss)
-                        possib+=possib_aux
                     else:
                         dif=adv_mod(rolagem['advan']+i[0])-adv_mod(rolagem['advan'])
                         possib_aux=[]
@@ -171,10 +173,15 @@ def apply_posmod_pos(fonte,rolagem,r,possib):
                             poss.mods=j.mods+str(i).replace('(','{').replace(')','}')+', '
                             poss.crit=calc_crit(rolagem['crit'], poss.p)
                             possib_aux.append(poss)
-                        possib+=possib_aux
-                    mod[1].remove(i)                    
-                    if mod[1]:
-                        possib=possib+apply_posmod_pos(fonte,rolagem,r,possib[:l])
+                    possib+=possib_aux
+                    mod[1].remove(i)
+                    mod[1].append(1)
+                    if len(mod[1])>1:
+                        if any(isinstance(x, tuple) for x in mod[1]):
+                            possib=possib+apply_posmod_pos(fonte,rolagem,r,possib[:l])
+                            print(possib)
+                        elif 1 in mod[1]:
+                            return possib[1:]
                     mod[0]-=1
     if l==1:
         return possib

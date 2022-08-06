@@ -1656,34 +1656,85 @@ class GUI(Tk):
                             aux_3=text=Label(aux_mor, bg='black', text='Recursos', fg='white', font=('Courier', 12))
                             aux_3.pack(side='left')
                             p_old, crit_old, r, resultStr=self.transl(message[0])
-                            prob_old=0
+                            prob_old=0.0001
                             side_old=''
-                            prob_old_c=0
+                            prob_old_c=0.0001
                             side_old_c=''
-                            prob_old_cf=0
+                            prob_old_cf=0.0001
                             side_old_cf=''
+                            p_last, crit_last, r, resultStr=self.transl(message[-1])
                             for i in message:
-                                p, crit, r, resultStr=self.transl(i)
-                                prob_old, side_old, poss_str=self.calc_change(p_old, p, r, prob_old, side_old)
                                 aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                                 aux_mor.pack_propagate(0)
                                 aux_mor.pack()
+                                p, crit, r, resultStr=self.transl(i)
+                                prob_old, side_old, bol=self.calc_change(p_old, p, r, prob_old, side_old)
+                                prob_old_cf, side_old_cf, bol_cf=self.calc_change(p_old/10, p/10, r, prob_old_cf, side_old_cf)
+                                prob_old_c, side_old_c, bol_c=self.calc_change(crit_old, crit, r, prob_old_c, side_old_c)
+                                if not prob_old:
+                                    side_old_cf=''
+                                    if not prob_old_c:
+                                        side_old=''
+                                if bol:
+                                    print('bol')
+                                    if side_old_cf!=' (l)':
+                                        print('side_old_cf!=\' (l)\'')
+                                        if not self.calc_change(crit, crit_last, r, prob_old_c, side_old_c)[-1] and not bol_c:
+                                            prob_old_c=0
+                                            side_old_c=''
+                                        if not self.calc_change(p/10, p_last/10, r, prob_old_cf, side_old_cf)[-1] and not bol_cf:
+                                            prob_old_cf=0
+                                            side_old_cf=''
+                                    else:
+                                        print('side_old_cf==\' (l)\'')
+                                        bol=0
+                                        prob_old=1-prob_old
+                                if bol_c:
+                                    print('bol_c')
+                                    if side_old!=' (l)':
+                                        print('side_old!=\' (l)\'')
+                                        if not self.calc_change(p, p_last, r, prob_old, side_old)[-1] and not bol:
+                                            prob_old=0
+                                            side_old=''
+                                        if not self.calc_change(p/10, p_last/10, r, prob_old_cf, side_old_cf)[-1] and not bol_cf:
+                                            prob_old_cf=0
+                                            side_old_cf=''
+                                    else:
+                                        print('side_old==\' (l)\'')
+                                        bol_c=0
+                                        prob_old_c=1-prob_old
+                                if bol_cf:
+                                    print('bol_cf')
+                                    if not self.calc_change(p, p_last, r, prob_old, side_old)[-1] and not bol:
+                                        prob_old=0
+                                        side_old=''
+                                    if not self.calc_change(crit, crit_last, r, prob_old_c, side_old_c)[-1] and not bol_c:
+                                        prob_old_c=0
+                                        side_old_c=''
+                                poss_str=(side_old!='' and p_old!=p)*("%.3f"%round(prob_old,3)+side_old)
                                 aux_1=text=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 aux_1.pack(side='left')
-                                prob_old_c, side_old_c, poss_str=self.calc_change(crit_old, crit, r, prob_old_c, side_old_c)
+                                poss_str=(side_old_c!='' and p_old!=p)*("%.3f"%round(prob_old_c,3)+side_old_c)
                                 aux_12=text=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 aux_12.pack(side='left')
-                                prob_old_cf, side_old_cf, poss_str=self.calc_change(p_old/10, p/10, r, prob_old_cf, side_old_cf)
+                                poss_str=(side_old_cf!='' and p_old!=p)*("%.3f"%round(prob_old_cf,3)+side_old_cf)
                                 aux_13=text=Label(aux_mor, bg='black', text=poss_str+(14-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 aux_13.pack(side='left')
                                 aux_2=text=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Courier', 12))
                                 aux_2.pack(side='left')
                                 aux_3=text=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Courier', 12))
                                 aux_3.pack(side='left')
+                                if bol:
+                                    prob_old=1
+                                if bol_c:
+                                    prob_old_c=1
+                                if bol_cf:
+                                    prob_old_cf=1
                                 p_old=p
                                 crit_old=crit
                             aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                             aux_mor.pack()
+                            print('-----------------------')
                             resButton = Button(possibs,
                                                 fg = 'white',
                                                 bg = 'black', text = 'Show results',
@@ -1697,7 +1748,72 @@ class GUI(Tk):
                         self.on_closing()
                     else:
                         break
-                    
+
+        def calc_change(self, old, new, r, prob_old, side_old):
+            old*=100
+            new*=100
+            print(old, new)
+            if prob_old==1 or not prob_old:
+                print('prob_old==1 or not prob_old:', prob_old)
+                return [1, '', 0]
+            if new!=old:
+                bol, prob, side=self.prob_func(old, new, r)
+                if round(prob,3)==1 and prob!=1:
+                    prob=0.999
+                    print('999!')
+                if side_old==' (r)':
+                    if side==' (c)' or side==' (r)':
+                        prob=0
+                        bol=0
+                        print('r->c/r')
+                elif side_old==' (l)' and side==' (r)':
+                    prob=1
+                    bol=1
+                    print('l->r')
+                elif not bol:
+                    prob=1-prob
+                    print('not bol')
+                print(prob)
+                return [prob, side, bol]
+            else:
+                print('new==old')
+                return [prob_old, side_old, 0]
+
+        def prob_func(self, old, new, r):
+            mn=min(old, new)/2000
+            mx=max(old, new)/2000
+            interval=mx-mn
+            r/=20
+            aux=mx/(mn+mx)
+            x=(1/2-interval)/(mn+(1-mx)*aux)
+            y=x*aux
+            x=x/(interval*(1+x/interval-x))
+            y=y/(interval*(1+y/interval-y))
+            y_2=(1/2-interval)/(mn*aux+(1-mx))
+            x_2=y_2*aux
+            x_2=x_2/(interval*(1+x_2/interval-x_2))
+            y_2=y_2/(interval*(1+y_2/interval-y_2))
+            if (x_2-0.5)**2+(y_2-0.5)**2<(x-0.5)**2+(y-0.5)**2:
+                x=x_2
+                y=y_2
+            if r<=mn*(1+interval):
+                print('esq')
+                prob=x
+                if r>mn:
+                    print('change')
+                    return [random.random()<=prob, prob, ' (l)']
+                print('miss')
+                return [random.random()<=1-prob, prob, ' (l)']
+            elif r>mx or (r<=mx-interval**2 and r>mn*(1+interval)):
+                print('dir')
+                prob=y
+                if r<=mx:
+                    print('change')
+                    return [random.random()<=prob, prob, ' (r)']
+                print('miss')
+                return [random.random()<=1-prob, prob, ' (r)']
+            return [1,1,' (c)']
+
         def show_res(self, arguments):
             possibs, message=arguments[0], arguments[1]
             possibs.destroy()
@@ -1706,7 +1822,7 @@ class GUI(Tk):
             except Exception:
                 print(traceback.format_exc())
             p_old, crit_old, r, resultStr=self.transl(message[0])
-            self.displayres(p_old, crit_old, r, resultStr)
+            #self.displayres(p_old, crit_old, r, resultStr)
             self.possibs=Toplevel(bg='black')
             self.possibs.title('Possibildiades')
             self.possibs.resizable(width = False, height=False)
@@ -1731,64 +1847,6 @@ class GUI(Tk):
                 aux_2.pack(side='left')
                 aux_3=text=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Courier', 12))
                 aux_3.pack(side='left')
-
-        def prob_func(self, old, new, r):
-            mn=min(old, new)/2000
-            mx=max(old, new)/2000
-            interval=mx-mn
-            r/=20
-            aux=mx/(mn+mx)
-            x=(4/5-interval)/(mn+(1-mx)*aux)
-            y=x*aux
-            x=x/(interval*(1+x/interval-x))
-            y=y/(interval*(1+y/interval-y))
-            y_2=(4/5-interval)/(mn*aux+(1-mx))
-            x_2=y_2*aux
-            x_2=x_2/(interval*(1+x_2/interval-x_2))
-            y_2=y_2/(interval*(1+y_2/interval-y_2))
-            if (x_2-0.5)**2+(y_2-0.5)**2<(x-0.5)**2+(y-0.5)**2:
-                x=x_2
-                y=y_2
-            print(mn, mx, r, x, y)
-            if r<=mn*(1+interval):
-                print(1)
-                prob=x
-                if r>mn:
-                    print(1.1)
-                    return [random.random()<=prob, prob, ' (l)']
-                print(1.2)
-                return [random.random()<=1-prob, prob, ' (l)']
-            elif r>mx or (r<=mx-interval**2 and r>mn*(1+interval)):
-                print(2)
-                prob=y
-                if r<=mx:
-                    print(2.1)
-                    return [random.random()<=prob, prob, ' (r)']
-                print(2.2)
-                return [random.random()<=1-prob, prob, ' (r)']
-            return [1,1,' (c)']
-
-        def calc_change(self, old, new, r, prob_old, side_old):
-            old*=100
-            new*=100
-            if new!=old:
-                bol, prob, side=self.prob_func(old, new, r)
-                if round(prob,3)==1 and prob!=1:
-                    prob=0.999
-                    print('999!')
-                if side_old==' (r)' and side==' (c)':
-                    prob=0
-                    print('r->c')
-                elif side_old==' (l)' and side==' (r)':
-                    prob=1
-                    print('l->r')
-                elif not bol:
-                    prob=1-prob
-                    print('switch!')
-                print(prob)
-                return [prob, side, "%.3f"%round(prob,3)+side]
-            else:
-                return [prob_old, side_old, '']
        
         def rolldic(self, dice):
             try:
@@ -1856,7 +1914,6 @@ class GUI(Tk):
                         j=re.sub("\{|\}","",j)
                         singular=(int(re.split(",", j)[0]),int(re.split(",", j)[1]))
                         rec.posmod[-1][1].append(singular)
-                print(rec)
                 return rec
             except:
                 messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
