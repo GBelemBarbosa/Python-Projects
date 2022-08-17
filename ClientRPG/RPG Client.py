@@ -208,14 +208,11 @@ class TextWrapper:
                         elif len(chunks)>1:
                             z=chunks.pop()
                             chunks[-1]='\j'*(width-cur_len-len(yob[0])>0)+z.replace(' ','')+chunks[-1]
-                            print(z, chunks[-1], z+chunks[-1])
                         else:
                             if not yob[0] and (width-cur_len-len(yob[0])==0):
                                 chunks.append(' '*width)
-                                print('ahoo')
                             else:
                                 chunks.append('\j'*(width-cur_len-len(yob[0])>0))
-                            print(width, cur_len, len(yob[0]))
                         if yob[0]:
                             if len(yob[0])<(width-cur_len):
                                 chunks.append((width-cur_len-len(yob[0]))*' ')
@@ -638,7 +635,6 @@ class GUI(Tk):
         def on_closing(self):
             self.not_closing=0
             for filename in os.listdir('Past configs/'):
-                print('Past configs/'+filename)
                 os.remove('Past configs/'+filename)
             self.destroy()
             client.close()
@@ -1560,8 +1556,6 @@ class GUI(Tk):
                         self.height-=1
                         line=str(self.indexs[self.height])+'.'
                         line2=str(self.indexs[self.height+1]-1)+'.'
-                        print(self.textCons.get(line+'0', line+"end"))
-                        print(self.textCons.get(line2+'0', line2+"end"))
                         col=str(re.search('> |$', self.textCons.get(line+'0', line+"end")).start()+2)
                         self.block_entry.focus()
                         self.entryMsg.delete(0, END) 
@@ -1571,8 +1565,6 @@ class GUI(Tk):
                         self.height+=1
                         line=str(self.indexs[self.height])+'.'
                         line2=str(self.indexs[self.height+1]-1)+'.'
-                        print(self.textCons.get(line+'0', line+"end"))
-                        print(self.textCons.get(line2+'0', line2+"end"))
                         col=str(re.search('> |$', self.textCons.get(line+'0', line+"end")).start()+2)
                         self.block_entry.focus()
                         self.entryMsg.delete(0, END) 
@@ -1622,7 +1614,6 @@ class GUI(Tk):
                         self.indexs.pop()
                         self.indexs+=[current_line, end_line]
                         self.height=len(self.indexs)-1
-                        print(self.indexs, self.height)
                     elif type(message).__name__=='dict':
                         playerFlag = True
                         for i in range(len(self.players)):
@@ -1686,13 +1677,11 @@ class GUI(Tk):
                                 aux_mor.pack()
                                 p, crit, r, resultStr=self.transl(i)
                                 aux=(p_old!=p)
-                                print(p, crit, aux, ahead, ahead_c, ahead_cf)
                                 prob_old, bol=self.calc_change(p_old, p, r, prob_old)
                                 prob_old_c, bol_c=self.calc_change(crit_old, crit, r, prob_old_c)
                                 prob_old_cf, bol_cf=self.calc_change(p_old/10, p/10, r, prob_old_cf)
                                 if ahead and aux:
                                     if bol:
-                                        print('bol')
                                         ahead=0
                                         if not self.calc_change(crit, crit_last, r, prob_old_c)[1] and not bol_c:
                                             ahead_c=0
@@ -1704,7 +1693,6 @@ class GUI(Tk):
                                 aux_1=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 if ahead_c and aux: 
                                     if bol_c:
-                                        print('bol_c')
                                         ahead_c=0
                                         if not self.calc_change(p, p_last, r, prob_old)[1] and not bol:
                                             ahead=0
@@ -1717,7 +1705,6 @@ class GUI(Tk):
                                 aux_12=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 if ahead_cf and aux:
                                     if bol_cf:
-                                        print('bol_cf')
                                         ahead_cf=0
                                         if not self.calc_change(p, p_last, r, prob_old)[1] and not bol:
                                             ahead=0
@@ -1748,7 +1735,6 @@ class GUI(Tk):
 
                                 p_old=p
                                 crit_old=crit
-                            print('---------------')
                             aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                             aux_mor.pack()
                             resButton = Button(possibs,
@@ -1768,10 +1754,8 @@ class GUI(Tk):
             old*=100
             new*=100
             if prob_old==1:
-                print('prob_old==1 or not prob_old:', prob_old)
                 return (1, 0)
             bol, prob=self.prob_func(old, new, r)
-            print(prob)
             return (prob, bol)
 
         def prob_func(self, old, new, r):
@@ -1783,14 +1767,11 @@ class GUI(Tk):
             prob=4*(interval-1)/(3*interval-4)
             prob_old=prob
             if r<=mn or r>mx: 
-                print('miss')
                 prob=1-prob
             bol=(random.random()<=prob)
             if bol:
-                print('bol==1')
                 prob=4/5
             else:
-                print('bol==0')
                 prob=interval*(1-prob_old)/(prob_old*(1-interval)+(1-prob_old)*interval)
             return (bol, prob)
 
@@ -1878,34 +1859,50 @@ class GUI(Tk):
                         if len(dice)>1:
                             dice[1]=int(dice[1])
                             sgn=np.sign(dice[0])
-                            for j in range(dice[0]):
+                            for j in range(sgn*dice[0]):
                                 roll+=sgn*random.randint(1, dice[1])
                             dice_list.append((dice[0], dice[1]))
                         else:
                             roll+=dice[0]
                             dice_list.append((dice[0], 1))
-                print(dice_list, roll)
+                dice_list=sorted(dice_list, key=lambda tup: abs(tup[0]))
                 tot=0
                 num=0
                 mini=0
+                maxi=0
                 for i in dice_list:
                     if i[0]>0:
-                        mini+=max(1, i[0])
+                        mini+=i[0]
+                        maxi+=i[0]*i[1]
                     else:
-                        mini+=min(-i[1], i[0])
-                print(mini)
+                        mini+=i[0]*i[1]
+                        maxi+=i[0]
                 dic=OrderedDict(sorted(self.rec(tot, num, dice_list, 0).items(), reverse=True))
+                print(mini, maxi)
                 total=sum(dic.values())
                 values=[x/total for x in dic.values()]
                 tot=0
                 for i in range(len(values)):
                     tot+=values[i]
                     values[i]=tot
-                roll_value=values[mini-roll-1]
                 plt.bar(dic.keys(), values, color='g')
-                plt.bar(roll, roll_value, color='r')
-                plt.title('x='+str(roll)+', f(x)='+"{:.1e}".format(dic[roll]/total)+', 1-F(x)='+"{:.1e}".format(roll_value))
-                plt.show()
+                plt.show(block=False)
+                i=0
+                current_value=random.randint(mini, maxi)
+                old_value=current_value-1
+                while True:
+                    i+=1
+                    while current_value==old_value:
+                        current_value=random.randint(mini, maxi)
+                    plt.bar(current_value, values[mini-current_value-1], color='r')
+                    plt.pause(0.5)
+                    if i>8 and current_value==roll:
+                        break
+                    plt.bar(current_value, values[mini-current_value-1], color='g')
+                    plt.pause(0.3)   
+                    old_value=current_value
+                plt.title('r='+str(roll)+', f(r)='+"{:.1e}".format(dic[roll]/total)+', f(x>=r)='+"{:.1e}".format(values[mini-roll-1]))
+                plt.pause(0.001)
             except Exception:
                 print(traceback.format_exc())
                 
@@ -1918,11 +1915,11 @@ class GUI(Tk):
             message_sent = pickle.dumps(msg(destinatários, self.msg))
             message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
             client.send(message_sent_header+message_sent)
-            self.rolldic(self.msg)
             try:
                 plt.close()
-            except:
-                pass
+            except Exception:
+                print(traceback.format_exc())
+            self.rolldic(self.msg) 
 
         def send_block(self):
             message_sent = self.conversao()

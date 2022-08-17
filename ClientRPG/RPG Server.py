@@ -147,7 +147,7 @@ def apply_posmod_pre(receiver,fonte,rolagem):
 
 def apply_posmod_pos(fonte,rolagem,r,possib):
     l=len(possib)
-    print(l)
+    print(l, 'l')
     for mod in fonte['posmod']:
         if mod[0]>0:
             for i in mod[1]:
@@ -156,6 +156,8 @@ def apply_posmod_pos(fonte,rolagem,r,possib):
                 #posterior é []
                 if type(i)==tuple:
                     #advan posterior é (número de advan., 0)
+                    l_pre=len(possib)
+                    print(l_pre, 'l_pre')
                     if i[1]!=0:
                         #const. é c*d1 (i[0]=c, i[1]=1)
                         #dado é x*dy (i[0]=x, i[1]=y)
@@ -174,19 +176,26 @@ def apply_posmod_pos(fonte,rolagem,r,possib):
                             poss.crit=calc_crit(rolagem['crit'], poss.p)
                             possib_aux.append(poss)
                     possib+=possib_aux
-                    mod[1].remove(i)
-                    mod[1].append(1)
+                    index=mod[1].index(i)
+                    mod[1][index]=1
                     if len(mod[1])>1:
                         if any(isinstance(x, tuple) for x in mod[1]):
-                            possib=possib+apply_posmod_pos(fonte,rolagem,r,possib[:l])
-                            print(possib)
+                            print(len(possib), 'any(isinstance(x, tuple) for x in mod[1])')
+                            possib=possib+apply_posmod_pos(fonte,rolagem,r,possib[:l_pre])
+                            print(len(possib), 'after')
+                            if index!=0:
+                                print(len(possib), 'index!=0')
+                                return possib[l_pre:]
                         elif 1 in mod[1]:
-                            return possib[1:]
+                            print(len(possib), '1 in mod[1]')
+                            return possib[l_pre:]     
                     mod[0]-=1
     if l==1:
+        print(len(possib), 'l==1')
         return possib
     else:
-        possib[l:]
+        print(len(possib), 'else')
+        return possib[l:]
                     
 def rola(rolagem):
     global rolls
