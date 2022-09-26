@@ -683,7 +683,7 @@ class GUI(Tk):
             if not bloco_text:
                 bloco_text=0
             try:
-                bloco_text=str(int(bloco_text)+int(int(num1.get())*(int(num2)+1)/2))
+                bloco_text=str(int(bloco_text)+int(int(num1)*(int(num2)+1)/2))
                 self.value_entry.delete(0, END)
                 self.value_entry.insert(END, bloco_text)
                 self.value_entry.icursor(self.value_entry.index(INSERT))
@@ -1111,7 +1111,7 @@ class GUI(Tk):
                                                             width = 1, 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.antepaste(self.ac, 1)) 
+                                                            command = lambda : self.antepaste(self.ac.get(), 1)) 
                 
                 self.aconbtt.pack(side='left')
 
@@ -1173,7 +1173,7 @@ class GUI(Tk):
                                                             width = 1, 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.antepaste(self.ad[0], self.ad[1])) 
+                                                            command = lambda : self.antepaste(self.ad[0].get(), self.ad[1].get())) 
                 
                 self.adicbtt.pack(side='left')
                 
@@ -1652,11 +1652,11 @@ class GUI(Tk):
                             aux_mor=Label(possibs, bg='black', width = 120, height = 1)
                             aux_mor.pack_propagate(0)
                             aux_mor.pack()
-                            aux_1=text=Label(aux_mor, bg='black', text='% reverse|', fg='white', font=('Courier', 12))
+                            aux_1=text=Label(aux_mor, bg='black', text='% of f->s+|', fg='white', font=('Courier', 12))
                             aux_1.pack(side='left')
-                            aux_12=text=Label(aux_mor, bg='black', text='% \'\' crit|', fg='white', font=('Courier', 12))
+                            aux_12=text=Label(aux_mor, bg='black', text='% of s->cs|', fg='white', font=('Courier', 12))
                             aux_12.pack(side='left')
-                            aux_13=text=Label(aux_mor, bg='black', text='% \'\' crit fail|', fg='white', font=('Courier', 12))
+                            aux_13=text=Label(aux_mor, bg='black', text='% of cf->f+|', fg='white', font=('Courier', 12))
                             aux_13.pack(side='left')
                             aux_2=text=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Courier', 12))
                             aux_2.pack(side='left')
@@ -1690,7 +1690,7 @@ class GUI(Tk):
                                     poss_str="{:.1e}".format(prob_old)
                                 else:
                                     poss_str=''
-                                aux_1=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
+                                aux_1=Label(aux_mor, bg='black', text=poss_str+(10-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 if ahead_c and aux: 
                                     if bol_c:
                                         ahead_c=0
@@ -1702,7 +1702,7 @@ class GUI(Tk):
                                     poss_str="{:.1e}".format(prob_old_c)
                                 else:
                                     poss_str=''
-                                aux_12=Label(aux_mor, bg='black', text=poss_str+(9-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
+                                aux_12=Label(aux_mor, bg='black', text=poss_str+(10-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 if ahead_cf and aux:
                                     if bol_cf:
                                         ahead_cf=0
@@ -1715,7 +1715,7 @@ class GUI(Tk):
                                     poss_str="{:.1e}".format(prob_old_cf)
                                 else:
                                     poss_str=''
-                                aux_13=Label(aux_mor, bg='black', text=poss_str+(14-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
+                                aux_13=Label(aux_mor, bg='black', text=poss_str+(11-len(poss_str))*' '+'|', fg='white', font=('Courier', 12))
                                 
                                 aux_1.pack(side='left')
                                 
@@ -1723,7 +1723,7 @@ class GUI(Tk):
                                 
                                 aux_13.pack(side='left')
                                 
-                                aux_2=text=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Courier', 12))
+                                aux_2=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Courier', 12))
                                 aux_2.pack(side='left')
                                 
                                 resButton = Button(aux_mor,
@@ -1886,23 +1886,24 @@ class GUI(Tk):
                     tot+=values[i]
                     values[i]=tot
                 plt.bar(dic.keys(), values, color='g')
-                plt.show(block=False)
+                plt.show()
+##                plt.show(block=False)
                 i=0
                 current_value=random.randint(mini, maxi)
                 old_value=current_value-1
-                while True:
-                    i+=1
-                    while current_value==old_value:
-                        current_value=random.randint(mini, maxi)
-                    plt.bar(current_value, values[mini-current_value-1], color='r')
-                    plt.pause(0.5)
-                    if i>8 and current_value==roll:
-                        break
-                    plt.bar(current_value, values[mini-current_value-1], color='g')
-                    plt.pause(0.3)   
-                    old_value=current_value
+##                while True:
+##                    i+=1
+##                    while current_value==old_value:
+##                        current_value=random.randint(mini, maxi)
+##                    plt.bar(current_value, values[mini-current_value-1], color='r')
+##                    plt.pause(0.5)
+##                    if i>8 and current_value==roll:
+##                        break
+##                    plt.bar(current_value, values[mini-current_value-1], color='g')
+##                    plt.pause(0.3)   
+##                    old_value=current_value
                 plt.title('r='+str(roll)+', f(r)='+"{:.1e}".format(dic[roll]/total)+', f(x>=r)='+"{:.1e}".format(values[mini-roll-1]))
-                plt.pause(0.001)
+##                plt.pause(0.001)
             except Exception:
                 print(traceback.format_exc())
                 
