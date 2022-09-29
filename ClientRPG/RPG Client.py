@@ -18,9 +18,13 @@ import os
 import traceback
 from functools import partial
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+from matplotlib.figure import Figure
 from collections import OrderedDict
 import itertools
 import math
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
 
 __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 
@@ -409,7 +413,6 @@ class GUI(Tk):
                 violet=Color('#ff00ff')
                 self.colors = list(red.range_to(violet,50))
                 self.colors+=list(violet.range_to(red,50))
-                self.dice_style=' ('+str(random.randint(2,6))+').png'
                 # chat window which is currently hidden 
 
                 self.withdraw() 
@@ -617,7 +620,7 @@ class GUI(Tk):
                         roundedRealDiceRoll = ceil(r)
 
                 if roundedRealDiceRoll==0 or roundedRealDiceRoll==20:
-                    img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+self.dice_style)
+                    img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+self.dice_style.get()+'.png')
                 else:
                     img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
                 img = img.resize((250,250), Image.ANTIALIAS)
@@ -875,7 +878,7 @@ class GUI(Tk):
                 self.Window2=Toplevel()
                 self.Window2.title("Roll") 
                 self.Window2.resizable(width = False, height = False)
-                self.Window2.configure(width = 775, height = 500, bg = 'black')
+                self.Window2.configure(width = 775, height = 530, bg = 'black')
                 self.Window2.pack_propagate(0)
 
                 self.menubar = Menu(self.Window2)
@@ -893,17 +896,17 @@ class GUI(Tk):
                                                 pady=5) 
                 self.label.pack(expand=True, fill="y", side="top")
                 
-                self.sidebaroll = Frame(self.Window2, bg = 'black', width=200, height=500)
+                self.sidebaroll = Frame(self.Window2, bg = 'black', width=200, height=530)
                 self.sidebaroll.pack(expand = False, fill = 'both', side = 'left')
                 
                 self.sep3 = Label(self.Window2, bg = self.color)
                 self.sep3.pack(expand = False, fill = 'both', side = 'left')
         
-                self.secFrame = Frame(self.Window2, width=562, height=500, bg='black')
+                self.secFrame = Frame(self.Window2, width=562, height=530, bg='black')
                 self.secFrame.pack(expand=True, fill = 'both', side='left')
 
                 self.labelBottom2 = Label(self.secFrame, bg = 'black', height = 79, width = 562)     
-                self.labelBottom2.place(y=385) 
+                self.labelBottom2.place(y=415) 
 
                 self.block=StringVar()
                 self.block.trace_variable('w', self.modify)
@@ -925,45 +928,45 @@ class GUI(Tk):
                                             y = 5, 
                                             height = 66, 
                                             width = 126) 
-                
-                self.line3 = Label(self.secFrame, bg=self.color)                 
-                self.line3.place(relwidth=1,relheight=0.012,y=379)
 
                 self.line4 = Label(self.Window2, bg=self.color)
                 self.line4.place(relwidth=1,relheight=0.012,y=36)
 
                 self.stypebar= Label(self.secFrame, bg = 'black')
-                self.stypebar.place(relwidth=1,relheight=0.05,y=1)
+                self.stypebar.place(relwidth=1,relheight=0.05*50/53,y=1)
 
                 self.sep4 = Label(self.Window2, bg = self.color)
                 self.sep4.pack(expand = False, fill = 'both', side = 'left')
 
                 self.antebar= Label(self.secFrame, bg = 'black')
-                self.antebar.place(relwidth=1,relheight=0.14,rely=0.05)
+                self.antebar.place(relwidth=1,relheight=0.14*50/53,rely=0.05*50/53)
 
                 self.antebar2= Label(self.secFrame, bg = 'black')
-                self.antebar2.place(relwidth=1,relheight=0.09,rely=0.19)
+                self.antebar2.place(relwidth=1,relheight=0.09*50/53,rely=0.19*50/53)
 
                 self.line8 = Label(self.secFrame, bg=self.color)                 
-                self.line8.place(relwidth=1,relheight=0.012,rely=0.05)
+                self.line8.place(relwidth=1,relheight=0.012*50/53,rely=0.05*50/53)
 
                 self.interbar= Label(self.secFrame, bg = 'black')
-                self.interbar.place(relwidth=1,relheight=0.17,rely=0.286)
+                self.interbar.place(relwidth=1,relheight=0.17*50/53,rely=0.286*50/53)
 
                 self.line5 = Label(self.secFrame, bg=self.color)                 
-                self.line5.place(relwidth=1,relheight=0.012,rely=0.286)
+                self.line5.place(relwidth=1,relheight=0.012*50/53,rely=0.286*50/53)
 
                 self.postbar= Label(self.secFrame, bg = 'black')
-                self.postbar.place(relwidth=1,relheight=0.17,rely=0.456)
+                self.postbar.place(relwidth=1,relheight=0.17*50/53,rely=0.456*50/53)
 
                 self.line6 = Label(self.secFrame, bg=self.color)                 
-                self.line6.place(relwidth=1,relheight=0.012,rely=0.456)
+                self.line6.place(relwidth=1,relheight=0.012*50/53,rely=0.456*50/53)
                 
                 self.resourcebar= Label(self.secFrame, bg = 'black')
-                self.resourcebar.place(relwidth=1,relheight=0.19,rely=0.626)
+                self.resourcebar.place(relwidth=1,relheight=0.25,rely=0.626*50/53)
+
+                self.line3 = Label(self.secFrame, bg=self.color)                 
+                self.line3.place(relwidth=1,relheight=0.012*50/53,rely=0.83)
 
                 self.line7 = Label(self.secFrame, bg=self.color)                 
-                self.line7.place(relwidth=1,relheight=0.012,rely=0.626)
+                self.line7.place(relwidth=1,relheight=0.012*50/53,rely=0.626*50/53)
 
                 self.progresswindow=Toplevel(bg='black')
                 self.progresswindow.title("Result")
@@ -1382,7 +1385,7 @@ class GUI(Tk):
                                     from_ = 0,
                                     to = 100)
 
-                self.resbox.pack(pady=2)
+                self.resbox.pack(pady=14)
 
                 self.resbtt = Button(self.resourcebar2, 
                                                             text = "Add resource", 
@@ -1392,7 +1395,7 @@ class GUI(Tk):
                                                             fg="white",
                                                             command = lambda: self.resourcepaste(self.res)) 
                 
-                self.resbtt.pack(side='bottom')
+                self.resbtt.pack()
 
                 self.critlabel= Label(self.resourcebar1,fg="white",text='Crit chance: ',bg='black', width=13, font = 'Courier 12 bold')
                 self.critlabel.pack(side='left')
@@ -1436,6 +1439,24 @@ class GUI(Tk):
                                                                         font = 'Courier 10 bold')
                 
                 self.dicebtt.pack()
+
+                self.options = [
+                "Chico",
+                "Hide the pain",
+                "Chorrindo",
+                "Picardía",
+                "Tobey"
+                ]
+
+                self.dice_style = StringVar()
+                self.dice_style.set(self.options[0])
+
+                self.dice_style_drop = ttk.Combobox(self.resourcebar3, textvariable=self.dice_style, values=self.options, state='readonly', width=14)
+                self.dice_style_drop.pack()
+
+                self.style=ttk.Style(self)
+                self.style.theme_use('clam')
+                self.style.configure("TCombobox", fieldbackground= "black", background= "white")
 
                 self.Window2.protocol("WM_DELETE_WINDOW", self.blocswitch)
                 self.Window2.withdraw()
@@ -1776,7 +1797,6 @@ class GUI(Tk):
             return (bol, prob)
 
         def show_res(self, possibs, message):
-            possibs.destroy()
             try:
                 self.possibs.destroy()
             except Exception:
@@ -1878,32 +1898,75 @@ class GUI(Tk):
                         mini+=i[0]*i[1]
                         maxi+=i[0]
                 dic=OrderedDict(sorted(self.rec(tot, num, dice_list, 0).items(), reverse=True))
-                print(mini, maxi)
                 total=sum(dic.values())
                 values=[x/total for x in dic.values()]
                 tot=0
                 for i in range(len(values)):
                     tot+=values[i]
                     values[i]=tot
-                plt.bar(dic.keys(), values, color='g')
-                plt.show()
-##                plt.show(block=False)
-                i=0
-                current_value=random.randint(mini, maxi)
-                old_value=current_value-1
-##                while True:
-##                    i+=1
-##                    while current_value==old_value:
-##                        current_value=random.randint(mini, maxi)
-##                    plt.bar(current_value, values[mini-current_value-1], color='r')
-##                    plt.pause(0.5)
-##                    if i>8 and current_value==roll:
-##                        break
-##                    plt.bar(current_value, values[mini-current_value-1], color='g')
-##                    plt.pause(0.3)   
-##                    old_value=current_value
-                plt.title('r='+str(roll)+', f(r)='+"{:.1e}".format(dic[roll]/total)+', f(x>=r)='+"{:.1e}".format(values[mini-roll-1]))
-##                plt.pause(0.001)
+                try:
+                    self.possi.destroy()
+                except Exception:
+                    print(traceback.format_exc())
+                self.possi=Toplevel(bg='black')
+                self.possi.resizable(width = False, height=False)
+                self.possi.configure(width = 500, height = 300)
+                self.possi.pack_propagate(0)
+                self.possi.title("Dice roll")
+                frame=Label(self.possi, bg='black')
+                frame.pack()
+
+                f = Figure(facecolor='k')
+                
+                canvas = FigureCanvasTkAgg(f, master=frame)
+                canvas.draw()
+                canvas.get_tk_widget().pack()
+                
+                p=f.gca()
+                p.set_facecolor('k')
+                p.set(xlabel='r', ylabel='p(x>=r)')
+                p.xaxis.label.set_color('w')
+                p.yaxis.label.set_color('w')
+                p.tick_params(axis='x', colors='w')
+                p.tick_params(axis='y', colors='w')
+                p.bar(dic.keys(), values, color='w')
+                rolls=[random.randint(mini, maxi)]
+                p.set_title(' ')
+
+                for i in range(random.randint(5, 10)):
+                    c=random.randint(mini, maxi)
+                    while c==rolls[-1]:
+                        c=random.randint(mini, maxi)
+                    rolls.append(c)
+                if rolls[-1]!=roll:
+                    rolls.append(roll)
+                l=len(rolls)
+                for j in range(l):
+                    i=rolls[j]
+                    p.bar(i, values[mini-i-1], color=self.color)
+                    f.tight_layout()
+
+                    canvas0 = FigureCanvasTkAgg(f, master=frame)
+                    canvas0.draw()
+                    canvas.get_tk_widget().pack_forget()
+                    canvas0.get_tk_widget().pack()
+                    sleep(0.5)
+                    if j!=l-1:
+                        p.bar(i, values[mini-i-1], color='w')
+                        f.tight_layout()
+
+                        canvas = FigureCanvasTkAgg(f, master=frame)
+                        canvas.draw()
+                        canvas0.get_tk_widget().pack_forget()
+                        canvas.get_tk_widget().pack()
+                        sleep(0.3)
+                p.set_title('r='+str(roll)+', p(r)='+"{:.1e}".format(dic[roll]/total)+', p(x>=r)='+"{:.1e}".format(values[mini-roll-1]), color='w')
+                f.tight_layout()
+                
+                canvas = FigureCanvasTkAgg(f, master=frame)
+                canvas.draw()
+                canvas0.get_tk_widget().pack_forget()
+                canvas.get_tk_widget().pack()
             except Exception:
                 print(traceback.format_exc())
                 
@@ -1920,7 +1983,7 @@ class GUI(Tk):
                 plt.close()
             except Exception:
                 print(traceback.format_exc())
-            self.rolldic(self.msg) 
+            self.rldc = threading.Thread(target=self.rolldic(self.msg)) 
 
         def send_block(self):
             message_sent = self.conversao()
