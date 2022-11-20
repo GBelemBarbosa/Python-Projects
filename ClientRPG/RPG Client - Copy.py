@@ -649,65 +649,10 @@ class GUI(Tk):
         def blocswitch(self):
             if not self.Window2.winfo_viewable():
                 self.Window2.deiconify()
-                self.block_entry.focus()
                 self.blocbtt.config(text='<')
             else:
                 self.Window2.withdraw()
                 self.blocbtt.config(text='>')            
-
-        def resourcepaste(self, num):
-            self.block_entry.focus()
-            if self.block_entry.get():
-                if self.block_entry.get()[-1]==')':
-                    self.block_entry.insert(END, (", "))
-                elif self.block_entry.get()[-2:]!=', ':
-                    bloco_text=re.search('^.*\)', self.block_entry.get()).group()+', '
-                    self.block_entry.delete(0, END)
-                    self.block_entry.insert(END, bloco_text)
-            self.block_entry.insert(END, "("+num.get()+", []), ")           
-            self.block_entry.icursor(self.block_entry.index(END)-4)
-
-        def anteadvpaste(self, num):
-            bloco_text=self.advan_entry.get()
-            
-            bloco_text=bloco_text.replace(" ", "")
-            if not bloco_text:
-                bloco_text=0
-            try:
-                bloco_text=str(int(bloco_text)+int(num.get()))
-                self.advan_entry.delete(0, END)
-                self.advan_entry.insert(END, bloco_text)
-                self.advan_entry.icursor(self.advan_entry.index(INSERT))
-            except:
-                pass
-            self.advan_entry.focus()
-        
-        def antepaste(self, num1, num2):
-            bloco_text=self.value_entry.get()
-            
-            bloco_text=bloco_text.replace(" ", "")
-            if not bloco_text:
-                bloco_text=0
-            try:
-                bloco_text=str(int(bloco_text)+int(int(num1)*(int(num2)+1)/2))
-                self.value_entry.delete(0, END)
-                self.value_entry.insert(END, bloco_text)
-                self.value_entry.icursor(self.value_entry.index(INSERT))
-            except:
-                pass
-            self.value_entry.focus()
-
-        def interpaste(self, num1, num2):
-            if type(num2)!=str:
-                num2=num2.get()
-            self.block_entry.insert(self.block_entry.index(INSERT), "<"+num1.get()+","+num2+">, ")
-            self.block_entry.focus()
-
-        def postpaste(self, num1, num2):
-            if type(num2)!=str:
-                num2=num2.get()
-            self.block_entry.insert(self.block_entry.index(INSERT), "{"+num1.get()+","+num2+"}, ")
-            self.block_entry.focus()
 
         def goAhead(self, name):
             my_username = name.encode(FORMAT)
@@ -819,8 +764,140 @@ class GUI(Tk):
             except Exception:
                 print(traceback.format_exc())
                 messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
-                return               
+                return
 
+        def build_resor(self):
+            general=Label(self.terFrame, text="Advan: "+(self.advanint>=0)*"+"+str(self.advanint)+", Constant: "+str(self.const),
+                                                bg = 'black',
+                                                fg='white',
+                                                font = "Consolas 12 bold")
+            general.pack(fill=x)
+            for i in range(len(self.resor)):
+                self.resor[i][2]=Radiobutton(self.terFrame, 
+                                                                        variable = self.selectRes, 
+                                                                        value = i,
+                                                                        text = str(i)+"-ésimo recurso\nQnt. "+self.resor[i][1], 
+                                                                        fg="white",
+                                                                        bg='black',
+                                                                        selectcolor='black', 
+                                                                        font = 'Consolas 10 bold')
+                self.resor[i][2].pack(fill=x)
+                self.resor[i][4]=[]
+                for j in range(len(self.resor[i][3])):
+                    self.resor[i][4].append(Button(self.terFrame, 
+                                                                        text = self.resor[i][3][j][1], 
+                                                                        fg="white",
+                                                                        bg='black',
+                                                                        font = 'Consolas 10 bold'
+                                                                        command = lambda c=(i, j): self.destroy_subres(c))
+                    )
+                    self.resor[i][4][-1].pack(fill=x)                    
+
+            #self.resor[self.selectRes][2]
+
+        def destroy_subres(self, pos):
+            self.resor[pos[1]][3].pop(pos[2])
+            self.build_resor()
+
+        def resourcepaste(self, num):
+            self.resor.append([num, [], [], []])
+            self.build_resor()
+            
+        def anteadvpaste(self, num):
+            try:
+                self.advanint+=int(num)
+                self.build_resor()
+            except:
+                pass
+        
+        def antepaste(self, num1, num2):
+            try:
+                self.const+=int(int(num1)*(int(num2)+1)/2))
+                self.build_resor()
+            except:
+                pass
+            
+        def interpaste(self, num1, num2):
+            if type(num2)!=str:
+                num2=num2.get()
+            self.block_entry.insert(self.block_entry.index(INSERT), "<"+num1.get()+","+num2+">, ")
+            self.block_entry.focus()
+
+        def postpaste(self, num1, num2):
+            if type(num2)!=str:
+                num2=num2.get()
+            self.block_entry.insert(self.block_entry.index(INSERT), "{"+num1.get()+","+num2+"}, ")
+            self.block_entry.focus()
+
+        def send_block(self):
+            message_sent = self.conversao()
+            if message_sent:
+                try:
+                    with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
+                        pickle.dump([message_sent, self.critbox.get()], file)
+                except Exception:
+                    print(traceback.format_exc())
+                    self.on_closing()
+                self.past_index_max+=1
+                self.past_index=self.past_index_max
+                message_sent=pickle.dumps(message_sent)
+                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+                client.send(message_sent_header+message_sent)             
+        
+        def conversao(self): 
+            try:
+                bloco_text=self.block_entry.get().replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
+
+                rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get(),int(self.crit.get())/100)
+
+                recursos=re.findall("\(.+?\)", bloco_text)
+                rec.posmod=[]
+                for i in recursos:
+                    quant=int(re.search("\d+", i).group())
+                    rec.posmod.append([quant, []])
+                    recurso=re.search("(?<=,\[).+(?=\])", i).group()
+                    pos_pre=re.findall("\<.+?\>", recurso)
+                    for j in pos_pre:
+                        j=re.sub("\<|\>","",j)
+                        singular=[int(x) for x in re.split(",", j)]
+                        rec.posmod[-1][1].append(singular)  
+                    pos_pos=re.findall("\{.+?\}", recurso)
+                    for j in pos_pos:
+                        j=re.sub("\{|\}","",j)
+                        singular=(int(re.split(",", j)[0]),int(re.split(",", j)[1]))
+                        rec.posmod[-1][1].append(singular)
+                return rec
+            except:
+                messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
+                return 0
+
+        def up_down2(self, event):
+            if self.past_index_max:
+                alt=1
+                if event.keysym == 'Up':
+                    if self.past_index:
+                        self.past_index-=1
+                        if self.past_index==self.past_index_max-1:
+                            self.path='Past configs/'+str(self.past_index)+'.txt'
+                            self.openfile(self.path)
+                            self.past_index-=1
+                            alt=0
+                            self.Window2.title('#'+str(self.past_index+1))
+                    else:
+                        alt=0
+                else:
+                    if self.past_index<self.past_index_max-1:
+                        self.past_index+=1
+                    else:
+                        alt=0
+                if alt:
+                    self.path='Past configs/'+str(self.past_index)+'.txt'
+                    with open(self.path, 'rb') as file:             
+                        content = file.read()
+                        self.load_content(content)                                      
+                        self.modified=0
+                        self.Window2.title('#'+str(self.past_index+1))
+                
         # The main layout of the chat 
         def layout(self,name):
                 self.path=''
@@ -880,7 +957,7 @@ class GUI(Tk):
                 self.Window2=Toplevel()
                 self.Window2.title("Roll") 
                 self.Window2.resizable(width = False, height = False)
-                self.Window2.configure(width = 875, height = 530, bg = 'black')
+                self.Window2.configure(width = 1075, height = 530, bg = 'black')
                 self.Window2.pack_propagate(0)
 
                 self.menubar = Menu(self.Window2)
@@ -907,29 +984,18 @@ class GUI(Tk):
                 self.secFrame = Frame(self.Window2, width=662, height=530, bg='black')
                 self.secFrame.pack(expand=True, fill = 'both', side='left')
 
+                self.sep5 = Label(self.Window2, bg = self.color)
+                self.sep5.pack(expand = False, fill = 'both', side = 'left')
+
+                self.terFrame = Frame(self.Window2, width=200, height=530, bg='black')
+                self.terFrame.pack(expand=True, fill = 'both', side='left')
+
+                self.resor=[]
+
+                self.selectRes=IntVar(value=0)
+
                 self.labelBottom2 = Label(self.secFrame, bg = 'black', height = 79, width = 562)     
                 self.labelBottom2.place(y=415) 
-
-                self.block=StringVar()
-                self.block.trace_variable('w', self.modify)
-                self.block_entry = ttk.Entry(self.labelBottom2, font = "Consolas 12", textvariable=self.block) 
-                self.block_entry.place(width = 517, 
-                                                height = 65, 
-                                                y = 1, 
-                                                x = 5) 
-                
-                self.button_block = Button(self.labelBottom2, 
-                                                            text = "Send", 
-                                                            font = "Consolas 12 bold", 
-                                                            width = 10, 
-                                                            bg = 'black',
-                                                            fg="white",
-                                                            command = lambda : self.send_block()) 
-                
-                self.button_block.place(x = 528, 
-                                            y = 1, 
-                                            height = 66, 
-                                            width = 126) 
 
                 self.line4 = Label(self.Window2, bg=self.color)
                 self.line4.place(relwidth=1,relheight=0.012,y=36)
@@ -1080,7 +1146,8 @@ class GUI(Tk):
 
                 self.valuelabel= Label(self.antebar2,fg="white",text='        Total value: ',bg= 'black', width=25, font = 'Consolas 10 bold')           
                 self.valuelabel.pack(side='left')
-                
+
+                self.const=0
                 self.value=StringVar(value='0')
                 self.value.trace_variable('w', self.modify)
                 self.value_entry = ttk.Entry(self.antebar2, font = "Consolas 12", width = 4, textvariable=self.value) 
@@ -1088,7 +1155,8 @@ class GUI(Tk):
 
                 self.advanlabel= Label(self.antebar2,fg="white",text='  Total advantage: ',bg= 'black', width=19, font = 'Consolas 10 bold')           
                 self.advanlabel.pack(side='left')
-
+                
+                self.advanint=0
                 self.advan=StringVar(value='0')
                 self.advan.trace_variable('w', self.modify)
                 self.advan_entry = ttk.Entry(self.antebar2, font = "Consolas 12", width = 4, textvariable=self.advan) 
@@ -1567,33 +1635,6 @@ class GUI(Tk):
         def on_mousewheel(self, event):
             self.textCons.yview_scroll(-1*int(event.delta/120), "units")
 
-        def up_down2(self, event):
-            if self.past_index_max:
-                alt=1
-                if event.keysym == 'Up':
-                    if self.past_index:
-                        self.past_index-=1
-                        if self.past_index==self.past_index_max-1:
-                            self.path='Past configs/'+str(self.past_index)+'.txt'
-                            self.openfile(self.path)
-                            self.past_index-=1
-                            alt=0
-                            self.Window2.title('#'+str(self.past_index+1))
-                    else:
-                        alt=0
-                else:
-                    if self.past_index<self.past_index_max-1:
-                        self.past_index+=1
-                    else:
-                        alt=0
-                if alt:
-                    self.path='Past configs/'+str(self.past_index)+'.txt'
-                    with open(self.path, 'rb') as file:             
-                        content = file.read()
-                        self.load_content(content)                                      
-                        self.modified=0
-                        self.Window2.title('#'+str(self.past_index+1))
-
         def up_down(self, event):
                 if event.keysym == 'Up':
                     if self.height!=0 and self.indexs:
@@ -1601,7 +1642,7 @@ class GUI(Tk):
                         line=str(self.indexs[self.height])+'.'
                         line2=str(self.indexs[self.height+1]-1)+'.'
                         col=str(re.search('> |$', self.textCons.get(line+'0', line+"end")).start()+2)
-                        self.block_entry.focus()
+                        self.entryMsg.focus()
                         self.entryMsg.delete(0, END) 
                         self.entryMsg.insert(END, self.textCons.get(line+col, line2+"end").replace('\n', ''))
                 else:
@@ -1610,7 +1651,7 @@ class GUI(Tk):
                         line=str(self.indexs[self.height])+'.'
                         line2=str(self.indexs[self.height+1]-1)+'.'
                         col=str(re.search('> |$', self.textCons.get(line+'0', line+"end")).start()+2)
-                        self.block_entry.focus()
+                        self.entryMsg.focus()
                         self.entryMsg.delete(0, END) 
                         self.entryMsg.insert(END, self.textCons.get(line+col, line2+"end").replace('\n', ''))
         
@@ -1673,7 +1714,6 @@ class GUI(Tk):
                         if not self.Window2.winfo_viewable():
                             self.Window2.deiconify()
                             self.blocbtt.config(text='<')
-                            self.block_entry.focus() 
                         else:
                             self.Window2.deiconify()
                         self.roll_list=[]
@@ -2009,48 +2049,6 @@ class GUI(Tk):
             except Exception:
                 print(traceback.format_exc())
             self.rldc = threading.Thread(target=self.rolldic(self.msg)) 
-
-        def send_block(self):
-            message_sent = self.conversao()
-            if message_sent:
-                try:
-                    with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
-                        pickle.dump([message_sent, self.critbox.get()], file)
-                except Exception:
-                    print(traceback.format_exc())
-                    self.on_closing()
-                self.past_index_max+=1
-                self.past_index=self.past_index_max
-                message_sent=pickle.dumps(message_sent)
-                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
-                client.send(message_sent_header+message_sent)             
-        
-        def conversao(self): 
-            try:
-                bloco_text=self.block_entry.get().replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
-
-                rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get(),int(self.crit.get())/100)
-
-                recursos=re.findall("\(.+?\)", bloco_text)
-                rec.posmod=[]
-                for i in recursos:
-                    quant=int(re.search("\d+", i).group())
-                    rec.posmod.append([quant, []])
-                    recurso=re.search("(?<=,\[).+(?=\])", i).group()
-                    pos_pre=re.findall("\<.+?\>", recurso)
-                    for j in pos_pre:
-                        j=re.sub("\<|\>","",j)
-                        singular=[int(x) for x in re.split(",", j)]
-                        rec.posmod[-1][1].append(singular)  
-                    pos_pos=re.findall("\{.+?\}", recurso)
-                    for j in pos_pos:
-                        j=re.sub("\{|\}","",j)
-                        singular=(int(re.split(",", j)[0]),int(re.split(",", j)[1]))
-                        rec.posmod[-1][1].append(singular)
-                return rec
-            except:
-                messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
-                return 0
             
 # create a GUI class object
 g = GUI()
