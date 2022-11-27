@@ -533,7 +533,6 @@ class GUI(Tk):
 
         def transl(self, res):
             p, crit, r=(2000-res.p)/100, (2000-res.crit)/100, (2000-res.r+1)/100
-            r=19.66
             if (r > p):
                 if(r > crit):
                     resultStr = "SUCESSO CRÍTICO"

@@ -521,7 +521,8 @@ class GUI(Tk):
                                                 font = "Consolas 14 bold",
                                                 command=lambda c=i: self.onPlayerClick(c))
                 self.playerBtts.append(tempButton)
-                self.playerBtts[-1].place(relwidth=1, relheight=0.1, rely = 0.1*(len(self.playerBtts)-1))
+                self.playerBtts[-1].bind("<MouseWheel>", self.on_mousewheel3)
+                self.playerBtts[-1].pack(fill="x")
 
                 tempButton = Button(self.sidebaroll,
                                                     fg = self.players[i]['color'],
@@ -529,11 +530,11 @@ class GUI(Tk):
                                                     font = "Consolas 14 bold",
                                                     command=lambda c=i: self.onPlayerSelec(c))
                 self.playerBtts2.append(tempButton)
-                self.playerBtts2[-1].place(relwidth=1, relheight=0.1, rely = 0.1*(len(self.playerBtts2)-1))
+                self.playerBtts2[-1].bind("<MouseWheel>", self.on_mousewheel4)
+                self.playerBtts2[-1].pack(fill="x")
 
         def transl(self, res):
             p, crit, r=(2000-res.p)/100, (2000-res.crit)/100, (2000-res.r+1)/100
-            r=19.66
             if (r > p):
                 if(r > crit):
                     resultStr = "SUCESSO CRÍTICO"
@@ -663,7 +664,7 @@ class GUI(Tk):
             server_message=client.recv(server_message_length).decode(FORMAT)
             if server_message=='ok':
                 try:
-                    self.color=askcolor(title ="Escolha a cor do seu usuário")[1]
+                    self.color=askcolor(color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), title ="Escolha a cor do seu usuário")[1]
                     color=self.color.encode(FORMAT)
                 except:
                     self.on_closing()
@@ -690,29 +691,199 @@ class GUI(Tk):
             self.menubar.add_command(label="Save as...", command=self.savefileas)
                 
         def modify(self, a, b, c):
-            self.modified=1
+            self.modified=1           
+
+        def build_resor(self):  
+            self.general=Label(self.terFramefpre, text="Advan: "+(self.advanint>0)*"+"+str(self.advanint)+"   Constant: "+str(self.const)+"\nCrit chance: "+str(self.crit.get())+"%",
+                                                bg = 'black',
+                                                fg='white',
+                                                font = "Consolas 10 bold")
+            self.general.bind("<MouseWheel>", self.on_mousewheel2)
+            self.general.pack(fill="x")
+
+            self.linepre = Frame(self.terFramefpre, bg=self.color, height=6)
+            self.linepre.pack(fill="x")
+            self.linepre.bind("<MouseWheel>", self.on_mousewheel2)
             
+            for i in range(len(self.resor)):
+                self.resor[i][1]=Radiobutton(self.terFrame, 
+                                                                        variable = self.selectRes, 
+                                                                        value = i+1,
+                                                                        text = "Resource #"+str(i+1)+": Qnt. "+self.resor[i][0], 
+                                                                        fg="white",
+                                                                        bg='black',
+                                                                        selectcolor='black', 
+                                                                        font = 'Consolas 10 bold')
+                self.resor[i][1].pack(fill="x")
+                self.resor[i][1].bind("<MouseWheel>", self.on_mousewheel2)
+    
+                self.resor[i][3]=[]
+                for j in range(len(self.resor[i][2])):
+                    self.resor[i][3].append(Button(self.terFrame, 
+                                                                        text = self.resor[i][2][j][1], 
+                                                                        fg="white",
+                                                                        bg='black',
+                                                                        font = 'Consolas 10 bold',
+                                                                        command = lambda c=(i, j): self.destroy_subres(c))
+                    )
+                    self.resor[i][3][-1].pack(fill="x")
+                    self.resor[i][3][-1].bind("<MouseWheel>", self.on_mousewheel2)
+
+                self.resor[i][4]=Button(self.terFrame, 
+                                                                        text = "Delete resource", 
+                                                                        fg="white",
+                                                                        bg='black',
+                                                                        font = 'Consolas 10 bold',
+                                                                        command = lambda c=i: self.destroy_res(c))
+                self.resor[i][4].pack(fill="x")
+                self.resor[i][4].bind("<MouseWheel>", self.on_mousewheel2)
+
+                self.resor[i][5] = Frame(self.terFrame, bg=self.color, height=6)
+                self.resor[i][5].pack(fill="x")
+                self.resor[i][5].bind("<MouseWheel>", self.on_mousewheel2)
+
+        def destroy_all(self):
+            self.general.destroy()
+            self.linepre.destroy()
+            for i in range(len(self.resor)):
+                self.resor[i][1].destroy()
+                self.resor[i][4].destroy()
+                self.resor[i][5].destroy()
+                for j in range(len(self.resor[i][3])):
+                    self.resor[i][3][j].destroy()
+
+        def destroy_subres(self, pos):
+            self.resor[pos[0]][2].pop(pos[1])
+            self.destroy_all()
+            self.build_resor()
+
+        def destroy_res(self, pos):
+            self.destroy_all()
+            self.resor.pop(pos)
+            self.build_resor()
+            self.selectRes.set(0)
+
+        def resourcepaste(self, num):
+            num=num.get()
+            if int(num):
+                self.resor.append([num, Frame(), [], [], Frame(), Frame()])
+                self.destroy_all()
+                self.build_resor()
+                self.selectRes.set(len(self.resor))
+            
+        def anteadvpaste(self, num):
+            try:
+                self.advanint+=int(num.get())
+                self.destroy_all()
+                self.build_resor()
+            except:
+                pass
+        
+        def antepaste(self, num1, num2):
+            try:
+                self.const+=int(int(num1)*(int(num2)+1)/2)
+                self.destroy_all()
+                self.build_resor()
+            except:
+                pass
+            
+        def interpaste(self, num1, num2):
+            if self.selectRes.get():
+                num1=num1.get()
+                if type(num2)!=str:
+                    num2=num2.get()
+                    if num1=="0" or num2=="0":
+                        return
+                elif  num1=="0":
+                    return
+                self.resor[self.selectRes.get()-1][2].append([[int(num1), int(num2)], "Inter: "+"Advan "*(num2=="0")+"+"*(int(num1)>0)+num1*(num1!="0")+(num2!="1" and num2!="0")*("d"+num2)])
+                self.destroy_all()
+                self.build_resor()
+
+        def postpaste(self, num1, num2):
+            if self.selectRes.get():
+                num1=num1.get()
+                if type(num2)!=str:
+                    num2=num2.get()
+                    if num1=="0" or num2=="0":
+                        return
+                elif  num1=="0":
+                    return
+                self.resor[self.selectRes.get()-1][2].append([(int(num1), int(num2)), "Post: "+"Advan "*(num2=="0")+"+"*(int(num1)>0)+num1*(num1!="0")+(num2!="1" and num2!="0")*("d"+num2)])
+                self.destroy_all()
+                self.build_resor()
+
+        def conversao(self): 
+            try:
+                rec=bloco((self.const, self.advanint), [], self.sn.get(), int(self.crit.get())/100)
+
+                for i in self.resor:
+                    if i[2]:
+                        rec.posmod.append([int(i[0]), []])
+                        for j in i[2]:
+                            rec.posmod[-1][1].append(j[0])
+                return rec
+            except:
+                messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
+                return
+
+        def clean_resor(self):
+            resor=[]
+            for i in self.resor:
+                resor.append([i[0], i[2]])
+            return resor
+
+        def send_block(self):
+            message_sent = self.conversao()
+            if message_sent:
+                try:
+                    with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
+                        pickle.dump([self.clean_resor(), self.const, self.advanint, self.critbox.get()], file)
+                except Exception:
+                    print(traceback.format_exc())
+                    self.on_closing()
+                self.past_index_max+=1
+                if self.unmoved:
+                    self.past_index=self.past_index_max
+                    self.Window2.title("Browse through past settings with ^ or ⌄")
+                message_sent=pickle.dumps(message_sent)
+                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+                client.send(message_sent_header+message_sent)
+
         def load_content(self, content):
-            content, crit=pickle.loads(content)
-            
+            resor, self.const, self.advanint, crit=pickle.loads(content)
+
+            self.resor=[]
+            for i in resor:
+                self.resor.append([i[0], Frame(), i[1], [], Frame(), Frame()])
             self.crit.set(str(crit))
-            self.value_entry.delete(0, END)
-            self.value_entry.insert(END, str(content.premod[0]))
-            self.advan_entry.delete(0, END)
-            self.advan_entry.insert(END, str(content.premod[1]))
-            converted_pos=''
-            for i in content.posmod:
-                converted_pos+="("+str(i[0])+", ["
-                for j in i[1]:
-                    if type(j)==list:
-                        converted_pos+="<"+str(j[0])+", "+str(j[1])+">, "
-                    else:
-                        converted_pos+="{"+str(j[0])+", "+str(j[1])+"}, "
-                converted_pos=converted_pos[:-2]+"]), "
-            converted_pos=converted_pos[:-2]
-            self.block_entry.delete(0, END)
-            self.block_entry.insert(END, converted_pos)
-            self.block_entry.icursor(self.block_entry.index(INSERT))
+        
+            self.destroy_all()
+            self.build_resor()
+
+        def savefile(self):             
+            if self.path != '':                
+                with open(self.path, 'wb') as file:
+                    pickle.dump([self.clean_resor(), self.const, self.advanint, self.critbox.get()], file)
+                    self.modified=0                       
+            else:
+                self.savefileas()     
+
+        def savefileas(self):    
+            try:
+                self.path = filedialog.askopenfile(parent=self.Window2, filetypes = [("Text files", "*.txt")]).name
+                with open(self.path, 'wb') as file:
+                    pickle.dump([self.clean_resor(), self.const, self.advanint, self.critbox.get()], file)
+                    self.modified=0
+                self.Window2.title(os.path.basename(os.path.normpath(self.path))[:-4])
+                self.menubar.delete(0,"end")
+                self.openmenu.delete(0,"end")
+                self.build_menu()
+                self.past_index=self.past_index_max
+            except Exception:
+                print(traceback.format_exc())
+                messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
+                return
 
         def openfile(self, pre_path):
             if not self.modified:
@@ -729,150 +900,18 @@ class GUI(Tk):
                     self.past_index=self.past_index_max
                 except Exception:
                     print(traceback.format_exc())
-                    messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
+                    messagebox.showerror(parent=self.Window2, title="Path error", message="Invalid path, try again.")
                     return               
             else:
-                answer = messagebox.askyesno(parent=self.Window2, title='Confirmação', message='Existem mudanças não salvas. Deseja salvar as configurações atuais primeiro?')
+                answer = messagebox.askyesno(parent=self.Window2, title='Confirmation', message='There are unsaved changes. Do you want to save current settings first?')
                 if answer:
                     self.savefileas()                      
                 self.modified=0             
                 self.openfile(pre_path)
 
-        def savefile(self):             
-            if self.path != '':                
-                with open(self.path, 'wb') as file:
-                    content=self.conversao()
-                    if content:
-                        pickle.dump([content, self.critbox.get()], file)
-                        self.modified=0                       
-            else:
-                self.savefileas()                
-
-        def savefileas(self):    
-            try:
-                self.path = filedialog.askopenfile(parent=self.Window2, filetypes = [("Text files", "*.txt")]).name
-                with open(self.path, 'wb') as file:
-                    content=self.conversao()
-                    if content:
-                        pickle.dump([content, self.critbox.get()], file)
-                        self.modified=0
-                self.Window2.title(os.path.basename(os.path.normpath(self.path))[:-4])
-                self.menubar.delete(0,"end")
-                self.openmenu.delete(0,"end")
-                self.build_menu()
-                self.past_index=self.past_index_max
-            except Exception:
-                print(traceback.format_exc())
-                messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
-                return
-
-        def build_resor(self):
-            general=Label(self.terFrame, text="Advan: "+(self.advanint>=0)*"+"+str(self.advanint)+", Constant: "+str(self.const),
-                                                bg = 'black',
-                                                fg='white',
-                                                font = "Consolas 12 bold")
-            general.pack(fill=x)
-            for i in range(len(self.resor)):
-                self.resor[i][2]=Radiobutton(self.terFrame, 
-                                                                        variable = self.selectRes, 
-                                                                        value = i,
-                                                                        text = str(i)+"-ésimo recurso\nQnt. "+self.resor[i][1], 
-                                                                        fg="white",
-                                                                        bg='black',
-                                                                        selectcolor='black', 
-                                                                        font = 'Consolas 10 bold')
-                self.resor[i][2].pack(fill=x)
-                self.resor[i][4]=[]
-                for j in range(len(self.resor[i][3])):
-                    self.resor[i][4].append(Button(self.terFrame, 
-                                                                        text = self.resor[i][3][j][1], 
-                                                                        fg="white",
-                                                                        bg='black',
-                                                                        font = 'Consolas 10 bold'
-                                                                        command = lambda c=(i, j): self.destroy_subres(c))
-                    )
-                    self.resor[i][4][-1].pack(fill=x)                    
-
-            #self.resor[self.selectRes][2]
-
-        def destroy_subres(self, pos):
-            self.resor[pos[1]][3].pop(pos[2])
-            self.build_resor()
-
-        def resourcepaste(self, num):
-            self.resor.append([num, [], [], []])
-            self.build_resor()
-            
-        def anteadvpaste(self, num):
-            try:
-                self.advanint+=int(num)
-                self.build_resor()
-            except:
-                pass
-        
-        def antepaste(self, num1, num2):
-            try:
-                self.const+=int(int(num1)*(int(num2)+1)/2))
-                self.build_resor()
-            except:
-                pass
-            
-        def interpaste(self, num1, num2):
-            if type(num2)!=str:
-                num2=num2.get()
-            self.block_entry.insert(self.block_entry.index(INSERT), "<"+num1.get()+","+num2+">, ")
-            self.block_entry.focus()
-
-        def postpaste(self, num1, num2):
-            if type(num2)!=str:
-                num2=num2.get()
-            self.block_entry.insert(self.block_entry.index(INSERT), "{"+num1.get()+","+num2+"}, ")
-            self.block_entry.focus()
-
-        def send_block(self):
-            message_sent = self.conversao()
-            if message_sent:
-                try:
-                    with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
-                        pickle.dump([message_sent, self.critbox.get()], file)
-                except Exception:
-                    print(traceback.format_exc())
-                    self.on_closing()
-                self.past_index_max+=1
-                self.past_index=self.past_index_max
-                message_sent=pickle.dumps(message_sent)
-                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
-                client.send(message_sent_header+message_sent)             
-        
-        def conversao(self): 
-            try:
-                bloco_text=self.block_entry.get().replace(" ", "").replace(">,",">").replace("),",")").replace("},","}")
-
-                rec=bloco((int(self.value_entry.get()),int(self.advan_entry.get())),[],self.sn.get(),int(self.crit.get())/100)
-
-                recursos=re.findall("\(.+?\)", bloco_text)
-                rec.posmod=[]
-                for i in recursos:
-                    quant=int(re.search("\d+", i).group())
-                    rec.posmod.append([quant, []])
-                    recurso=re.search("(?<=,\[).+(?=\])", i).group()
-                    pos_pre=re.findall("\<.+?\>", recurso)
-                    for j in pos_pre:
-                        j=re.sub("\<|\>","",j)
-                        singular=[int(x) for x in re.split(",", j)]
-                        rec.posmod[-1][1].append(singular)  
-                    pos_pos=re.findall("\{.+?\}", recurso)
-                    for j in pos_pos:
-                        j=re.sub("\{|\}","",j)
-                        singular=(int(re.split(",", j)[0]),int(re.split(",", j)[1]))
-                        rec.posmod[-1][1].append(singular)
-                return rec
-            except:
-                messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
-                return 0
-
         def up_down2(self, event):
             if self.past_index_max:
+                self.unmoved=False
                 alt=1
                 if event.keysym == 'Up':
                     if self.past_index:
@@ -897,6 +936,19 @@ class GUI(Tk):
                         self.load_content(content)                                      
                         self.modified=0
                         self.Window2.title('#'+str(self.past_index+1))
+
+        def callbackCrit(self, var, index, mode):
+            self.destroy_all()
+            self.build_resor()
+
+        def callbackRes(self, var, index, mode):
+            if self.selectRes.get():
+                if int(self.res.get()):
+                    self.resor[self.selectRes.get()-1][0]=self.res.get()
+                    self.destroy_all()
+                    self.build_resor()
+                else:
+                    self.destroy_res(self.selectRes.get()-1)
                 
         # The main layout of the chat 
         def layout(self,name):
@@ -932,8 +984,24 @@ class GUI(Tk):
                 self.resizable(width = False, height = False) 
                 self.configure(width = 800, height = 500, bg = 'black')
 
-                self.sidebar = Frame(self, bg = 'black', width=200, height=500)
-                self.sidebar.pack(expand = False, fill = 'both', side = 'left')
+                self.sidebarf = Frame(self, bg = 'black', width=200, height=500)
+                self.sidebarf.pack_propagate(0)
+                self.sidebarf.pack(expand = False, fill = 'both', side = 'left')
+
+                self.sidebarc=Canvas(self.sidebarf, bg='black', highlightthickness=0)
+                self.sidebar=Frame(self.sidebarc, bg='black')
+                self.sidebar.bind(
+                    "<Configure>",
+                    lambda e: self.sidebarc.configure(
+                        scrollregion=self.sidebarc.bbox("all")
+                    )
+                )
+                self.auxframe2 = Frame(self.sidebar, bg='black', width=200, height=0)
+                self.auxframe2.pack_propagate(0)
+                self.auxframe2.pack()
+                self.sidebarc.create_window((0, 0), window=self.sidebar, anchor="nw")
+                self.sidebarc.pack(expand=True, fill = 'both')
+                self.sidebarc.pack_propagate(0)
                 
                 self.sep = Label(self, bg = self.color)
                 self.sep.pack(expand = False, fill = 'both', side = 'left')
@@ -957,7 +1025,7 @@ class GUI(Tk):
                 self.Window2=Toplevel()
                 self.Window2.title("Roll") 
                 self.Window2.resizable(width = False, height = False)
-                self.Window2.configure(width = 1075, height = 530, bg = 'black')
+                self.Window2.configure(width = 1225, height = 440, bg = 'black')
                 self.Window2.pack_propagate(0)
 
                 self.menubar = Menu(self.Window2)
@@ -974,67 +1042,107 @@ class GUI(Tk):
                                                 font = "Consolas 14 bold",
                                                 pady=5) 
                 self.label.pack(expand=True, fill="y", side="top")
-                
-                self.sidebaroll = Frame(self.Window2, bg = 'black', width=200, height=530)
-                self.sidebaroll.pack(expand = False, fill = 'both', side = 'left')
+
+                self.sidebarollf = Frame(self.Window2, bg = 'black', width=200, height=400)
+                self.sidebarollf.pack_propagate(0)
+                self.sidebarollf.pack(expand = False, fill = 'both', side = 'left')
+
+                self.sidebarollc=Canvas(self.sidebarollf, bg='black', highlightthickness=0)
+                self.sidebaroll=Frame(self.sidebarollc, bg='black')
+                self.sidebaroll.bind(
+                    "<Configure>",
+                    lambda e: self.sidebarollc.configure(
+                        scrollregion=self.sidebarollc.bbox("all")
+                    )
+                )
+                self.auxframe3 = Frame(self.sidebaroll, bg='black', width=200, height=0)
+                self.auxframe3.pack_propagate(0)
+                self.auxframe3.pack()
+                self.sidebarollc.create_window((0, 0), window=self.sidebaroll, anchor="nw")
+                self.sidebarollc.pack(expand=True, fill = 'both')
+                self.sidebarollc.pack_propagate(0)
                 
                 self.sep3 = Label(self.Window2, bg = self.color)
                 self.sep3.pack(expand = False, fill = 'both', side = 'left')
         
-                self.secFrame = Frame(self.Window2, width=662, height=530, bg='black')
+                self.secFrame = Frame(self.Window2, width=662, height=400, bg='black')
                 self.secFrame.pack(expand=True, fill = 'both', side='left')
 
                 self.sep5 = Label(self.Window2, bg = self.color)
                 self.sep5.pack(expand = False, fill = 'both', side = 'left')
+                
+                self.terFramef0=Frame(self.Window2, bg='black', width=350, height=400)
+                self.terFramef0.pack(expand=True, fill = 'both', side='left')
+                self.terFramef0.pack_propagate(0)
+                
+                self.terFramefpre=Frame(self.terFramef0, bg='black')
+                self.terFramefpre.pack(expand=True, fill = 'x')
+                
+                self.terFramef=Frame(self.terFramef0, bg='black', width=326, height=400)
+                self.terFramef.pack(expand=True, fill = 'both')
+                self.terFramef.pack_propagate(0)
 
-                self.terFrame = Frame(self.Window2, width=200, height=530, bg='black')
-                self.terFrame.pack(expand=True, fill = 'both', side='left')
+                self.button_block = Button(self.terFramef, 
+                                                            text = "Send", 
+                                                            font = "Consolas 14 bold", 
+                                                            bg = 'black',
+                                                            fg="white",
+                                                            command = lambda : self.send_block())
+                self.button_block.pack(fill="x", side="bottom")
+                
+                self.terFramec=Canvas(self.terFramef, bg='black', highlightthickness=0)
+                self.terFrame = Frame(self.terFramec, bg='black')
+                self.terFrame.bind(
+                    "<Configure>",
+                    lambda e: self.terFramec.configure(
+                        scrollregion=self.terFramec.bbox("all")
+                    )
+                )
+                self.auxframe = Frame(self.terFrame, bg='black', width=350, height=0)
+                self.auxframe.pack_propagate(0)
+                self.auxframe.pack()
+                self.terFramec.create_window((0, 0), window=self.terFrame, anchor="nw")
+                self.terFramec.pack(expand=True, fill = 'both')
+                self.terFramec.pack_propagate(0)
 
                 self.resor=[]
+                self.general=Frame()
+                self.linepre=Frame()
 
                 self.selectRes=IntVar(value=0)
 
-                self.labelBottom2 = Label(self.secFrame, bg = 'black', height = 79, width = 562)     
-                self.labelBottom2.place(y=415) 
-
                 self.line4 = Label(self.Window2, bg=self.color)
-                self.line4.place(relwidth=1,relheight=0.012,y=36)
+                self.line4.place(relwidth=1,relheight=0.013*50/40,y=36)
 
                 self.stypebar= Label(self.secFrame, bg = 'black')
-                self.stypebar.place(relwidth=1,relheight=0.05*50/53,y=1)
+                self.stypebar.place(relwidth=1,relheight=0.05*50/40,y=1)
 
                 self.sep4 = Label(self.Window2, bg = self.color)
                 self.sep4.pack(expand = False, fill = 'both', side = 'left')
 
                 self.antebar= Label(self.secFrame, bg = 'black')
-                self.antebar.place(relwidth=1,relheight=0.14*50/53,rely=0.05*50/53)
-
-                self.antebar2= Label(self.secFrame, bg = 'black')
-                self.antebar2.place(relwidth=1,relheight=0.09*50/53,rely=0.19*50/53)
+                self.antebar.place(relwidth=1,relheight=0.14*50/40,rely=0.052*50/40)
 
                 self.line8 = Label(self.secFrame, bg=self.color)                 
-                self.line8.place(relwidth=1,relheight=0.012*50/53,rely=0.05*50/53)
+                self.line8.place(relwidth=1,relheight=0.012*50/40,rely=0.052*50/40)
 
                 self.interbar= Label(self.secFrame, bg = 'black')
-                self.interbar.place(relwidth=1,relheight=0.17*50/53,rely=0.286*50/53)
+                self.interbar.place(relwidth=1,relheight=0.17*50/40,rely=0.204*50/40)
 
                 self.line5 = Label(self.secFrame, bg=self.color)                 
-                self.line5.place(relwidth=1,relheight=0.012*50/53,rely=0.286*50/53)
+                self.line5.place(relwidth=1,relheight=0.012*50/40,rely=0.204*50/40)
 
                 self.postbar= Label(self.secFrame, bg = 'black')
-                self.postbar.place(relwidth=1,relheight=0.17*50/53,rely=0.456*50/53)
+                self.postbar.place(relwidth=1,relheight=0.17*50/40,rely=0.374*50/40)
 
                 self.line6 = Label(self.secFrame, bg=self.color)                 
-                self.line6.place(relwidth=1,relheight=0.012*50/53,rely=0.456*50/53)
+                self.line6.place(relwidth=1,relheight=0.012*50/40,rely=0.374*50/40)
                 
                 self.resourcebar= Label(self.secFrame, bg = 'black')
-                self.resourcebar.place(relwidth=1,relheight=0.25,rely=0.626*50/53)
-
-                self.line3 = Label(self.secFrame, bg=self.color)                 
-                self.line3.place(relwidth=1,relheight=0.012*50/53,rely=0.83)
+                self.resourcebar.place(relwidth=1,relheight=0.25*53/40,rely=0.544*50/40)
 
                 self.line7 = Label(self.secFrame, bg=self.color)                 
-                self.line7.place(relwidth=1,relheight=0.012*50/53,rely=0.626*50/53)
+                self.line7.place(relwidth=1,relheight=0.012*50/40,rely=0.544*50/40)
 
                 self.progresswindow=Toplevel(bg='black')
                 self.progresswindow.title("Result")
@@ -1113,7 +1221,7 @@ class GUI(Tk):
                 self.sbtt=Radiobutton(self.stypebar, 
                                                                         variable = self.sn, 
                                                                         value = 's',
-                                                                        text = 'Sim', 
+                                                                        text = 'Yes', 
                                                                         fg="white", 
                                                                         bg='black', 
                                                                         selectcolor='black', 
@@ -1122,7 +1230,7 @@ class GUI(Tk):
                 self.nbtt=Radiobutton(self.stypebar, 
                                                                         variable = self.sn, 
                                                                         value = 'n',
-                                                                        text = 'Não', 
+                                                                        text = 'No', 
                                                                         fg="white", 
                                                                         bg='black', 
                                                                         selectcolor='black', 
@@ -1144,24 +1252,17 @@ class GUI(Tk):
 
                 #----------------------------------------
 
-                self.valuelabel= Label(self.antebar2,fg="white",text='        Total value: ',bg= 'black', width=25, font = 'Consolas 10 bold')           
-                self.valuelabel.pack(side='left')
-
                 self.const=0
-                self.value=StringVar(value='0')
-                self.value.trace_variable('w', self.modify)
-                self.value_entry = ttk.Entry(self.antebar2, font = "Consolas 12", width = 4, textvariable=self.value) 
-                self.value_entry.pack(side='left')
-
-                self.advanlabel= Label(self.antebar2,fg="white",text='  Total advantage: ',bg= 'black', width=19, font = 'Consolas 10 bold')           
-                self.advanlabel.pack(side='left')
                 
                 self.advanint=0
-                self.advan=StringVar(value='0')
-                self.advan.trace_variable('w', self.modify)
-                self.advan_entry = ttk.Entry(self.antebar2, font = "Consolas 12", width = 4, textvariable=self.advan) 
-                self.advan_entry.pack(side='left')
 
+                self.build_resor()
+
+                self.unmoved=True
+
+                self.crit.trace_add('write', self.callbackCrit)
+                self.res.trace_add('write', self.callbackRes)
+                
                 #----------------------------------------
 
                 self.aconlabel= Label(self.antebar,fg="white",text='Constant: ',bg= 'black', width=10, font = 'Consolas 10 bold')           
@@ -1469,10 +1570,10 @@ class GUI(Tk):
 
                 self.resbtt = Button(self.resourcebar2, 
                                                             text = "+", 
-                                                            font = "Consolas 10 bold",
+                                                            font = "Consolas 12 bold",
                                                             image=self.pixelVirtual,
-                                                            width = 12,
-                                                            height=15,
+                                                            width = 25,
+                                                            height=20,
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
@@ -1583,30 +1684,33 @@ class GUI(Tk):
                                             height = 66, 
                                             width = 126) 
                 
-                self.rollBtt = Button(self.sidebaroll, 
+                self.rollBtt = Button(self.sidebarollf, 
                                                         text = "Roll", 
                                                         font = "Consolas 14 bold", 
                                                         bg = 'black', fg="white",
                                                         command = lambda : self.rollerrola()) 
-                self.rollBtt.place(relwidth=1, relheight=0.1,rely=0.9)
+                self.rollBtt.pack(fill="x", side="bottom")
     
-                self.allButton = Button(self.sidebar,
+                self.allButton = Button(self.sidebarf,
                                     fg = "white",
                                     bg = 'black', text = 'Select all',
                                     font = "Consolas 14 bold",
                                     command=lambda: self.AllClick())
-                self.allButton.place(relwidth=1, relheight=0.1,rely=0.9)
+                self.allButton.pack(fill="x", side="bottom")
 
                 self.textCons.config(cursor = "arrow") 
                 self.textCons.config(state = DISABLED) 
 
-                self.bind_all("<MouseWheel>", self.on_mousewheel)
-                self.bind('<Return>',(lambda event: self.sendButton(self.entryMsg.get())))
+                self.textCons.bind("<MouseWheel>", self.on_mousewheel)
+                self.bind('<Return>', (lambda event: self.sendButton(self.entryMsg.get())))
                 self.bind("<Up>", self.up_down)
                 self.bind("<Down>", self.up_down)
                 self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-                self.Window2.bind('<Return>',(lambda event: self.send_block()))
+                self.terFramec.bind("<MouseWheel>", self.on_mousewheel2)
+                self.sidebarc.bind("<MouseWheel>", self.on_mousewheel3)
+                self.sidebarollc.bind("<MouseWheel>", self.on_mousewheel4)
+                self.Window2.bind('<Return>', (lambda event: self.send_block()))
                 self.Window2.bind("<Up>", self.up_down2)
                 self.Window2.bind("<Down>", self.up_down2)
                 
@@ -1634,6 +1738,15 @@ class GUI(Tk):
 
         def on_mousewheel(self, event):
             self.textCons.yview_scroll(-1*int(event.delta/120), "units")
+
+        def on_mousewheel2(self, event):
+            self.terFramec.yview_scroll(-1*int(event.delta/120), "units")
+
+        def on_mousewheel3(self, event):
+            self.sidebarc.yview_scroll(-1*int(event.delta/120), "units")
+
+        def on_mousewheel4(self, event):
+            self.sidebarollc.yview_scroll(-1*int(event.delta/120), "units")
 
         def up_down(self, event):
                 if event.keysym == 'Up':
@@ -1732,7 +1845,7 @@ class GUI(Tk):
                             possibs=Toplevel(bg='black')
                             possibs.title('Possibildiades')
                             possibs.resizable(width = False, height=False)
-                            m=max(max(len(i.mods) for i in message), 10)
+                            m=max(max(len(i.mods) for i in message), 11)
                             w=round(68+m*1.44)
                             aux_mor=Label(possibs, bg='black', width = w, height = 1)
                             aux_mor.pack_propagate(0)
@@ -1745,7 +1858,7 @@ class GUI(Tk):
                             aux_13.pack(side='left')
                             aux_2=text=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Consolas', 12))
                             aux_2.pack(side='left')
-                            aux_3=text=Label(aux_mor, bg='black', text='Recursos', fg='white', font=('Consolas', 12))
+                            aux_3=text=Label(aux_mor, bg='black', text='Resources', fg='white', font=('Consolas', 12))
                             aux_3.pack(side='left')
                             p_old, crit_old, r, resultStr=self.transl(message[0])
                             ahead=1
@@ -1869,16 +1982,16 @@ class GUI(Tk):
             self.possibs=Toplevel(bg='black')
             self.possibs.title('Possibildiades')
             self.possibs.resizable(width = False, height=False)
-            m=max(max(len(i.mods) for i in message), 11)
+            m=max(max(len(i.mods) for i in message), 12)
             w=round(42+(m-1)*1.44)
             aux_mor=Label(self.possibs, bg='black', width = w, height = 1)
             aux_mor.pack_propagate(0)
             aux_mor.pack()
-            aux_1=text=Label(aux_mor, bg='black', text='Resultado      |', fg='white', font=('Consolas', 12))
+            aux_1=text=Label(aux_mor, bg='black', text='Result         |', fg='white', font=('Consolas', 12))
             aux_1.pack(side='left')
             aux_2=text=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Consolas', 12))
             aux_2.pack(side='left')
-            aux_3=text=Label(aux_mor, bg='black', text='Recursos', fg='white', font=('Consolas', 12))
+            aux_3=text=Label(aux_mor, bg='black', text='Resources', fg='white', font=('Consolas', 12))
             aux_3.pack(side='left')
             for i in message:
                 p, crit, r, resultStr=self.transl(i)
