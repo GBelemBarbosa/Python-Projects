@@ -3,6 +3,7 @@ import select
 import pickle
 import random
 import re
+import itertools
 from decimal import *
 getcontext()
 getcontext().prec=20
@@ -14,35 +15,53 @@ hostname = socket.gethostname()
 IP = socket.gethostbyname(hostname)
 PORT = 1234
 class res:
-    def __init__(self,p,crit,r,advan):
+    def __init__(self, p, crit, r, adv):
         self.p=p
         self.r=r
         self.crit=crit
-        self.advan=advan
+        self.adv=adv
         self.mods=''
 
     def __lt__(self, other):
          return self.p < other.p
 
 class status:
-    def __init__(self,num):
+    def __init__(self, num):
         self.num=num
 
 class msg:
-    def __init__(self,sender,content,cor):
+    def __init__(self, sender, content, cor):
         self.sender=sender
         self.content=content
         self.cor=cor
 
 class roll:
-    def __init__(self,receiver,who):
+    def __init__(self, receiver, who):
         self.receiver=receiver
         self.who=who
 
+class premod:
+    def __init__(self, adv, const):
+        self.adv=adv
+        self.const=const
+
+class posmod:
+    def __init__(self, typ, timing, num1, num2):
+        self.typ=typ
+        self.timing=timing
+        self.value=num1*(num2+1)*25*(typ!="adv")+num1*(typ=="adv")
+        self.subresName=timing+" Advan"*(typ=="adv")+" "+"+"*(num1>0)+str(num1)+(typ=="dice")*("d"+str(num2))
+        
+class resourceSend:
+    def __init__(self, qnt, resName, listSubres):
+        self.qnt=qnt
+        self.resName=resName
+        self.listSubres=listSubres
+
 class bloco:
-    def __init__(self,premod,posmod,sn,crit):
-        self.premod=premod
-        self.posmod=posmod
+    def __init__(self, premods, posmods, sn, crit):
+        self.premods=premods
+        self.posmods=posmods
         self.sn=sn
         self.crit=crit
 
@@ -91,111 +110,88 @@ def send_rolagem(rolagem,possib):
         notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+clients[rolagem['caller']]['data']+" finalizada!"
     if rolagem['send_type']=='hidden':
         notifi1=pickle.dumps(msg('Server',notifi,colore))
-        send_new_message(notifi1,rolagem['caller'])
+        send_new_message(notifi1, rolagem['caller'])
         opposite_message=(rolagem['hidden_message']=='n')*'Sim.'+(rolagem['hidden_message']=='s')*'Não.'
         rolagem['hidden_message']=(rolagem['hidden_message']=='s')*'Sim.'+(rolagem['hidden_message']=='n')*'Não.'
         notifi+='\gResposta: '+(r<=rolagem['p'])*rolagem['hidden_message']+(r>rolagem['p'])*opposite_message
-        notifi=pickle.dumps(msg('Server',notifi,colore))
-        send_new_message(notifi,rolagem['receiver'])
+        notifi=pickle.dumps(msg('Server', notifi, colore))
+        send_new_message(notifi, rolagem['receiver'])
         print((r<=rolagem['p'])*rolagem['hidden_message']+(r>rolagem['p'])*opposite_message)
         notifi=pickle.dumps(possib)
-        send_new_message(notifi,rolagem['caller'])
-        send_new_message(notifi,rolagem['receiver'])
+        send_new_message(notifi, rolagem['caller'])
+        send_new_message(notifi, rolagem['receiver'])
     else:
         notifi=pickle.dumps(possib)
         if rolagem['send_type']=='me':
-            send_new_message(notifi,rolagem['caller'])
+            send_new_message(notifi, rolagem['caller'])
         elif rolagem['send_type']=='you' or rolagem['send_type']=='single':
-            send_new_message(notifi,rolagem['receiver'])
+            send_new_message(notifi, rolagem['receiver'])
         elif rolagem['send_type']=='we':
-            send_new_message(notifi,rolagem['caller'])
-            send_new_message(notifi,rolagem['receiver'])
+            send_new_message(notifi, rolagem['caller'])
+            send_new_message(notifi, rolagem['receiver'])
 
 def apply_posmod_pre(receiver,fonte,rolagem):
-    res_index=0
-    for mod in fonte['posmod']:
-        #mod=(total de usos, [recurso 1, recurso 2, ...])
-        res_index+=1
-        pos_res_index=0
-        if mod[0]!=0:
-            for i in mod[1]:                
-                pos_res_index+=1
-                #intermediate é []
-                if type(i)==list:
-                    #advan intermediate é [número de advan., 0]
+    for res in fonte['posmod']:
+        if res.qnt>0:
+            for i in res.listSubres:                
+                if i.timing=="Inter":
                     usado=0
-                    if i[1]!=0:
-                        #const. é c*d1 (i[0]=c, i[1]=1)
-                        #dado é x*dy (i[0]=x, i[1]=y)
-                        rolagem['p']+=i[0]*(i[1]+1)*25
-                        if random.randint(1,80)<=i[0]*(i[1]+1):
+                    if i.typ!="adv":
+                        rolagem['p']+=i.value
+                        if random.randint(1,2000)<=i.value:
                             usado=1
                     else:
-                        rolagem['p']+=adv_mod(rolagem['advan']+i[0])-adv_mod(rolagem['advan'])
-                        rolagem['advan']+=i[0]
-                        if random.randint(1,20)<=3*abs(i[0]):
+                        rolagem['p']+=adv_mod(rolagem['advan']+i.value)-adv_mod(rolagem['advan'])
+                        rolagem['advan']+=i.value
+                        if random.randint(1,20)<=3*abs(i.value):
                             usado=1
                     if usado:
-                        mod[0]-=1
+                        res.qnt-=1
+                        notifi='Usado o possível recurso '+i.subresName+' de '+res.resName+' na rolagem '
                         if rolagem['send_type']=='single':
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem solo.'
+                            notifi+='solo.'
                         else:
-                            notifi='Usado o #'+str(pos_res_index)+' possível recurso ('+str(i[0])+'d'+str(i[1])+' intermediate) do #'+str(res_index)+' recurso na rolagem entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
+                            notifi+='entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,receiver)
-                        
 
-def apply_posmod_pos(fonte,rolagem,r,possib):
-    l=len(possib)
-    print(l, 'l')
-    for mod in fonte['posmod']:
-        if mod[0]>0:
-            for i in mod[1]:
-                print(i)
-                print(mod[1])
-                #posterior é []
-                if type(i)==tuple:
-                    #advan posterior é (número de advan., 0)
-                    l_pre=len(possib)
-                    print(l_pre, 'l_pre')
-                    if i[1]!=0:
-                        #const. é c*d1 (i[0]=c, i[1]=1)
-                        #dado é x*dy (i[0]=x, i[1]=y)
-                        possib_aux=[]
-                        for j in possib:
-                            poss=res(j.p+i[0]*(1+i[1])*25, 0, j.r, j.advan)
-                            poss.mods=j.mods+str(i).replace('(','{').replace(')','}')+', '
-                            poss.crit=calc_crit(rolagem['crit'], poss.p)
-                            possib_aux.append(poss)
-                    else:
-                        dif=adv_mod(rolagem['advan']+i[0])-adv_mod(rolagem['advan'])
-                        possib_aux=[]
-                        for j in possib:
-                            poss=res(j.p+dif, 0, j.r, j.advan+i[0])
-                            poss.mods=j.mods+str(i).replace('(','{').replace(')','}')+', '
-                            poss.crit=calc_crit(rolagem['crit'], poss.p)
-                            possib_aux.append(poss)
-                    possib+=possib_aux
-                    index=mod[1].index(i)
-                    mod[1][index]=1
-                    if len(mod[1])>1:
-                        if any(isinstance(x, tuple) for x in mod[1]):
-                            print(len(possib), 'any(isinstance(x, tuple) for x in mod[1])')
-                            possib=possib+apply_posmod_pos(fonte,rolagem,r,possib[:l_pre])
-                            print(len(possib), 'after')
-                            if index!=0:
-                                print(len(possib), 'index!=0')
-                                return possib[l_pre:]
-                        elif 1 in mod[1]:
-                            print(len(possib), '1 in mod[1]')
-                            return possib[l_pre:]     
-                    mod[0]-=1
-    if l==1:
-        print(len(possib), 'l==1')
-        return possib
-    else:
-        print(len(possib), 'else')
-        return possib[l:]
+def apply(listSubres, who, mods):
+    const=0
+    adv=0
+    for i in who:
+        if i:
+            i-=1
+            mods+=listSubres[i].subresName+', '
+            if listSubres[i].typ!="adv":
+                const+=listSubres[i].value
+            #advan posterior é (número de advan., 0)
+            else:
+                adv+=listSubres[i].value
+    mods=mods[:-2]+" | "
+    return const, adv, mods
+
+def apply_posmod_pos(fonte, rolagem, possib):
+    for resource in fonte['posmod']:
+        if resource.qnt>0:
+            index=[]
+            modsAux=resource.resName+": "
+            for i in range(len(resource.listSubres)):
+                if resource.listSubres[i].timing=="Post":
+                    index.append(i+1)
+            possib_aux=[]
+            whos=set(itertools.combinations(index+[0 for i in range(resource.qnt)], resource.qnt))
+            while whos:
+                who=whos.pop()
+                if any(who):
+                    const, adv, mods=apply(resource.listSubres, who, modsAux)
+                    for j in possib:
+                        dif=adv_mod(j.adv+adv)-adv_mod(j.adv)
+                        poss=res(j.p+const+dif, 0, j.r, j.adv+adv)
+                        poss.mods=j.mods+mods
+                        poss.crit=calc_crit(rolagem['crit'], poss.p)
+                        possib_aux.append(poss)
+            possib=possib+possib_aux
+    return possib
                     
 def rola(rolagem):
     global rolls
@@ -204,19 +200,20 @@ def rola(rolagem):
     recibru=rolagem['receiver']
     rolagem['p']+=adv_mod(rolagem['advan'])
     r=random.randint(1,2000)
-    apply_posmod_pre(recibru,rolagem,rolagem)
+    apply_posmod_pre(recibru, rolagem, rolagem)
     if rolagem['send_type']!='single':
         rolls[recibru].pop()
         caller=rolagem['caller']
-        apply_posmod_pre(caller,rolls[caller],rolagem)
+        apply_posmod_pre(caller, rolls[caller], rolagem)
         possib=[res(rolagem['p'], calc_crit(rolagem['crit'], rolagem['p']), r, rolagem['advan'])]
-        possib=apply_posmod_pos(rolagem,rolagem,r,possib)
-        possib=apply_posmod_pos(rolls[caller],rolagem,r,possib)
+        possib=apply_posmod_pos(rolagem, rolagem, possib)
+        caller_rolls=rolls[caller]
+        possib=apply_posmod_pos(caller_rolls, rolagem, possib)
     else:
         possib=[res(rolagem['p'], calc_crit(rolagem['crit'], rolagem['p']), r, rolagem['advan'])]
-        possib=apply_posmod_pos(rolagem,rolagem,r,possib)
+        possib=apply_posmod_pos(rolagem, rolagem, possib)
     possib.sort()
-    send_rolagem(rolagem,possib)
+    send_rolagem(rolagem, possib)
 
 def calc_crit(crit_chance, p):
     return p*crit_chance+(p>2000)*(p-2000)
@@ -367,8 +364,8 @@ while True:
                                         rolls[client_socket].append(dic)
                                 else:
                                     notifi=check+" encontra-se indisponível."
-                                    notifi=pickle.dumps(msg('Server',notifi,colore))
-                                    send_new_message(notifi,notified_socket)
+                                    notifi=pickle.dumps(msg('Server', notifi, colore))
+                                    send_new_message(notifi, notified_socket)
                         if user['calling']:
                             user['rolling']=1
                             rolls[notified_socket]={'send_type':messagepf.who}
@@ -386,42 +383,39 @@ while True:
                         send_new_message(notifi,notified_socket)
                         
                         converted_pos=''
-                        for i in messagepf.posmod:
-                            converted_pos+="("+str(i[0])+", ["
-                            for j in i[1]:
-                                if type(j)==list:
-                                    converted_pos+="<"+str(j[0])+", "+str(j[1])+">, "
-                                else:
-                                    converted_pos+="{"+str(j[0])+", "+str(j[1])+"}, "
-                            converted_pos=converted_pos[:-2]+"]), "
-                        converted_pos=converted_pos[:-2]
+                        for i in messagepf.posmods:
+                            converted_pos+=i.resName+": "
+                            for j in i.listSubres:
+                                converted_pos+=j.subresName+', '
+                            converted_pos=converted_pos[:-2]+" - "
+                        converted_pos=converted_pos[:-3]
                         
-                        notifi='Info:\gValue: '+str(messagepf.premod[0])+".\gAdvantage: "+str(messagepf.premod[1])+".\gResources: "+converted_pos+".\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
+                        notifi='Info:\gValue: '+str(messagepf.premods[0])+".\gAdvantage: "+str(messagepf.premods[1])+".\gResources: "+converted_pos+".\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,notified_socket)
                         if not user['calling']:
-                            rolls[notified_socket][-1]['posmod']=messagepf.posmod
-                            rolls[notified_socket][-1]['p']+=50*messagepf.premod[0]
-                            rolls[notified_socket][-1]['advan']+=messagepf.premod[1]
+                            rolls[notified_socket][-1]['posmod']=messagepf.posmods
+                            rolls[notified_socket][-1]['p']+=50*messagepf.premods.const
+                            rolls[notified_socket][-1]['advan']+=messagepf.premods.adv
                             rolls[notified_socket][-1]['ready']+=1
                             rola(rolls[notified_socket][-1]) 
                         else:
-                            rolls[notified_socket]['posmod']=messagepf.posmod
+                            rolls[notified_socket]['posmod']=messagepf.posmods
                             if rolls[notified_socket]['send_type']=='hidden':
                                 for called_socket in user['calling']:
                                     for i in range(len(rolls[called_socket])):
                                         rolls[called_socket][i]['hidden_message']=messagepf.sn
                             for called_socket in user['calling']:
                                 for i in range(len(rolls[called_socket])):
-                                    rolls[called_socket][i]['p']+=50*messagepf.premod[0]
-                                    rolls[called_socket][i]['advan']+=messagepf.premod[1]
+                                    rolls[called_socket][i]['p']+=50*messagepf.premods.const
+                                    rolls[called_socket][i]['advan']+=messagepf.premods.adv
                                     rolls[called_socket][i]['ready']+=1
                                     rolls[called_socket][i]['crit']=messagepf.crit
                                     rola(rolls[called_socket][i]) 
                         
                         user['calling']=[]
                     else:
-                        rola({'advan': messagepf.premod[1], 'receiver': notified_socket, 'crit': messagepf.crit, 'ready': 2, 'p': 1000+50*messagepf.premod[0], 'posmod': messagepf.posmod, 'send_type': 'single'}) 
+                        rola({'advan': messagepf.premods.adv, 'receiver': notified_socket, 'crit': messagepf.crit, 'ready': 2, 'p': 1000+50*messagepf.premods.const, 'posmod': messagepf.posmods, 'send_type': 'single'}) 
                             
             elif notified_socket in espera_de_cor:
                 cor=receive_message(notified_socket)

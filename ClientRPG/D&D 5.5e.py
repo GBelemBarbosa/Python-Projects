@@ -369,34 +369,62 @@ FORMAT = "utf-8"
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 client.connect(ADDRESS)
 
+class premod:
+    def __init__(self, adv, const):
+        self.adv=adv
+        self.const=const
+
+class posmod:
+    def __init__(self, typ, timing, num1, num2):
+        self.typ=typ
+        self.timing=timing
+        self.value=num1*(num2+1)*25*(typ!="adv")+num1*(typ=="adv")
+        self.subresName=timing+" Advan"*(typ=="adv")+" "+"+"*(num1>0)+str(num1)+(typ=="dice")*("d"+str(num2))
+
+class resource:
+    def __init__(self, qnt, resName):
+        self.qnt=qnt
+        self.resName=resName
+        self.mainButton=Frame()
+        self.listSubres=[]
+        self.subButtons=[]
+        self.separator=Frame()
+        self.deleteButton=Frame()
+
+class resourceSend:
+    def __init__(self, qnt, resName, listSubres):
+        self.qnt=qnt
+        self.resName=resName
+        self.listSubres=listSubres
+
 class bloco:
-    def __init__(self,premod,posmod,sn,crit):
-        self.premod=premod
-        self.posmod=posmod
+    def __init__(self, premods, posmods, sn, crit):
+        self.premods=premods
+        self.posmods=posmods
         self.sn=sn
         self.crit=crit
 
 class status:
-    def __init__(self,num):
+    def __init__(self, num):
         self.num=num
 
 class msg:
-    def __init__(self,destiny,content):
+    def __init__(self, destiny, content):
         self.destiny=destiny
         self.content=content
 
 class roll:
-    def __init__(self,receiver,who):
+    def __init__(self, receiver, who):
         self.receiver=receiver
         self.who=who
         self.crit=crit
 
 class res:
-    def __init__(self,p,crit,r,advan):
+    def __init__(self, p, crit, r, adv):
         self.p=p
         self.r=r
         self.crit=crit
-        self.advan=advan
+        self.adv=adv
         self.mods=''
 
     def __lt__(self, other):
@@ -545,7 +573,7 @@ class GUI(Tk):
                     resultStr = "FALHA CRÍTICA"
                 else:
                     resultStr = "FALHA"
-            return [p, crit, r, resultStr]
+            return p, crit, r, resultStr
                 
         def displayres(self, p, crit, r, resultStr):
             if self.displaymode.get()=='bar':
@@ -694,7 +722,7 @@ class GUI(Tk):
             self.modified=1           
 
         def build_resor(self):  
-            self.general=Label(self.terFramefpre, text="Advan: "+(self.advanint>0)*"+"+str(self.advanint)+"   Constant: "+str(self.const)+"\nCrit chance: "+str(self.crit.get())+"%",
+            self.general=Label(self.terFramefpre, text="Advan: "+(self.premod.adv>0)*"+"+str(self.premod.adv)+"   Constant: "+str(self.premod.const)+"\nCrit chance: "+str(self.crit.get())+"%",
                                                 bg = 'black',
                                                 fg='white',
                                                 font = "Consolas 10 bold")
@@ -706,165 +734,158 @@ class GUI(Tk):
             self.linepre.bind("<MouseWheel>", self.on_mousewheel2)
             
             for i in range(len(self.resor)):
-                self.resor[i][1]=Radiobutton(self.terFrame, 
+                aux=("Resource #"+str(i+1))*(self.resor[i].resName.replace(" ", "")=="")+self.resor[i].resName*(self.resor[i].resName.replace(" ", "")!="")
+                self.resor[i].mainButton=Radiobutton(self.terFrame, 
                                                                         variable = self.selectRes, 
                                                                         value = i+1,
-                                                                        text = "Resource #"+str(i+1)+": Qnt. "+self.resor[i][0], 
+                                                                        text = aux+": Qnt. "+self.resor[i].qnt, 
                                                                         fg="white",
                                                                         bg='black',
                                                                         selectcolor='black', 
                                                                         font = 'Consolas 10 bold')
-                self.resor[i][1].pack(fill="x")
-                self.resor[i][1].bind("<MouseWheel>", self.on_mousewheel2)
+                self.resor[i].mainButton.pack(fill="x")
+                self.resor[i].mainButton.bind("<MouseWheel>", self.on_mousewheel2)
     
-                self.resor[i][3]=[]
-                for j in range(len(self.resor[i][2])):
-                    self.resor[i][3].append(Button(self.terFrame, 
-                                                                        text = self.resor[i][2][j][1], 
+                self.resor[i].subButtons=[]
+                for j in range(len(self.resor[i].listSubres)):
+                    self.resor[i].subButtons.append(Button(self.terFrame, 
+                                                                        text = self.resor[i].listSubres[j].subresName, 
                                                                         fg="white",
                                                                         bg='black',
                                                                         font = 'Consolas 10 bold',
                                                                         command = lambda c=(i, j): self.destroy_subres(c))
                     )
-                    self.resor[i][3][-1].pack(fill="x")
-                    self.resor[i][3][-1].bind("<MouseWheel>", self.on_mousewheel2)
+                    self.resor[i].subButtons[-1].pack(fill="x")
+                    self.resor[i].subButtons[-1].bind("<MouseWheel>", self.on_mousewheel2)
 
-                self.resor[i][4]=Button(self.terFrame, 
+                self.resor[i].deleteButton=Button(self.terFrame, 
                                                                         text = "Delete resource", 
                                                                         fg="white",
                                                                         bg='black',
                                                                         font = 'Consolas 10 bold',
                                                                         command = lambda c=i: self.destroy_res(c))
-                self.resor[i][4].pack(fill="x")
-                self.resor[i][4].bind("<MouseWheel>", self.on_mousewheel2)
+                self.resor[i].deleteButton.pack(fill="x")
+                self.resor[i].deleteButton.bind("<MouseWheel>", self.on_mousewheel2)
 
-                self.resor[i][5] = Frame(self.terFrame, bg=self.color, height=6)
-                self.resor[i][5].pack(fill="x")
-                self.resor[i][5].bind("<MouseWheel>", self.on_mousewheel2)
+                self.resor[i].separator = Frame(self.terFrame, bg=self.color, height=6)
+                self.resor[i].separator.pack(fill="x")
+                self.resor[i].separator.bind("<MouseWheel>", self.on_mousewheel2)
 
         def destroy_all(self):
             self.general.destroy()
             self.linepre.destroy()
             for i in range(len(self.resor)):
-                self.resor[i][1].destroy()
-                self.resor[i][4].destroy()
-                self.resor[i][5].destroy()
-                for j in range(len(self.resor[i][3])):
-                    self.resor[i][3][j].destroy()
+                self.resor[i].mainButton.destroy()
+                self.resor[i].deleteButton.destroy()
+                self.resor[i].separator.destroy()
+                for j in range(len(self.resor[i].subButtons)):
+                    self.resor[i].subButtons[j].destroy()
 
         def destroy_subres(self, pos):
-            self.resor[pos[0]][2].pop(pos[1])
+            self.resor[pos[0]].listSubres.pop(pos[1])
             self.destroy_all()
             self.build_resor()
+            self.modified=1 
 
         def destroy_res(self, pos):
             self.destroy_all()
             self.resor.pop(pos)
             self.build_resor()
             self.selectRes.set(0)
+            self.modified=1 
 
-        def resourcepaste(self, num):
-            num=num.get()
+        def resourcepaste(self, num, name):
             if int(num):
-                self.resor.append([num, Frame(), [], [], Frame(), Frame()])
+                self.resor.append(resource(num, name))
                 self.destroy_all()
                 self.build_resor()
                 self.selectRes.set(len(self.resor))
+                self.modified=1 
             
         def anteadvpaste(self, num):
             try:
-                self.advanint+=int(num.get())
-                self.destroy_all()
-                self.build_resor()
+                if num:
+                    self.premod.adv+=num
+                    self.destroy_all()
+                    self.build_resor()                
+                    self.modified=1
             except:
                 pass
         
         def antepaste(self, num1, num2):
             try:
-                self.const+=int(int(num1)*(int(num2)+1)/2)
-                self.destroy_all()
-                self.build_resor()
+                if num1 and num2:
+                    self.premod.const+=int(num1*(num2+1)/2)
+                    self.destroy_all()
+                    self.build_resor()
+                    self.modified=1
             except:
                 pass
-            
-        def interpaste(self, num1, num2):
-            if self.selectRes.get():
-                num1=num1.get()
-                if type(num2)!=str:
-                    num2=num2.get()
-                    if num1=="0" or num2=="0":
-                        return
-                elif  num1=="0":
-                    return
-                self.resor[self.selectRes.get()-1][2].append([[int(num1), int(num2)], "Inter: "+"Advan "*(num2=="0")+"+"*(int(num1)>0)+num1*(num1!="0")+(num2!="1" and num2!="0")*("d"+num2)])
-                self.destroy_all()
-                self.build_resor()
 
-        def postpaste(self, num1, num2):
+        def postpaste(self, num1, num2, typ, timing):
             if self.selectRes.get():
-                num1=num1.get()
-                if type(num2)!=str:
-                    num2=num2.get()
-                    if num1=="0" or num2=="0":
+                if typ=="dice":
+                    if not num1 or not num2:
                         return
-                elif  num1=="0":
+                elif not num1:
                     return
-                self.resor[self.selectRes.get()-1][2].append([(int(num1), int(num2)), "Post: "+"Advan "*(num2=="0")+"+"*(int(num1)>0)+num1*(num1!="0")+(num2!="1" and num2!="0")*("d"+num2)])
+                self.resor[self.selectRes.get()-1].listSubres.append(posmod(typ, timing, num1, num2))
                 self.destroy_all()
                 self.build_resor()
+                self.modified=1
 
         def conversao(self): 
             try:
-                rec=bloco((self.const, self.advanint), [], self.sn.get(), int(self.crit.get())/100)
-
-                for i in self.resor:
-                    if i[2]:
-                        rec.posmod.append([int(i[0]), []])
-                        for j in i[2]:
-                            rec.posmod[-1][1].append(j[0])
-                return rec
+                return bloco(self.premod, self.clean_resor(), self.sn.get(), int(self.crit.get())/100)
             except:
+                print(traceback.format_exc())
                 messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
                 return
 
         def clean_resor(self):
-            resor=[]
-            for i in self.resor:
-                resor.append([i[0], i[2]])
-            return resor
+            posmods=[]
+            for i in range(len(self.resor)):
+                aux=("Resource #"+str(i+1))*(self.resor[i].resName.replace(" ", "")=="")+self.resor[i].resName*(self.resor[i].resName.replace(" ", "")!="")
+                if self.resor[i].listSubres:
+                    posmods.append(resourceSend(int(self.resor[i].qnt), aux, self.resor[i].listSubres))
+            return posmods
 
         def send_block(self):
             message_sent = self.conversao()
             if message_sent:
                 try:
                     with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
-                        pickle.dump([self.clean_resor(), self.const, self.advanint, self.critbox.get()], file)
+                        pickle.dump(message_sent, file)
                 except Exception:
                     print(traceback.format_exc())
                     self.on_closing()
                 self.past_index_max+=1
                 if self.unmoved:
                     self.past_index=self.past_index_max
-                    self.Window2.title("Browse through past settings with ^ or ⌄")
+                    messagebox.showinfo(parent=self.Window2, title="Dica", message="Browse through past settings with ^ or ⌄.")
+                    self.unmoved=False
                 message_sent=pickle.dumps(message_sent)
                 message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
                 client.send(message_sent_header+message_sent)
 
         def load_content(self, content):
-            resor, self.const, self.advanint, crit=pickle.loads(content)
+            block=pickle.loads(content)
+            resor, self.premod, crit=block.posmods, block.premods, block.crit
+            self.selectRes.set(0)
 
+            self.destroy_all()
             self.resor=[]
             for i in resor:
-                self.resor.append([i[0], Frame(), i[1], [], Frame(), Frame()])
-            self.crit.set(str(crit))
+                self.resor.append(resource(str(i.qnt), i.resName))
+                self.resor[-1].listSubres=i.listSubres
         
-            self.destroy_all()
-            self.build_resor()
+            self.crit.set(str(int(100*crit)))
 
         def savefile(self):             
-            if self.path != '':                
+            if self.path != '':
+                block = self.conversao()
                 with open(self.path, 'wb') as file:
-                    pickle.dump([self.clean_resor(), self.const, self.advanint, self.critbox.get()], file)
+                    pickle.dump(block, file)
                     self.modified=0                       
             else:
                 self.savefileas()     
@@ -872,8 +893,9 @@ class GUI(Tk):
         def savefileas(self):    
             try:
                 self.path = filedialog.askopenfile(parent=self.Window2, filetypes = [("Text files", "*.txt")]).name
+                block = self.conversao()
                 with open(self.path, 'wb') as file:
-                    pickle.dump([self.clean_resor(), self.const, self.advanint, self.critbox.get()], file)
+                    pickle.dump(block, file)
                     self.modified=0
                 self.Window2.title(os.path.basename(os.path.normpath(self.path))[:-4])
                 self.menubar.delete(0,"end")
@@ -911,7 +933,6 @@ class GUI(Tk):
 
         def up_down2(self, event):
             if self.past_index_max:
-                self.unmoved=False
                 alt=1
                 if event.keysym == 'Up':
                     if self.past_index:
@@ -941,10 +962,11 @@ class GUI(Tk):
             self.destroy_all()
             self.build_resor()
 
-        def callbackRes(self, var, index, mode):
+        def callbackRes(self, name):
             if self.selectRes.get():
                 if int(self.res.get()):
-                    self.resor[self.selectRes.get()-1][0]=self.res.get()
+                    self.resor[self.selectRes.get()-1].qnt=self.res.get()
+                    self.resor[self.selectRes.get()-1].resName=name
                     self.destroy_all()
                     self.build_resor()
                 else:
@@ -1252,16 +1274,13 @@ class GUI(Tk):
 
                 #----------------------------------------
 
-                self.const=0
-                
-                self.advanint=0
+                self.premod=premod(0, 0)
 
                 self.build_resor()
 
                 self.unmoved=True
 
                 self.crit.trace_add('write', self.callbackCrit)
-                self.res.trace_add('write', self.callbackRes)
                 
                 #----------------------------------------
 
@@ -1288,7 +1307,7 @@ class GUI(Tk):
                                                             compound="c",
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.antepaste(self.ac.get(), 1)) 
+                                                            command = lambda : self.antepaste(int(self.ac.get()), 1)) 
                 
                 self.aconbtt.pack(side='left', pady=(1, 0))
 
@@ -1313,7 +1332,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.anteadvpaste(self.aa)) 
+                                                            command = lambda : self.anteadvpaste(int(self.aa.get()))) 
                 
                 self.aadvbtt.pack(side='left', pady=(1, 0))
 
@@ -1350,7 +1369,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.antepaste(self.ad[0].get(), self.ad[1].get())) 
+                                                            command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get()))) 
                 
                 self.adicbtt.pack(side='left', pady=(1, 0))
                 
@@ -1378,7 +1397,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.interpaste(self.ic, "1")) 
+                                                            command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter")) 
                 
                 self.iconbtt.pack(side='left', pady=(1, 0))
 
@@ -1403,7 +1422,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.interpaste(self.ia, "0")) 
+                                                            command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter")) 
                 
                 self.iadvbtt.pack(side='left', pady=(1, 0))
 
@@ -1440,7 +1459,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.interpaste(self.id[0], self.id[1])) 
+                                                            command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter")) 
                 
                 self.idicbtt.pack(side='left', pady=(1, 0))
 
@@ -1468,7 +1487,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.postpaste(self.pc, "1")) 
+                                                            command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post")) 
 
                 self.pconbtt.pack(side='left', pady=(1, 0))
 
@@ -1493,7 +1512,7 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda : self.postpaste(self.pa, "0")) 
+                                                            command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post")) 
 
                 self.padvbtt.pack(side='left', pady=(1, 0))
 
@@ -1530,7 +1549,7 @@ class GUI(Tk):
                                                             bg = 'black',
                                                             compound="c",
                                                             fg="white",
-                                                            command = lambda : self.postpaste(self.pd[0], self.pd[1])) 
+                                                            command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post")) 
 
                 self.pdicbtt.pack(side='left', pady=(1, 0))
 
@@ -1549,6 +1568,7 @@ class GUI(Tk):
 
                 self.resourcebar2= Label(self.resourcebar, bg='black')
                 self.resourcebar2.pack(side='left', expand=True, fill="both")
+                self.resourcebar21= Label(self.resourcebar2, bg='black')
 
                 self.sep6= Label(self.resourcebar, bg=self.color)
                 self.sep6.pack(expand = False, fill = 'both', side = 'left')
@@ -1556,8 +1576,8 @@ class GUI(Tk):
                 self.resourcebar3= Label(self.resourcebar, bg='black')
                 self.resourcebar3.pack(side='left')
                 
-                self.reslabel= Label(self.resourcebar2,fg="white",text='Resource quantity:',bg='black', width=18, font = 'Consolas 12 bold')
-                self.reslabel.pack()
+                self.reslabel = ttk.Entry(self.resourcebar2, font = "Consolas 12")
+                self.reslabel.pack(pady=(9, 0))
 
                 self.resbox = ttk.Spinbox(self.resourcebar2,
                                     textvariable = self.res,
@@ -1566,9 +1586,11 @@ class GUI(Tk):
                                     from_ = 0,
                                     to = 100)
 
-                self.resbox.pack(pady=(14, 15))
+                self.resbox.pack(pady=(7, 0))
 
-                self.resbtt = Button(self.resourcebar2, 
+                self.resourcebar21.pack(expand=True, fill="both")
+
+                self.resbtt = Button(self.resourcebar21, 
                                                             text = "+", 
                                                             font = "Consolas 12 bold",
                                                             image=self.pixelVirtual,
@@ -1577,9 +1599,22 @@ class GUI(Tk):
                                                             compound="c", 
                                                             bg = 'black',
                                                             fg="white",
-                                                            command = lambda: self.resourcepaste(self.res)) 
+                                                            command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
                 
-                self.resbtt.pack()
+                self.resbtt.pack(side="right", padx=(0, 130))
+
+                self.resbtt2 = Button(self.resourcebar21, 
+                                                            text = "<", 
+                                                            font = "Consolas 12 bold",
+                                                            image=self.pixelVirtual,
+                                                            width = 25,
+                                                            height=20,
+                                                            compound="c", 
+                                                            bg = 'black',
+                                                            fg="white",
+                                                            command = lambda: self.callbackRes(self.reslabel.get())) 
+                
+                self.resbtt2.pack(side="left", padx=(130, 0))
 
                 self.critlabel= Label(self.resourcebar11,fg="white",text=' Crit chance: ',bg='black', width=13, font = 'Consolas 12 bold')
                 self.critlabel.pack()
@@ -1886,6 +1921,8 @@ class GUI(Tk):
                                         if not self.calc_change(p/10, p_last/10, r, prob_old_cf)[1] and not bol_cf:
                                             ahead_cf=0
                                     poss_str="{:.1e}".format(prob_old)
+                                elif not aux:
+                                    poss_str='-'
                                 else:
                                     poss_str=''
                                 aux_1=Label(aux_mor, bg='black', text=poss_str+(10-len(poss_str))*' '+'|', fg='white', font=('Consolas', 12))
@@ -1898,6 +1935,8 @@ class GUI(Tk):
                                         if not self.calc_change(p/10, p_last/10, r, prob_old_cf)[1] and not bol_cf:
                                             ahead_cf=0
                                     poss_str="{:.1e}".format(prob_old_c)
+                                elif not aux:
+                                    poss_str='-'
                                 else:
                                     poss_str=''
                                 aux_12=Label(aux_mor, bg='black', text=poss_str+(10-len(poss_str))*' '+'|', fg='white', font=('Consolas', 12))
@@ -1911,6 +1950,8 @@ class GUI(Tk):
                                             ahead_c=0
                                             aux_12.config(text='          |')
                                     poss_str="{:.1e}".format(prob_old_cf)
+                                elif not aux:
+                                    poss_str='-'
                                 else:
                                     poss_str=''
                                 aux_13=Label(aux_mor, bg='black', text=poss_str+(11-len(poss_str))*' '+'|', fg='white', font=('Consolas', 12))
@@ -1921,12 +1962,12 @@ class GUI(Tk):
                                 
                                 aux_13.pack(side='left')
                                 
-                                aux_2=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Consolas', 12))
+                                aux_2=Label(aux_mor, bg='black', text='+'*(i.adv>=0)+str(i.adv)+11*' '+'|', fg='white', font=('Consolas', 12))
                                 aux_2.pack(side='left')
                                 
                                 resButton = Button(aux_mor,
                                                 fg = 'white',
-                                                bg = 'black', text = i.mods[:-2]+'N/A'*(not i.mods[:-2]),
+                                                bg = 'black', text = i.mods[:-3]+'N/A'*(not i.mods[:-3]),
                                                 font = "Consolas 12 bold",
                                                 command= lambda p=p, crit=crit, r=r, resultStr=resultStr: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr]).start())
                                 resButton.pack(side='left')
@@ -2000,7 +2041,7 @@ class GUI(Tk):
                 aux_mor.pack()
                 aux_1=text=Label(aux_mor, bg='black', text=resultStr+(15-len(resultStr))*' '+'|', fg='white', font=('Consolas', 12))
                 aux_1.pack(side='left')
-                aux_2=text=Label(aux_mor, bg='black', text='+'*(i.advan>=0)+str(i.advan)+11*' '+'|', fg='white', font=('Consolas', 12))
+                aux_2=text=Label(aux_mor, bg='black', text='+'*(i.adv>=0)+str(i.adv)+11*' '+'|', fg='white', font=('Consolas', 12))
                 aux_2.pack(side='left')
                 aux_3=text=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Consolas', 12))
                 aux_3.pack(side='left')
