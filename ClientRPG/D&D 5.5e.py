@@ -8,6 +8,11 @@ from colour import Color
 from time import sleep
 from tkinter.colorchooser import *
 import sys
+#from PyQt5 import QtWidgets, QtCore, QtGui #pyqt stuff
+
+#QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
+#QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
+
 import re
 import pickle
 import numpy as np
@@ -398,11 +403,12 @@ class resourceSend:
         self.listSubres=listSubres
 
 class bloco:
-    def __init__(self, premods, posmods, sn, crit):
+    def __init__(self, premods, posmods, sn, crit, mini):
         self.premods=premods
         self.posmods=posmods
         self.sn=sn
         self.crit=crit
+        self.min=mini
 
 class status:
     def __init__(self, num):
@@ -417,7 +423,6 @@ class roll:
     def __init__(self, receiver, who):
         self.receiver=receiver
         self.who=who
-        self.crit=crit
 
 class res:
     def __init__(self, p, crit, r, adv):
@@ -500,6 +505,111 @@ class GUI(Tk):
                 self.go.place(relx = 0.4, 
                                         rely = 0.55)
 
+        def askDice(self, name):
+            self.login2 = Toplevel() 
+            # set the title 
+            self.login2.title("Display modes")
+
+            self.login2.geometry('500x155')
+
+            self.dicebar= Label(self.login2,text='Display mode:', width=13, font = 'Consolas 12 bold')
+            self.dicebar.pack(padx=(6, 0))
+
+            self.displaymode=StringVar(value='bar')
+
+            self.barbtt=Radiobutton(self.login2, 
+                                                                    variable = self.displaymode, 
+                                                                    value = 'bar',
+                                                                    text = 'Bar', 
+                                                                    font = 'Consolas 10 bold')
+            
+            self.barbtt.pack()
+
+            self.dicebtt=Radiobutton(self.login2, 
+                                                                    variable = self.displaymode, 
+                                                                    value = 'dice',
+                                                                    text = 'Dice', 
+                                                                    font = 'Consolas 10 bold')
+            
+            self.dicebtt.pack() 
+            
+            # create a Continue Button 
+            # along with action 
+            self.go2 = Button(self.login2, 
+                                            text = "CONTINUE", 
+                                            font = "Consolas 14 bold", 
+                                            command = lambda: self.goAhead2(name))
+
+            self.login2.protocol("WM_DELETE_WINDOW", self.on_closing)  
+            self.go2.pack(pady=(5, 0))
+                
+            self.options = [
+                "Chico",
+                "Hide the pain",
+                "Chorrindo",
+                "Picardía",
+                "Tobey"
+                ]
+
+            self.dice_style = StringVar()
+            self.dice_style.set(self.options[0])
+                                
+        def goAhead2(self, name):
+            if self.displaymode.get()=='dice':
+                self.login3 = Toplevel() 
+                # set the title 
+                self.login3.title("Critical styles")
+
+                self.login3.geometry('500x134')
+
+                self.dicebar= Label(self.login3,text='Critical style:', width=15, font = 'Consolas 12 bold')
+                self.dicebar.pack()
+                
+                self.dice_style_drop = ttk.Combobox(self.login3, textvariable=self.dice_style, values=self.options, state='readonly', width=14)
+                self.dice_style_drop.pack(pady=(7, 0))
+
+                self.go3 = Button(self.login3, 
+                                            text = "CONTINUE", 
+                                            font = "Consolas 14 bold", 
+                                            command = lambda: self.goAhead3(name)) 
+
+                self.login3.protocol("WM_DELETE_WINDOW", self.on_closing)  
+                self.go3.pack(pady=(13, 0))
+            else:
+                self.goAhead3(name)
+
+        def goAhead3(self, name):
+            try:
+                self.login3.destroy()
+            except:
+                pass
+            self.login2.destroy()
+            self.receive()
+            self.layout(name)
+            # the thread to receive messages 
+            self.rcv = threading.Thread(target=self.receive) 
+            self.rcv.start()
+            
+        def goAhead(self, name):
+            my_username = name.encode(FORMAT)
+            my_username_header = f"{len(my_username):<{HEADER_LENGTH}}".encode(FORMAT)
+            client.send(my_username_header + my_username)
+            server_message_header=client.recv(HEADER_LENGTH)
+            server_message_length = int(server_message_header.decode(FORMAT).strip())
+            server_message=client.recv(server_message_length).decode(FORMAT)
+            if server_message=='ok':
+                try:
+                    self.color=askcolor(color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), title ="Escolha a cor do seu usuário")[1]
+                    color=self.color.encode(FORMAT)
+                except:
+                    self.on_closing()
+                color_header=f"{len(color):<{HEADER_LENGTH}}".encode(FORMAT)
+                client.send(color_header + color)
+                self.login.destroy()
+                self.askDice(name)
+            else:
+                self.pls.config(text=server_message)
+
         def onPlayerClick(self, c):
             self.playerBtts[c].config(bg=self.playerBtts[c].cget('fg'), fg=self.playerBtts[c].cget('bg'))
             self.players[c]['selected'] = not self.players[c]['selected']
@@ -569,98 +679,112 @@ class GUI(Tk):
                 else:
                     resultStr = "SUCESSO"
             else:
-                if (r<=p/10):
+                if (r<=p/2):
                     resultStr = "FALHA CRÍTICA"
                 else:
                     resultStr = "FALHA"
             return p, crit, r, resultStr
                 
-        def displayres(self, p, crit, r, resultStr):
-            if self.displaymode.get()=='bar':
-                self.progress['value']=0
-                self.minRollLabel2.config(text = "Precisa: "+str(p))
-                self.critRollLabel2.config(text = "Crítico a partir de: "+str(crit))
-                self.realRollLabel2.config(text = "")
-                self.ResultLabel2.config(text = "")
-                
-                p=4*((p*100+19)//20)
-                r_bar=(r*100+19)//20
-                crit=4*((crit*100+19)//20)
+        def displayres(self, p, crit, r, resultStr, send_type):
+            if send_type:
+                try:
+                    self.hiddenres.destroy()
+                except Exception:
+                    print(traceback.format_exc())
 
-                if not self.progresswindow.winfo_viewable():
-                    self.progresswindow.deiconify()
-                if self.dicewindow.winfo_viewable():
-                    self.dicewindow.withdraw()
-                self.progresswindow.focus()
-                
-                self.barracrit1.place(relwidth=0.0025,x=crit-1)
-                self.barrap1.place(relwidth=0.0025,x=p-1)
-                self.barracrit2.place(relwidth=0.0025,x=crit+1)
-                self.barrap2.place(relwidth=0.0025,x=p+1)
-
-                x=0;
-                n=random.randint(2,15)
-                for i in range(159):
-                    sleep(0.01)
-                    x+=0.00625
-                    y=int(r_bar*n*x/(1+(n-1)*x))
-                    self.progress['value']=y
-                
-                self.ResultLabel2.config(text = resultStr)
-                self.realRollLabel2.config(text = "Rolou: "+str(r))
+                self.hiddenres=Toplevel(bg='black')
+                self.hiddenres.title("Result")
+                self.hiddenres.geometry('300x100')
+                opposite_message=(send_type=='NÃO')*'SIM'+(send_type=='SIM')*'NÃO'
+                aux=(resultStr=="SUCESSO" or resultStr=="SUCESSO CRÍTICO")*send_type+(resultStr=="FALHA" or resultStr=="FALHA CRÍTICA")*opposite_message
+                aux_h=Label(self.hiddenres, bg='black', text=aux, font=('Consolas', 25), fg=self.color)
+                aux_h.pack()
             else:
-                self.minRollLabel.config(text = "Precisa: "+str(p))
-                self.critRollLabel.config(text = "Crítico a partir de: "+str(crit))
-                self.realRollLabel.config(text = "")
-                self.ResultLabel.config(text = "")
+                if self.displaymode.get()=='bar':
+                    self.progress['value']=0
+                    self.minRollLabel2.config(text = "Precisa: "+str(p))
+                    self.critRollLabel2.config(text = "Crítico a partir de: "+str(crit))
+                    self.realRollLabel2.config(text = "")
+                    self.ResultLabel2.config(text = "")
+                    
+                    p=4*((p*100+19)//20)
+                    r_bar=(r*100+19)//20
+                    crit=4*((crit*100+19)//20)
 
-                if not self.dicewindow.winfo_viewable():
-                    self.dicewindow.deiconify()
-                if self.progresswindow.winfo_viewable():
-                    self.progresswindow.withdraw()
-                self.dicewindow.focus()
+                    if not self.progresswindow.winfo_viewable():
+                        self.progresswindow.deiconify()
+                    if self.dicewindow.winfo_viewable():
+                        self.dicewindow.withdraw()
+                    self.progresswindow.focus()
+                    
+                    self.barracrit1.place(relwidth=0.0025,x=crit-1)
+                    self.barrap1.place(relwidth=0.0025,x=p-1)
+                    self.barracrit2.place(relwidth=0.0025,x=crit+1)
+                    self.barrap2.place(relwidth=0.0025,x=p+1)
 
-                ##### CONSTANTES PARA ADEQUACAO DOS TEMPOS DE ROLAGEM (EM 10^-2s)
+                    x=0;
+                    n=random.randint(2,15)
+                    for i in range(159):
+                        sleep(0.01)
+                        x+=0.00625
+                        y=int(r_bar*n*x/(1+(n-1)*x))
+                        self.progress['value']=y
+                    
+                    self.ResultLabel2.config(text = resultStr)
+                    self.realRollLabel2.config(text = "Rolou: "+str(r))
+                else:
+                    self.minRollLabel.config(text = "Precisa: "+str(p))
+                    self.critRollLabel.config(text = "Crítico a partir de: "+str(crit))
+                    self.realRollLabel.config(text = "")
+                    self.ResultLabel.config(text = "")
 
-                sleepTime = random.randint(self.minST,self.maxST)/100
-                maxSleepTime = random.randint(self.minMST,self.maxMST)/100
-                
-                currentRoll = random.randint(0, 20)
-                while maxSleepTime-sleepTime > 0.1 and maxSleepTime > sleepTime:
-                    rolagem = random.randint(0, 20)
-                    while rolagem == currentRoll:
+                    if not self.dicewindow.winfo_viewable():
+                        self.dicewindow.deiconify()
+                    if self.progresswindow.winfo_viewable():
+                        self.progresswindow.withdraw()
+                    self.dicewindow.focus()
+
+                    ##### CONSTANTES PARA ADEQUACAO DOS TEMPOS DE ROLAGEM (EM 10^-2s)
+
+                    sleepTime = random.randint(self.minST,self.maxST)/100
+                    maxSleepTime = random.randint(self.minMST,self.maxMST)/100
+                    
+                    currentRoll = random.randint(0, 20)
+                    while maxSleepTime-sleepTime > 0.1 and maxSleepTime > sleepTime:
                         rolagem = random.randint(0, 20)
+                        while rolagem == currentRoll:
+                            rolagem = random.randint(0, 20)
 
-                    currentRoll = rolagem
+                        currentRoll = rolagem
 
-                    img = Image.open("Dice_Images/"+str(rolagem)+".png")
+                        img = Image.open("Dice_Images/"+str(rolagem)+".png")
+                        img = img.resize((250,250))
+                        self.img = ImageTk.PhotoImage(img)
+                        self.panel.config(image = self.img)
+                        
+                        sleep(sleepTime)
+                        sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
+
+                    sleep(self.maxMST/100 - maxSleepTime)
+
+                    roundedRealDiceRoll = floor(r)
+                    if (r > crit):
+                        if roundedRealDiceRoll<crit:
+                            roundedRealDiceRoll = ceil(r)
+                    elif(r > p):
+                        if roundedRealDiceRoll<p:
+                            roundedRealDiceRoll = ceil(r)
+
+                    if roundedRealDiceRoll==0 or roundedRealDiceRoll==20:
+                        img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+self.dice_style.get()+'.png')
+                    else:
+                        img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
                     img = img.resize((250,250))
                     self.img = ImageTk.PhotoImage(img)
                     self.panel.config(image = self.img)
-                    
-                    sleep(sleepTime)
-                    sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
 
-                sleep(self.maxMST/100 - maxSleepTime)
-
-                roundedRealDiceRoll = floor(r)
-                if (r > crit):
-                    if roundedRealDiceRoll<crit:
-                        roundedRealDiceRoll = ceil(r)
-                elif(r > p):
-                    if roundedRealDiceRoll<p:
-                        roundedRealDiceRoll = ceil(r)
-
-                if roundedRealDiceRoll==0 or roundedRealDiceRoll==20:
-                    img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+self.dice_style.get()+'.png')
-                else:
-                    img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
-                img = img.resize((250,250))
-                self.img = ImageTk.PhotoImage(img)
-                self.panel.config(image = self.img)
-
-                self.realRollLabel.config(text = "Rolou: "+str(r))
-                self.ResultLabel.config(text = resultStr)
+                    self.realRollLabel.config(text = "Rolou: "+str(r))
+                    self.ResultLabel.config(text = resultStr)
 
         def nextSleepTime(self, currentTime, limitTime): # 3 opcoes de incremento de tempo
             # return currentTime + currentTime**2 / 2
@@ -681,31 +805,7 @@ class GUI(Tk):
                 self.blocbtt.config(text='<')
             else:
                 self.Window2.withdraw()
-                self.blocbtt.config(text='>')            
-
-        def goAhead(self, name):
-            my_username = name.encode(FORMAT)
-            my_username_header = f"{len(my_username):<{HEADER_LENGTH}}".encode(FORMAT)
-            client.send(my_username_header + my_username)
-            server_message_header=client.recv(HEADER_LENGTH)
-            server_message_length = int(server_message_header.decode(FORMAT).strip())
-            server_message=client.recv(server_message_length).decode(FORMAT)
-            if server_message=='ok':
-                try:
-                    self.color=askcolor(color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), title ="Escolha a cor do seu usuário")[1]
-                    color=self.color.encode(FORMAT)
-                except:
-                    self.on_closing()
-                color_header=f"{len(color):<{HEADER_LENGTH}}".encode(FORMAT)
-                client.send(color_header + color)
-                self.login.destroy()
-                self.receive()
-                self.layout(name)
-                # the thread to receive messages 
-                self.rcv = threading.Thread(target=self.receive) 
-                self.rcv.start()
-            else:
-                self.pls.config(text=server_message)
+                self.blocbtt.config(text='>')
 
         ##-----------------------------------------------
         def build_menu(self):
@@ -722,7 +822,7 @@ class GUI(Tk):
             self.modified=1           
 
         def build_resor(self):  
-            self.general=Label(self.terFramefpre, text="Advan: "+(self.premod.adv>0)*"+"+str(self.premod.adv)+"   Constant: "+str(self.premod.const)+"\nCrit chance: "+str(self.crit.get())+"%",
+            self.general=Label(self.terFramefpre, text="Advan: "+(self.premod.adv>0)*"+"+str(self.premod.adv)+"   Constant: "+(self.premod.const>0)*"+"+str(self.premod.const)+"\nCrit chance: "+str(self.crit.get())+"%"+"\nMinimum roll: "+str(self.mini.get()),
                                                 bg = 'black',
                                                 fg='white',
                                                 font = "Consolas 10 bold")
@@ -836,7 +936,7 @@ class GUI(Tk):
 
         def conversao(self): 
             try:
-                return bloco(self.premod, self.clean_resor(), self.sn.get(), int(self.crit.get())/100)
+                return bloco(self.premod, self.clean_resor(), self.sn.get(), int(self.crit.get())/100, int(self.mini.get()))
             except:
                 print(traceback.format_exc())
                 messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
@@ -870,7 +970,7 @@ class GUI(Tk):
 
         def load_content(self, content):
             block=pickle.loads(content)
-            resor, self.premod, crit=block.posmods, block.premods, block.crit
+            resor, self.premod, crit, mini=block.posmods, block.premods, block.crit, block.min
             self.selectRes.set(0)
 
             self.destroy_all()
@@ -879,7 +979,18 @@ class GUI(Tk):
                 self.resor.append(resource(str(i.qnt), i.resName))
                 self.resor[-1].listSubres=i.listSubres
         
-            self.crit.set(str(int(100*crit)))
+            self.crit.set(str(round(100*crit)))
+            self.mini.set(str(mini))
+
+        def flip_values(self):
+            self.premod.adv*=-1
+            self.premod.const*=-1
+            
+            for i in self.resor:
+                for j in range(len(i.listSubres)):
+                    i.listSubres[j].num1*=-1
+        
+            self.build_resor()
 
         def savefile(self):             
             if self.path != '':
@@ -981,6 +1092,8 @@ class GUI(Tk):
                 self.who=StringVar(value='we')
                 self.crit=StringVar(value='10')
                 self.crit.trace_variable('w', self.modify)
+                self.mini=StringVar(value='0')
+                self.mini.trace_variable('w', self.modify)
                 self.res=StringVar(value='0')
                 self.ac=StringVar(value='0')
                 self.ic=StringVar(value='0')
@@ -992,7 +1105,6 @@ class GUI(Tk):
                 self.id=[StringVar(value='0'),StringVar(value='0')]
                 self.pd=[StringVar(value='0'),StringVar(value='0')]
                 self.sn=StringVar(value='s')
-                self.displaymode=StringVar(value='bar')
                 self.minST = 1               #ST = sleepTime
                 self.maxST = 10
                 self.minMST = 60             #MST = maxSleepTime
@@ -1281,6 +1393,7 @@ class GUI(Tk):
                 self.unmoved=True
 
                 self.crit.trace_add('write', self.callbackCrit)
+                self.mini.trace_add('write', self.callbackCrit)
                 
                 #----------------------------------------
 
@@ -1559,8 +1672,6 @@ class GUI(Tk):
                 self.resourcebar11.pack()
                 self.resourcebar12= Label(self.resourcebar1, bg='black')
                 self.resourcebar12.pack()
-                self.resourcebar13= Label(self.resourcebar1, bg='black')
-                self.resourcebar13.pack()
 
 
                 self.sep5= Label(self.resourcebar, bg=self.color)
@@ -1575,6 +1686,11 @@ class GUI(Tk):
 
                 self.resourcebar3= Label(self.resourcebar, bg='black')
                 self.resourcebar3.pack(side='left')
+
+                self.resourcebar31= Label(self.resourcebar3, bg='black')
+                self.resourcebar31.pack()
+                self.resourcebar32= Label(self.resourcebar3, bg='black')
+                self.resourcebar32.pack()
                 
                 self.reslabel = ttk.Entry(self.resourcebar2, font = "Consolas 12")
                 self.reslabel.pack(pady=(9, 0))
@@ -1632,44 +1748,18 @@ class GUI(Tk):
                 self.percelabel= Label(self.resourcebar12,fg="white",text='%',bg='black', width=1, font = 'Consolas 12 bold')
                 self.percelabel.pack(side='left')
 
-                self.dicebar= Label(self.resourcebar3,fg="white",text='Display mode:', bg='black', width=13, font = 'Consolas 12 bold')
-                self.dicebar.pack(padx=(6, 0))
+                self.minlabel= Label(self.resourcebar31,fg="white",text=' Minimum roll: ',bg='black', width=15, font = 'Consolas 12 bold')
+                self.minlabel.pack()
 
-                self.barbtt=Radiobutton(self.resourcebar3, 
-                                                                        variable = self.displaymode, 
-                                                                        value = 'bar',
-                                                                        text = 'Bar', 
-                                                                        fg="white", 
-                                                                        bg='black', 
-                                                                        selectcolor='black', 
-                                                                        font = 'Consolas 10 bold')
-                
-                self.barbtt.pack()
+                self.minbox = ttk.Spinbox(self.resourcebar32,
+                                    textvariable = self.mini,
+                                    font='Consolas 10',
+                                    width = 3,
+                                    from_ = 0,
+                                    to = 2000,
+                                    increment = 100)
 
-                self.dicebtt=Radiobutton(self.resourcebar3, 
-                                                                        variable = self.displaymode, 
-                                                                        value = 'dice',
-                                                                        text = 'Dice', 
-                                                                        fg="white", 
-                                                                        bg='black', 
-                                                                        selectcolor='black', 
-                                                                        font = 'Consolas 10 bold')
-                
-                self.dicebtt.pack()
-
-                self.options = [
-                "Chico",
-                "Hide the pain",
-                "Chorrindo",
-                "Picardía",
-                "Tobey"
-                ]
-
-                self.dice_style = StringVar()
-                self.dice_style.set(self.options[0])
-
-                self.dice_style_drop = ttk.Combobox(self.resourcebar13, textvariable=self.dice_style, values=self.options, state='readonly', width=14)
-                self.dice_style_drop.pack()
+                self.minbox.pack(side="left")
 
                 self.Window2.protocol("WM_DELETE_WINDOW", self.blocswitch)
                 self.Window2.withdraw()
@@ -1880,6 +1970,7 @@ class GUI(Tk):
                             possibs=Toplevel(bg='black')
                             possibs.title('Possibildiades')
                             possibs.resizable(width = False, height=False)
+                            send_type=message.pop(-1)
                             m=max(max(len(i.mods) for i in message), 11)
                             w=round(68+m*1.44)
                             aux_mor=Label(possibs, bg='black', width = w, height = 1)
@@ -1912,13 +2003,13 @@ class GUI(Tk):
                                 aux=(p_old!=p)
                                 prob_old, bol=self.calc_change(p_old, p, r, prob_old)
                                 prob_old_c, bol_c=self.calc_change(crit_old, crit, r, prob_old_c)
-                                prob_old_cf, bol_cf=self.calc_change(p_old/10, p/10, r, prob_old_cf)
+                                prob_old_cf, bol_cf=self.calc_change(p_old/2, p/2, r, prob_old_cf)
                                 if ahead and aux:
                                     if bol:
                                         ahead=0
                                         if not self.calc_change(crit, crit_last, r, prob_old_c)[1] and not bol_c:
                                             ahead_c=0
-                                        if not self.calc_change(p/10, p_last/10, r, prob_old_cf)[1] and not bol_cf:
+                                        if not self.calc_change(p/2, p_last/2, r, prob_old_cf)[1] and not bol_cf:
                                             ahead_cf=0
                                     poss_str="{:.1e}".format(prob_old)
                                 elif not aux:
@@ -1932,7 +2023,7 @@ class GUI(Tk):
                                         if not self.calc_change(p, p_last, r, prob_old)[1] and not bol:
                                             ahead=0
                                             aux_1.config(text='          |')
-                                        if not self.calc_change(p/10, p_last/10, r, prob_old_cf)[1] and not bol_cf:
+                                        if not self.calc_change(p/2, p_last/2, r, prob_old_cf)[1] and not bol_cf:
                                             ahead_cf=0
                                     poss_str="{:.1e}".format(prob_old_c)
                                 elif not aux:
@@ -1969,7 +2060,7 @@ class GUI(Tk):
                                                 fg = 'white',
                                                 bg = 'black', text = i.mods[:-3]+'N/A'*(not i.mods[:-3]),
                                                 font = "Consolas 12 bold",
-                                                command= lambda p=p, crit=crit, r=r, resultStr=resultStr: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr]).start())
+                                                command= lambda p=p, crit=crit, r=r, resultStr=resultStr, send_type=send_type: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr, send_type]).start())
                                 resButton.pack(side='left')
 
                                 p_old=p
@@ -1980,7 +2071,7 @@ class GUI(Tk):
                                                 fg = 'white',
                                                 bg = 'black', text = 'Show results',
                                                 font = "Consolas 14 bold",
-                                                command=partial(self.show_res, possibs, message))
+                                                command=partial(self.show_res, message, send_type))
                             resButton.pack(pady=(0, 12))                            
                 except Exception:
                     print(traceback.format_exc())
@@ -2014,11 +2105,12 @@ class GUI(Tk):
                 prob=interval*(1-prob_old)/(prob_old*(1-interval)+(1-prob_old)*interval)
             return (bol, prob)
 
-        def show_res(self, possibs, message):
+        def show_res(self, message, send_type):
             try:
                 self.possibs.destroy()
             except Exception:
                 print(traceback.format_exc())
+                
             p_old, crit_old, r, resultStr=self.transl(message[0])
             self.possibs=Toplevel(bg='black')
             self.possibs.title('Possibildiades')
@@ -2028,22 +2120,26 @@ class GUI(Tk):
             aux_mor=Label(self.possibs, bg='black', width = w, height = 1)
             aux_mor.pack_propagate(0)
             aux_mor.pack()
-            aux_1=text=Label(aux_mor, bg='black', text='Result         |', fg='white', font=('Consolas', 12))
+            aux_1=Label(aux_mor, bg='black', text='Result         |', fg='white', font=('Consolas', 12))
             aux_1.pack(side='left')
-            aux_2=text=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Consolas', 12))
+            aux_2=Label(aux_mor, bg='black', text='Net advantage|', fg='white', font=('Consolas', 12))
             aux_2.pack(side='left')
-            aux_3=text=Label(aux_mor, bg='black', text='Resources', fg='white', font=('Consolas', 12))
+            aux_3=Label(aux_mor, bg='black', text='Resources', fg='white', font=('Consolas', 12))
             aux_3.pack(side='left')
             for i in message:
                 p, crit, r, resultStr=self.transl(i)
+                if send_type:
+                    opposite_message=(send_type=='NÃO')*'SIM'+(send_type=='SIM')*'NÃO'
+                    resultStr=(resultStr=="SUCESSO" or resultStr=="SUCESSO CRÍTICO")*send_type+(resultStr=="FALHA" or resultStr=="FALHA CRÍTICA")*opposite_message
+                    
                 aux_mor=Label(self.possibs, bg='black', width = w, height = 1)
                 aux_mor.pack_propagate(0)
                 aux_mor.pack()
-                aux_1=text=Label(aux_mor, bg='black', text=resultStr+(15-len(resultStr))*' '+'|', fg='white', font=('Consolas', 12))
+                aux_1=Label(aux_mor, bg='black', text=resultStr+(15-len(resultStr))*' '+'|', fg='white', font=('Consolas', 12))
                 aux_1.pack(side='left')
-                aux_2=text=Label(aux_mor, bg='black', text='+'*(i.adv>=0)+str(i.adv)+11*' '+'|', fg='white', font=('Consolas', 12))
+                aux_2=Label(aux_mor, bg='black', text='+'*(i.adv>=0)+str(i.adv)+11*' '+'|', fg='white', font=('Consolas', 12))
                 aux_2.pack(side='left')
-                aux_3=text=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Consolas', 12))
+                aux_3=Label(aux_mor, bg='black', text=i.mods[:-2], fg='white', font=('Consolas', 12))
                 aux_3.pack(side='left')
 
         def rec(self, tot, num, dice_list, index):
@@ -2137,7 +2233,7 @@ class GUI(Tk):
 
                 f = Figure(facecolor='k')
                 
-                canvas = FigureCanvasTkAgg(f, master=frame)
+                canvas=FigureCanvasTkAgg(f, master=frame)
                 canvas.draw()
                 canvas.get_tk_widget().pack()
                 
@@ -2165,18 +2261,18 @@ class GUI(Tk):
                     p.bar(i, values[mini-i-1], color=self.color)
                     f.tight_layout()
 
-                    canvas0 = FigureCanvasTkAgg(f, master=frame)
+                    canvas0=FigureCanvasTkAgg(f, master=frame)
                     canvas0.draw()
-                    canvas.get_tk_widget().pack_forget()
+                    canvas.get_tk_widget().destroy()
                     canvas0.get_tk_widget().pack()
                     sleep(0.5)
                     if j!=l-1:
                         p.bar(i, values[mini-i-1], color='w')
                         f.tight_layout()
 
-                        canvas = FigureCanvasTkAgg(f, master=frame)
+                        canvas=FigureCanvasTkAgg(f, master=frame)
                         canvas.draw()
-                        canvas0.get_tk_widget().pack_forget()
+                        canvas0.get_tk_widget().destroy()
                         canvas.get_tk_widget().pack()
                         sleep(0.3)
                 p.set_title('r='+str(roll)+', p(r)='+"{:.1e}".format(dic[roll]/total)+', p(x>=r)='+"{:.1e}".format(values[mini-roll-1]), color='w')
@@ -2184,7 +2280,7 @@ class GUI(Tk):
                 
                 canvas = FigureCanvasTkAgg(f, master=frame)
                 canvas.draw()
-                canvas0.get_tk_widget().pack_forget()
+                canvas0.get_tk_widget().destroy()
                 canvas.get_tk_widget().pack()
             except Exception:
                 print(traceback.format_exc())
