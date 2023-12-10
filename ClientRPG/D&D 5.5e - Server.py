@@ -473,19 +473,19 @@ while True:
                         if login_message=='ok':
                             for socket in clients:
                                 if clients[socket]['data']==user['data']:
-                                    login_message='Username já em uso, tente outro.'
+                                    login_message='Username já em uso, tente outro'
 
                         if login_message=='ok':
                             if user['data']=='Server' or user['data']=='':
-                                login_message='Username não pode ser \'Server\' ou ser em branco, tente outro.'
+                                login_message='Username não pode ser \'Server\' ou ser em branco, tente outro'
 
                         if login_message=='ok':
                             if '\\' in user['data']:
-                                login_message='Retire caracteres \ do username.'
+                                login_message='Retire caracteres \ do username'
 
                         if login_message=='ok':
                             if len(user['data'])>12:
-                                login_message='Username pode conter até 12 caracteres, tente outro.'
+                                login_message='Username pode conter até 12 caracteres, tente outro'
                             else:
                                 espera_de_cor[notified_socket]=user
             
