@@ -105,18 +105,18 @@ def send_new_message(notifi,client_socket):
     client_socket.send(notifi_header+notifi)
 
 def send_rolagem(rolagem,possib):
-    aux="\gInfo: \gCrit chance: "+str(round(rolagem['crit']*100))+"%;\gMinimum roll: "+str(rolagem['min'])+" de 2000."
+    aux=" Info: \gCrit chance: "+str(round(rolagem['crit']*100))+"%;\gMinimum roll: "+str(rolagem['min'])+" out of 2000."
     if rolagem['send_type']=='single':
-        notifi="Rolagem solo finalizada!"+aux
+        notifi="Solo roll finalized!"+aux
         notifi=pickle.dumps(msg('Server', notifi, colore))
     else:
-        notifi="Rolagem entre "+clients[rolagem['receiver']]['data']+' e '+clients[rolagem['caller']]['data']+" finalizada!"+aux
+        notifi="Roll between "+clients[rolagem['receiver']]['data']+' and '+clients[rolagem['caller']]['data']+" finalized!"+aux
         notifi=pickle.dumps(msg('Server', notifi, colore))
         send_new_message(notifi, rolagem['caller'])
     send_new_message(notifi, rolagem['receiver'])
     
     if rolagem['send_type']=='hidden':
-        possib.append((rolagem['hidden_message']=='s')*'SIM'+(rolagem['hidden_message']=='n')*'NÃO')
+        possib.append((rolagem['hidden_message']=='s')*'Yes'+(rolagem['hidden_message']=='n')*'No')
         notifi=pickle.dumps(possib)
         send_new_message(notifi, rolagem['caller'])
         send_new_message(notifi, rolagem['receiver'])
@@ -148,11 +148,11 @@ def apply_posmod_pre(receiver,fonte,rolagem):
                             usado=1
                     if usado:
                         res.qnt-=1
-                        notifi='Usado o possível recurso '+i.subresName+' de '+res.resName+' na rolagem '
+                        notifi='The possible resource '+i.subresName+' out of '+res.resName+' was used in the '
                         if rolagem['send_type']=='single':
-                            notifi+='solo.'
+                            notifi+='solo roll.'
                         else:
-                            notifi+='entre '+clients[rolagem['caller']]['data']+' e '+clients[rolagem['receiver']]['data']+'. Restam '+str(mod[0])+' desse recurso.'
+                            notifi+='roll between '+clients[rolagem['caller']]['data']+' and '+clients[rolagem['receiver']]['data']+'. '+str(mod[0])+' of this resource left.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,receiver)
 
@@ -200,7 +200,7 @@ def rola(rolagem):
         return
     recibru=rolagem['receiver']
     rolagem['p']+=adv_mod(rolagem['advan'])
-    r=max(random.randint(1,2000), rolagem['min'])
+    r=min(random.randint(0, 1999), 2000-rolagem['min'])
     apply_posmod_pre(recibru, rolagem, rolagem)
     if rolagem['send_type']!='single':
         rolls[recibru].pop()
@@ -217,7 +217,7 @@ def rola(rolagem):
     send_rolagem(rolagem, possib)
 
 def calc_crit(crit_chance, p):
-    return round(p*crit_chance+max(0,3*(p-2000)/5))
+    return round(p*crit_chance+max(0, 2*(p-2000)/5))
 
 # Handles message receiving
 def receive_message(client_socket):
@@ -283,7 +283,7 @@ while True:
                         
                     print('Closed connection from: {}.'.format(clients[notified_socket]['data']))
                     for client_socket in clients[notified_socket]['calling']:
-                        notifi=clients[notified_socket]['data']+" desconectou enquanto chamava você. Você não está mais rolando."
+                        notifi=clients[notified_socket]['data']+" disconnected while calling you. You're not rolling anymore."
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,client_socket)
                         notifi=pickle.dumps(status(0))
@@ -292,14 +292,14 @@ while True:
                     try:
                         clients[rolls[notified_socket][0]['caller']]['calling'].remove(notified_socket)
                         if clients[rolls[notified_socket][0]['caller']]['calling']==[]:
-                            notifi=clients[notified_socket]['data']+" desconectou e era sua única chamada. Você não está mais rolando."
+                            notifi=clients[notified_socket]['data']+" disconnected and they were your only call. You're not rolling anymore."
                             notifi=pickle.dumps(msg('Server',notifi,colore))
                             send_new_message(notifi,rolls[notified_socket][0]['caller'])
                             notifi=pickle.dumps(status(0))
                             send_new_message(notifi,rolls[notified_socket][0]['caller'])
                             clients[rolls[notified_socket][0]['caller']]['rolling']=0
                         else:
-                            notifi=clients[notified_socket]['data']+" desconectou porém você ainda tem chamadas. Você continua rolando."
+                            notifi=clients[notified_socket]['data']+" disconnected but you still have calls. You keep rolling with them."
                             notifi=pickle.dumps(msg('Server',notifi,colore))
                             send_new_message(notifi,rolls[notified_socket][0]['caller'])
                     except:
@@ -332,7 +332,7 @@ while True:
                         for client_socket in clients:
                             client_socket.send(message["header"] + message['data'])
                     else:
-                        messagepf.sender='Privado > '+user['data']
+                        messagepf.sender=user['data']+" (private)"
                         message['data']=pickle.dumps(messagepf)
                         message["header"]=f"{len(message['data']):<{HEADER_LENGTH}}".encode('utf-8')
                         for client_socket in clients:
@@ -343,7 +343,7 @@ while True:
                 elif type(messagepf).__name__=='roll':
                     if not user["rolling"]:
                         if messagepf.who=='hidden':
-                            notifi=pickle.dumps(msg('Server',"Confira o que você espera enviar ao oponente em caso de sucesso dele (Sim ou Não). Repita a rolagem se necessário.",colore))
+                            notifi=pickle.dumps(msg('Server', "Check what you expect to send to the opponent in case of their success (Yes or No). Repeat the roll if necessary.",colore))
                             send_new_message(notifi,notified_socket)
                         for client_socket in clients:
                             check=clients[client_socket]['data']
@@ -352,9 +352,9 @@ while True:
                                 if not clients[client_socket]['rolling']:
                                     clients[client_socket]['rolling']+=roladas
                                     user['calling'].append(client_socket)
-                                    notifi=pickle.dumps(msg('Server', check+" encontra-se disponível.",colore))
+                                    notifi=pickle.dumps(msg('Server', check+" is available.",colore))
                                     send_new_message(notifi, notified_socket)
-                                    notifi=user['data']+" iniciou "+str(roladas)+" rolagem(ns) com você com a tag "+messagepf.who+'.'+(roladas>1)*"\gRecomenda-se ler o resultado anterior antes de inserir o próximo bloco para evitar repetição de recursos."
+                                    notifi=user['data']+" started "+str(roladas)+" roll(s) with you with the tag "+messagepf.who+'.'+(roladas>1)*" \gIt is recommended to read the previous result before inserting the next block to avoid repeating resources."
                                     notifi=pickle.dumps(msg('Server',notifi,colore))
                                     send_new_message(notifi, client_socket)
                                     notifi=pickle.dumps(status(roladas))
@@ -365,7 +365,7 @@ while True:
                                         dic={'advan': 0, 'receiver': client_socket, 'caller': notified_socket, 'ready': 0, 'p':1000, 'send_type': messagepf.who, 'crit': 0.1, 'min': 0}
                                         rolls[client_socket].append(dic)
                                 else:
-                                    notifi=check+" encontra-se indisponível pois já está rolando."
+                                    notifi=check+" is unavailable as it is already rolling."
                                     notifi=pickle.dumps(msg('Server', notifi, colore))
                                     send_new_message(notifi, notified_socket)
                         if user['calling']:
@@ -374,11 +374,11 @@ while True:
                             notifi=pickle.dumps(status(1))
                             send_new_message(notifi,notified_socket)
                         else:
-                            notifi="Ninguém aceitou."
+                            notifi="Nobody accepted."
                             notifi=pickle.dumps(msg('Server',notifi,colore))
                             send_new_message(notifi,notified_socket)
                     else:
-                        notifi="Você já se encontra rolando, logo não pode iniciar novas rolagens."
+                        notifi="You are already rolling, so you cannot start new rolls."
                         notifi=pickle.dumps(msg('Server', notifi, colore))
                         send_new_message(notifi, notified_socket)
                 
@@ -388,12 +388,13 @@ while True:
                         converted_pos+=i.resName+": "
                         for j in i.listSubres:
                             converted_pos+=j.subresName+', '
-                        converted_pos=converted_pos[:-2]+"\g"
-                    converted_pos=converted_pos[:-2]
-                    notifi='Info:\gValue: '+(messagepf.premods.const>0)*"+"+str(messagepf.premods.const)+";\gAdvantage: "+(messagepf.premods.adv>0)*"+"+str(messagepf.premods.adv)+";\gResources: \g"+converted_pos
+                        converted_pos=converted_pos[:-2]+".\g          "
+                    converted_pos=converted_pos[:-12]
+                    b=(converted_pos.replace(" ", "")!="")
+                    notifi='Block received! Block info:\gValue: '+(messagepf.premods.const>0)*"+"+str(messagepf.premods.const)+";\gAdvantage: "+(messagepf.premods.adv>0)*"+"+str(messagepf.premods.adv)+"."*(not b)+(";\gResources: \g          "+converted_pos)*b
                     
                     if user['rolling']:
-                        notifi+=".\gFinalizado! Mais "+str(user['rolling'])+' rolagens.'
+                        notifi+=" \gAnother "+str(user['rolling'])+' rolls to go.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,notified_socket)
 
@@ -424,7 +425,6 @@ while True:
                                     rola(rolls[called_socket][i]) 
                         user['calling']=[]
                     else:
-                        notifi+=".\gFinalizado!"
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,notified_socket)
                         rola({'advan': messagepf.premods.adv, 'receiver': notified_socket, 'crit': messagepf.crit, 'ready': 2, 'p': 1000+50*messagepf.premods.const, 'posmod': messagepf.posmods, 'send_type': 'single', 'min': messagepf.min}) 
