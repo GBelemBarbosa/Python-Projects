@@ -746,8 +746,10 @@ class GUI(ctk.CTk):
                     resultStr = "Fail"
             return p, crit, r, resultStr
                 
-        def displayres(self, p, crit, r, resultStr, send_type):
+        def displayres(self, p, crit, r, resultStr, send_type, resources):
             if send_type:
+                message = "Selecionei uma opção de recursos na rolagem! A rolagem usou\g"+resources+", mas o resultado é segredo..."
+                
                 if not self.hiddenres.winfo_viewable():
                     self.hiddenres.deiconify()
                 if self.displaymode.get()=='bar':    
@@ -762,6 +764,8 @@ class GUI(ctk.CTk):
                 aux=(resultStr=="Success" or resultStr=="Critical success")*send_type+(resultStr=="Fail" or resultStr=="Critical fail")*opposite_message
                 self.hidden_label.configure(text=aux)
             else:
+                message = "Selecionei uma opção de recursos na rolagem! A rolagem usou\g"+resources+" e resultou em "+resultStr+"."
+                
                 if self.displaymode.get()=='bar':
                     self.progress['value']=0
                     self.InfoLabel2.configure(text = "Success: "+str(p)+"\nCritical success: "+str(crit)+"\n")
@@ -814,7 +818,9 @@ class GUI(ctk.CTk):
                         img = Image.open("Dice_Images/"+str(rolagem)+".png")
                         img = img.convert("RGBA")
                         self.img = ctk.CTkImage(img, size=(250,250))
+                        self.panel.configure(fg_color="gray20")
                         self.panel.configure(image = self.img)
+                        self.panel.configure(fg_color=self.color)
                         
                         sleep(sleepTime)
                         sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
@@ -837,10 +843,16 @@ class GUI(ctk.CTk):
                         img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
                     img = img.convert("RGBA")
                     self.img = ctk.CTkImage(img, size=(250,250))
+                    self.panel.configure(fg_color="gray20")
                     self.panel.configure(image = self.img)
+                    self.panel.configure(fg_color=self.color)
 
                     self.ResultLabel.configure(text = resultStr)
                     self.InfoLabel.configure(text = self.InfoLabel.cget("text")+"Rolled: "+str(r))
+
+            message_sent = pickle.dumps(msg([player['name'] for player in self.players], message))
+            message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+            client.send(message_sent_header+message_sent)
 
         def nextSleepTime(self, currentTime, limitTime): # 3 opcoes de incremento de tempo
             # return currentTime + currentTime**2 / 2
@@ -924,9 +936,10 @@ class GUI(ctk.CTk):
 
                 self.resor[i].deleteButton=ctk.CTkButton(self.resor[i].mainFrame, 
                                                                         text = "Delete resource",
+                                                                        text_color="gray30",
                                                                         border_color=self.color,
                                                                         border_width=2,
-                                                                        fg_color="gray30", hover_color="gray40", command = lambda c=i: self.destroy_res(c))
+                                                                        fg_color=self.color, hover_color="gray40", command = lambda c=i: self.destroy_res(c))
                 self.resor[i].deleteButton.grid(row=len(self.resor[i].listSubres)+1, column=0, padx=self.rescale, sticky="ew", pady=(0,self.rescale), columnspan=2)
 
         def destroy_all(self):
@@ -1339,7 +1352,7 @@ class GUI(ctk.CTk):
 
                 self.sdtypelabel= ctk.CTkLabel(self.stypebar, text='Send type:')
                 self.separator0= ctk.CTkLabel(self.stypebar, text="")
-                self.messagelabel= ctk.CTkLabel(self.stypebar, text='Hidden essage:')
+                self.messagelabel= ctk.CTkLabel(self.stypebar, text='Hidden message:')
                 self.sdtypelabel.grid(row=0, column=0, padx=self.rescale)
                 self.weBtt.grid(row=0, column=1, padx=(0,self.rescale))
                 self.meBtt.grid(row=0, column=2, padx=(0,self.rescale))
@@ -1898,11 +1911,12 @@ class GUI(ctk.CTk):
                                                 
                                 aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>0)+str(message[i].adv), fg_color="gray25", corner_radius=6)
                                 aux_2.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
-                                
+
+                                text=message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2])
                                 resButton = ctk.CTkButton(aux_3_mor,
-                                                text = message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2]),
+                                                text = text,
                                                 fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
-                                                command= lambda p=p, crit=crit, r=r, resultStr=resultStr, send_type=send_type: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr, send_type]).start())
+                                                command= lambda p=p, crit=crit, r=r, resultStr=resultStr, send_type=send_type: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr, send_type, text]).start())
                                 resButton.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                             
                             resButton = ctk.CTkButton(possibs,
@@ -2134,10 +2148,6 @@ class GUI(ctk.CTk):
             message_sent = pickle.dumps(msg(destinatários, self.msg))
             message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
             client.send(message_sent_header+message_sent)
-            try:
-                plt.close()
-            except Exception:
-                print(traceback.format_exc())
             self.rldc = threading.Thread(target=self.rolldic(self.msg)) 
             
 # create a GUI class object
