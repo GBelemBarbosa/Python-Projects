@@ -98,7 +98,7 @@ print(f'Listening for connections on {IP}:{PORT}...')
 colore='#ffffff'
 
 def adv_mod(adv):
-    return (adv>0)*300-(adv<0)*300
+    return (adv>0)*350-(adv<0)*350
 
 def send_new_message(notifi,client_socket):
     notifi_header = f"{len(notifi):<{HEADER_LENGTH}}".encode('utf-8')
