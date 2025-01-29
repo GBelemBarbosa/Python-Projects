@@ -748,7 +748,7 @@ class GUI(ctk.CTk):
                 
         def displayres(self, p, crit, r, resultStr, send_type, resources):
             if send_type:
-                message = "Selecionei uma opção de recursos na rolagem! A rolagem usou\g"+resources+", mas o resultado é segredo..."
+                message = "Opção de recursos selecionada! O resultado é segredo...\g Post: "+resources
                 
                 if not self.hiddenres.winfo_viewable():
                     self.hiddenres.deiconify()
@@ -764,7 +764,7 @@ class GUI(ctk.CTk):
                 aux=(resultStr=="Success" or resultStr=="Critical success")*send_type+(resultStr=="Fail" or resultStr=="Critical fail")*opposite_message
                 self.hidden_label.configure(text=aux)
             else:
-                message = "Selecionei uma opção de recursos na rolagem! A rolagem usou\g"+resources+" e resultou em "+resultStr+"."
+                message = "Opção de recursos selecionada! O resultado é: "+resultStr+".\g Post: "+resources
                 
                 if self.displaymode.get()=='bar':
                     self.progress['value']=0
