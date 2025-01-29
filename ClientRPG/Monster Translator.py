@@ -16,7 +16,7 @@ dic_skill={
     'performance': [11, 3, 'performance'],
     'persuasion': [11, 2, 'convincing'],
     'religion': [7, 4, 'religion'],
-    'sleight of hand': [3, 1, 'sleight of hand'],
+    'sleight of hand': [3, 1, 'dexterity'],
     'stealth': [3, 1, 'stealth'],
     'survival': [9, 4, 'survival']
 }
@@ -30,14 +30,15 @@ dic_save={
     'wisdom': 'soul/mind'
 }
 
-def sign(a):
-    return "+"*(a>=0)+'-'*(a<0)
+def signe(a):
+    return "+"*(a>=0)
 
 def skill_swap(m, entry, i, scores, scores2):
     m=m.group()
     aux=re.search("-?\d+", m).group()
     bonus=2*(int(aux)-scores[entry[0]])+scores2[entry[1]]
-    m=m.replace(aux, str(bonus))
+    m=m.replace("+", "")
+    m=m.replace(aux, signe(bonus)+str(bonus))
     m=m.replace(i, entry[2])
     return m
 
@@ -46,7 +47,8 @@ def AC_swap(m, entry, i):
     aux=re.search("-?\d+", m).group()
     bonus=-(int(aux)-10)*2
     m=m.replace(i, entry)
-    m=m.replace(aux, str(bonus))
+    m=m.replace("+", "")
+    m=m.replace(aux, signe(bonus)+str(bonus))
     m=m[:2].replace("dc", "AC")+m[2:]
     return m
 
@@ -55,7 +57,8 @@ def AS_swap(m, entry, i):
     aux=re.search("-?\d+", m).group()
     bonus=-(int(aux)-10)*2
     m=m.replace(i, entry)
-    m=m.replace(aux, str(bonus))
+    m=m.replace("+", "")
+    m=m.replace(aux, signe(bonus)+str(bonus))
     m=m[:2].replace("dc", "AS")+m[2:]
     return m
 
@@ -80,13 +83,18 @@ scores=[int(x) for x in re.findall("-?\d+", aux.group())]
 scores2=[int((scores[0]+scores[4]+1)/2)-10, scores[2]-10, int((scores[6]+scores[10]+1)/2)-10, int((scores[8]+scores[10]+1)/2)-10,0]
 bloqueto=str(int((scores[0]+scores[4]+1)/2))+' ('+str(scores2[0])+") "+str(scores[2])+' ('+str(scores2[1])+") "+str(int((scores[6]+scores[10]+1)/2))+' ('+str(scores2[2])+") "+str(int((scores[8]+scores[10]+1)/2))+' ('+str(scores2[3])+") "+str(scores[5])
 stat=stat[:stat.find("\nstr")]+"\nBody Senses Mind Soul Vitality\n"+bloqueto+stat[aux.end():]
+aux=re.search("passive perception.+?\n", stat)
+auxau=aux.group()
+auxau=re.sub("perception.+?\d+\D", lambda m: skill_swap(string(int(m)-10), dic_skill["perception"], "perception", scores, scores2), auxau)
+stat=stat[:aux.start()]+auxau+stat[aux.end():]
 if "skills" in stat:
     aux=re.search("skills.+?\n", stat)
     auxau=aux.group()
     for i in dic_skill:
         auxau=re.sub(i+".+?\d+\D", lambda m: skill_swap(m, dic_skill[i], i, scores, scores2), auxau)
-        stat=re.sub("dc.+?\d+?.+?"+i+".+?check", lambda m: AC_swap(m, dic_skill[i][2], i), stat, re.DOTALL)
     stat=stat[:aux.start()]+auxau+stat[aux.end():]
+for i in dic_skill:
+    stat=re.sub("dc.+?\d+?.+?"+i+".+?check", lambda m: AC_swap(m, dic_skill[i][2], i), stat, re.DOTALL)
 def chain_gang_chec(g, dic, stat):
     aux=re.findall(", "+dic[g][2]+" and|, "+dic[g][2]+" or|, "+dic[g][2]+",", stat)
     print(aux)
