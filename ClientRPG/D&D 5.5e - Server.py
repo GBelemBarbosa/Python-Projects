@@ -105,7 +105,7 @@ def send_new_message(notifi,client_socket):
     client_socket.send(notifi_header+notifi)
 
 def send_rolagem(rolagem,possib):
-    aux=" Info: \gCrit chance: "+str(round(rolagem['crit']*100))+"%;\gMinimum roll: "+str(rolagem['min'])+" out of 2000."
+    aux=r" Info: \gCrit chance: "+str(round(rolagem['crit']*100))+r"%;\gMinimum roll: "+str(rolagem['min'])+" out of 2000."
     if rolagem['send_type']=='single':
         notifi="Solo roll finalized!"+aux
         notifi=pickle.dumps(msg('Server', notifi, colore))
@@ -152,7 +152,7 @@ def apply_posmod_pre(receiver,fonte,rolagem):
                         if rolagem['send_type']=='single':
                             notifi+='solo roll.'
                         else:
-                            notifi+='roll between '+clients[rolagem['caller']]['data']+' and '+clients[rolagem['receiver']]['data']+'. '+str(mod[0])+' of this resource left.'
+                            notifi+='roll between '+clients[rolagem['caller']]['data']+' and '+clients[rolagem['receiver']]['data']+'. '+str(res.qnt)+' of this resource left.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,receiver)
 
@@ -324,21 +324,29 @@ while True:
                 messagepf=pickle.loads(message["data"])
                 
                 if type(messagepf).__name__=='msg':
-                    messagepf.cor=user['cor']
-                    if not messagepf.destiny:
-                        messagepf.sender=user['data']
+                    if messagepf.destiny == ['broadcast_roll_result']:
+                        messagepf.sender='Server'
+                        messagepf.cor=colore
                         message['data']=pickle.dumps(messagepf)
                         message["header"]=f"{len(message['data']):<{HEADER_LENGTH}}".encode('utf-8')
                         for client_socket in clients:
                             client_socket.send(message["header"] + message['data'])
                     else:
-                        messagepf.sender=user['data']+" (private)"
-                        message['data']=pickle.dumps(messagepf)
-                        message["header"]=f"{len(message['data']):<{HEADER_LENGTH}}".encode('utf-8')
-                        for client_socket in clients:
-                            if clients[client_socket]['data'] in messagepf.destiny:
+                        messagepf.cor=user['cor']
+                        if not messagepf.destiny:
+                            messagepf.sender=user['data']
+                            message['data']=pickle.dumps(messagepf)
+                            message["header"]=f"{len(message['data']):<{HEADER_LENGTH}}".encode('utf-8')
+                            for client_socket in clients:
                                 client_socket.send(message["header"] + message['data'])
-                        notified_socket.send(message["header"] + message['data'])
+                        else:
+                            messagepf.sender=user['data']+" (private)"
+                            message['data']=pickle.dumps(messagepf)
+                            message["header"]=f"{len(message['data']):<{HEADER_LENGTH}}".encode('utf-8')
+                            for client_socket in clients:
+                                if clients[client_socket]['data'] in messagepf.destiny:
+                                    client_socket.send(message["header"] + message['data'])
+                            notified_socket.send(message["header"] + message['data'])
 
                 elif type(messagepf).__name__=='roll':
                     if not user["rolling"]:
@@ -354,7 +362,7 @@ while True:
                                     user['calling'].append(client_socket)
                                     notifi=pickle.dumps(msg('Server', check+" is available.",colore))
                                     send_new_message(notifi, notified_socket)
-                                    notifi=user['data']+" started "+str(roladas)+" roll(s) with you with the tag "+messagepf.who+'.'+(roladas>1)*" \gIt is recommended to read the previous result before inserting the next block to avoid repeating resources."
+                                    notifi=user['data']+" started "+str(roladas)+" roll(s) with you with the tag "+messagepf.who+'.'+(roladas>1)*r" \gIt is recommended to read the previous result before inserting the next block to avoid repeating resources."
                                     notifi=pickle.dumps(msg('Server',notifi,colore))
                                     send_new_message(notifi, client_socket)
                                     notifi=pickle.dumps(status(roladas))
@@ -388,13 +396,13 @@ while True:
                         converted_pos+=i.resName+": "
                         for j in i.listSubres:
                             converted_pos+=j.subresName+', '
-                        converted_pos=converted_pos[:-2]+".\g          "
+                        converted_pos=converted_pos[:-2]+r".\g          "
                     converted_pos=converted_pos[:-12]
                     b=(converted_pos.replace(" ", "")!="")
-                    notifi='Block received! Block info:\gValue: '+(messagepf.premods.const>0)*"+"+str(messagepf.premods.const)+";\gAdvantage: "+(messagepf.premods.adv>0)*"+"+str(messagepf.premods.adv)+"."*(not b)+(";\gResources: \g          "+converted_pos)*b
+                    notifi=r'Block received! Block info:\gValue: '+(messagepf.premods.const>0)*"+"+str(messagepf.premods.const)+r";\gAdvantage: "+(messagepf.premods.adv>0)*"+"+str(messagepf.premods.adv)+"."*(not b)+(r";\gResources: \g          "+converted_pos)*b
                     
                     if user['rolling']:
-                        notifi+=" \gAnother "+str(user['rolling'])+' rolls to go.'
+                        notifi+=r" \gAnother "+str(user['rolling'])+' rolls to go.'
                         notifi=pickle.dumps(msg('Server',notifi,colore))
                         send_new_message(notifi,notified_socket)
 
@@ -468,24 +476,24 @@ while True:
 
                         if len(sockets_list)>=10:
                             sockets_list.remove(notified_socket)
-                            login_message='Servidor lotado'
+                            login_message='Server full'
 
                         if login_message=='ok':
                             for socket in clients:
                                 if clients[socket]['data']==user['data']:
-                                    login_message='Username já em uso, tente outro'
+                                    login_message='Username already in use, try another'
 
                         if login_message=='ok':
                             if user['data']=='Server' or user['data']=='':
-                                login_message='Username não pode ser \'Server\' ou ser em branco, tente outro'
+                                login_message='Username cannot be \'Server\' or blank, try another'
 
                         if login_message=='ok':
                             if '\\' in user['data']:
-                                login_message='Retire caracteres \ do username'
+                                login_message=r'Remove \ characters from username'
 
                         if login_message=='ok':
                             if len(user['data'])>12:
-                                login_message='Username pode conter até 12 caracteres, tente outro'
+                                login_message='Username can contain up to 12 characters, try another'
                             else:
                                 espera_de_cor[notified_socket]=user
             

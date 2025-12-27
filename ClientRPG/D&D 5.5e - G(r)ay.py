@@ -1,4 +1,8 @@
-# import all the required modules 
+# import all the required modules
+# Set DPI awareness BEFORE any GUI imports
+from ctypes import windll
+windll.shcore.SetProcessDpiAwareness(1)
+
 import socket 
 import threading
 from tkinter import *
@@ -24,6 +28,11 @@ from math import exp
 from math import floor, ceil
 import os
 import traceback
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PAST_CONFIGS_DIR = os.path.join(BASE_DIR, 'Past configs')
+SAVED_CONFIGS_DIR = os.path.join(BASE_DIR, 'Saved configs')
+DICE_IMAGES_DIR = os.path.join(BASE_DIR, 'Dice_Images')
 from functools import partial
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
@@ -33,8 +42,32 @@ import itertools
 import math
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
-from ctypes import windll
-windll.shcore.SetProcessDpiAwareness(1)
+# windll already imported at top of file
+import matplotlib.font_manager as fm
+### ROBOTO FONT DETECTION ###
+roboto_fonts = [f for f in fm.fontManager.ttflist if 'Roboto' in f.name]
+if not roboto_fonts:
+    print(">>> Roboto NOT in cache. Attempting deep refresh...")
+    try:
+        font_files = fm.findSystemFonts(fontpaths=None, fontext='ttf')
+        for fpath in font_files:
+            if 'Roboto' in os.path.basename(fpath):
+                fm.fontManager.addfont(fpath)
+        roboto_fonts = [f for f in fm.fontManager.ttflist if 'Roboto' in f.name]
+        if roboto_fonts:
+            print(f">>> SUCCESS: Roboto found after refresh. Names: {[f.name for f in roboto_fonts]}")
+        else:
+            print(">>> FAILURE: Roboto not found in system fonts.")
+    except Exception as e:
+        print(f">>> ERROR during font refresh: {e}")
+else:
+    print(f">>> Roboto ALREADY in cache. Names: {[f.name for f in roboto_fonts]}")
+##############################
+# Set Matplotlib to use Roboto as the default font
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Roboto'] + plt.rcParams['font.sans-serif']
+
+# DPI awareness already set at top of file
 
 __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 
@@ -43,7 +76,7 @@ _whitespace = '\t\n\x0b\x0c\r '
 def justify(words, width):
     if len(words)==width:
         return(words)
-    line = re.split("(\s+)",words)
+    line = re.split(r"(\s+)",words)
     if line[0]=='':
         line.pop(0)
     i=0
@@ -195,17 +228,17 @@ class TextWrapper:
             while chunks:
                 if '\n' in chunks[-1]:
                     chunks.pop()
-                    chunks.append('\j'+' -*- '*10)
-                elif '\k' in chunks[-1] and not '\\\k' in chunks[-1]:
-                        yob=chunks[-1].split('\k')
+                    chunks.append(r'\j'+' -*- '*10)
+                elif r'\k' in chunks[-1] and not r'\\\k' in chunks[-1]:
+                        yob=chunks[-1].split(r'\k')
                         chunks.pop()
                         if yob[1]!='':
                             chunks.append(yob[1])
                         elif len(chunks)>1:
                             z=chunks.pop()
-                            chunks[-1]='\j'+z+chunks[-1]
+                            chunks[-1]=r'\j'+z+chunks[-1]
                         else:
-                            chunks.append('\j')
+                            chunks.append(r'\j')
                         if yob[0]!='':
                             if len(yob[0])<(width-cur_len):
                                 chunks.append((width-cur_len-len(yob[0]))*' ')
@@ -221,12 +254,12 @@ class TextWrapper:
                             chunks.append(yob[1])
                         elif len(chunks)>1:
                             z=chunks.pop()
-                            chunks[-1]='\j'*(width-cur_len-len(yob[0])>0)+z.replace(' ','')+chunks[-1]
+                            chunks[-1]=r'\j'*(width-cur_len-len(yob[0])>0)+z.replace(' ','')+chunks[-1]
                         else:
                             if not yob[0] and (width-cur_len-len(yob[0])==0):
                                 chunks.append(' '*width)
                             else:
-                                chunks.append('\j'*(width-cur_len-len(yob[0])>0))
+                                chunks.append(r'\j'*(width-cur_len-len(yob[0])>0))
                         if yob[0]:
                             if len(yob[0])<(width-cur_len):
                                 chunks.append((width-cur_len-len(yob[0]))*' ')
@@ -235,14 +268,14 @@ class TextWrapper:
                             chunks.append(yob[0])
                         else:
                             chunks.append((width-cur_len)*' ')
-                elif '\g' in chunks[-1] and not '\\\g' in chunks[-1]:
-                        yob=chunks[-1].split('\g')
+                elif r'\g' in chunks[-1] and not r'\\\g' in chunks[-1]:
+                        yob=chunks[-1].split(r'\g')
                         chunks.pop()
                         if yob[1]!='':
-                            chunks.append('\j         '+yob[1])
+                            chunks.append(r'\j         '+yob[1])
                         elif len(chunks)>1:
                             z=chunks.pop()
-                            chunks[-1]='\j         '+z+chunks[-1]
+                            chunks[-1]=r'\j         '+z+chunks[-1]
                         if yob[0]!='':
                             if len(yob[0])<(width-cur_len):
                                 chunks.append((width-cur_len-len(yob[0]))*' ')
@@ -252,7 +285,7 @@ class TextWrapper:
                         else:
                             chunks.append((width-cur_len)*' ')
                             
-                l = len(chunks[-1])-2*(chunks[-1].startswith('\j') and cur_len==0)
+                l = len(chunks[-1])-2*(chunks[-1].startswith(r'\j') and cur_len==0)
                 if cur_len + l <= width:
                     cur_line.append(chunks.pop())
                     cur_len += l
@@ -400,14 +433,14 @@ class IntSpinbox(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)  # entry expands
 
         self.subtract_button = ctk.CTkButton(self, text="▼", width=height-6, border_color=color, border_width=2,
-                                                       fg_color="gray25", hover_color="gray35", command = self.subtract_button_callback)
+                                                       fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = self.subtract_button_callback)
         self.subtract_button.grid(row=0, column=0)
 
-        self.entry = ctk.CTkEntry(self, width=width-(2*height), border_width=0, fg_color="gray25")
+        self.entry = ctk.CTkEntry(self, width=width-(2*height), border_width=0, fg_color="gray25", font=("Roboto", 12))
         self.entry.grid(row=0, column=1, columnspan=1, padx=10/3, sticky="ew")
 
         self.add_button = ctk.CTkButton(self, text="▲", width=height-6, border_color=color, border_width=2,
-                                                  fg_color="gray25", hover_color="gray35", command = self.add_button_callback)
+                                                  fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = self.add_button_callback)
         self.add_button.grid(row=0, column=2)
 
         # default value
@@ -518,8 +551,9 @@ class GUI(ctk.CTk):
                 self.configure(fg_color="gray15")
                 self.withdraw()
 
-                for filename in os.listdir('Past configs/'):
-                    os.remove('Past configs/'+filename)
+                os.makedirs(PAST_CONFIGS_DIR, exist_ok=True)
+                for filename in os.listdir(PAST_CONFIGS_DIR):
+                    os.remove(os.path.join(PAST_CONFIGS_DIR, filename))
                 
                 # login window 
                 self.login = ctk.CTkToplevel(fg_color="gray15") 
@@ -535,28 +569,29 @@ class GUI(ctk.CTk):
                 self.plsFrame.grid_columnconfigure(0, weight=1)
                 self.plsFrame.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
                 
-                self.pls = ctk.CTkLabel(self.plsFrame, text = "Please login to continue") 
+                self.pls = ctk.CTkLabel(self.plsFrame, text = "Please login to continue", font=("Roboto", 14)) 
                 self.pls.grid(row=0, column=0)
                 
                 # create a Label 
-                self.labelName = ctk.CTkLabel(self.login) 
+                self.labelName = ctk.CTkLabel(self.login, text="", font=("Roboto", 12)) 
                 self.labelName.grid(row=1, column=0)
                 self.labelName.grid_rowconfigure(0, weight=1)
                 
                 # create a entry box for 
                 # typing the message 
-                self.entryName = ctk.CTkEntry(self.labelName, fg_color="gray20", border_width=0, placeholder_text_color="gray30", placeholder_text="Username") 
+                self.entryName = ctk.CTkEntry(self.labelName, fg_color="gray20", border_width=0, placeholder_text_color="gray30", placeholder_text="Username", font=("Roboto", 12)) 
                 self.entryName.grid(row=0, column=0)
                 self.entryName.bind('<Return>',(lambda event: self.goAhead(self.entryName.get())))
                 
                 # set the focus of the curser 
-                #self.entryName.after(20, self.entryName.focus)
+                self.login.focus_force()
+                self.entryName.after(200, self.entryName.focus)
                 
                 # create a Continue Button 
                 # along with action 
                 self.go = ctk.CTkButton(self.login, 
                                                 text = "Login", 
-                                                fg_color="gray20", hover_color="gray30", command = lambda: self.goAhead(self.entryName.get()))
+                                                fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead(self.entryName.get()))
                 self.go.grid(row=2, column=0, pady=self.rescale) 
                 
 
@@ -573,7 +608,7 @@ class GUI(ctk.CTk):
             self.displayFrame.grid_columnconfigure(0, weight=1)
             self.displayFrame.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
                 
-            self.display = ctk.CTkLabel(self.displayFrame, text="Display mode") 
+            self.display = ctk.CTkLabel(self.displayFrame, text="Display mode", font=("Roboto", 14)) 
             self.display.grid(row=0, column=0)
 
             self.displaymode=StringVar(value='bar')
@@ -581,20 +616,20 @@ class GUI(ctk.CTk):
             self.barbtt=ctk.CTkRadioButton(self.login2, 
                                                                     variable = self.displaymode, 
                                                                     value = 'bar',
-                                                                    text = ' Bar', fg_color=self.color, border_color="gray20", hover_color=self.color)
+                                                                    text = ' Bar', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
             self.barbtt.grid(row=1, column=0, padx=(44, 0))
 
             self.dicebtt=ctk.CTkRadioButton(self.login2, 
                                                                     variable = self.displaymode, 
                                                                     value = 'dice',
-                                                                    text = 'Dice', fg_color=self.color, border_color="gray20", hover_color=self.color)
+                                                                    text = 'Dice', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
             self.dicebtt.grid(row=2, column=0, padx=(44, 0)) 
             
             # create a Continue Button 
             # along with action 
             self.go2 = ctk.CTkButton(self.login2, 
                                             text = "Continue", border_color=self.color, border_width=2, 
-                                            fg_color="gray20", hover_color="gray30", command = lambda: self.goAhead2(name))
+                                            fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead2(name))
             self.go2.grid(row=3, column=0, pady=self.rescale)
                 
             self.options = [
@@ -623,15 +658,15 @@ class GUI(ctk.CTk):
                 self.displayCritical.grid_columnconfigure(0, weight=1)
                 self.displayCritical.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
-                self.dicebar= ctk.CTkLabel(self.displayCritical, text='Critical style')
+                self.dicebar= ctk.CTkLabel(self.displayCritical, text='Critical style', font=("Roboto", 14))
                 self.dicebar.grid(row=0, column=0)
                 
-                self.dice_style_drop = ctk.CTkComboBox(self.login3, variable=self.dice_style, values=self.options, state='readonly', dropdown_hover_color="gray25", fg_color="gray20", border_width=0, button_color="gray25")
+                self.dice_style_drop = ctk.CTkComboBox(self.login3, variable=self.dice_style, values=self.options, state='readonly', dropdown_hover_color="gray25", fg_color="gray20", border_width=0, button_color="gray25", font=("Roboto", 12))
                 self.dice_style_drop.grid(row=1, column=0)
 
                 self.go3 = ctk.CTkButton(self.login3, 
                                             text = "Continue", border_color=self.color, border_width=2,
-                                            fg_color="gray20", hover_color="gray30", command = lambda: self.goAhead3(name)) 
+                                            fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead3(name)) 
                 self.go3.grid(row=2, column=0, pady=self.rescale)
             else:
                 self.goAhead3(name)
@@ -656,7 +691,7 @@ class GUI(ctk.CTk):
             server_message=client.recv(server_message_length).decode(FORMAT)
             if server_message=='ok':
                 try:
-                    self.color=askcolor(color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), title ="Escolha a cor do seu usuário")[1]
+                    self.color=askcolor(color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), title ="Choose your user color")[1]
                     color=self.color.encode(FORMAT)
                 except:
                     self.on_closing()
@@ -680,7 +715,8 @@ class GUI(ctk.CTk):
                                                     hover=False,
                                                     border_color=self.players[c]['color'],
                                                     border_width=2,
-                                                    text = self.players[c]['name'])
+                                                    text = self.players[c]['name'],
+                                                    font=("Roboto", 12))
             self.playerSelected.append(tempLabel)
             self.playerSelected[-1].grid(row=len(self.playerSelected)-1, column=0, pady=(0,self.rescale), sticky="ew")
 
@@ -719,6 +755,7 @@ class GUI(ctk.CTk):
                                                 border_color=self.players[i]['color'],
                                                 border_width=2,
                                                 text = self.players[i]['name'],
+                                                font=("Roboto", 12),
                                                 command=lambda c=i: self.onPlayerClick(c))
                 self.playerBtts.append(tempButton)
                 self.playerBtts[-1].grid(row=i, column=0, pady=(0,self.rescale), sticky="ew")
@@ -728,6 +765,7 @@ class GUI(ctk.CTk):
                                                     border_color=self.players[i]['color'],
                                                     border_width=2,
                                                     text = self.players[i]['name'],
+                                                    font=("Roboto", 12),
                                                     command=lambda c=i: self.onPlayerSelec(c))
                 self.playerBtts2.append(tempButton)
                 self.playerBtts2[-1].grid(row=i, column=0, pady=(0,self.rescale), sticky="ew")
@@ -748,7 +786,7 @@ class GUI(ctk.CTk):
                 
         def displayres(self, p, crit, r, resultStr, send_type, resources):
             if send_type:
-                message = "Opção de recursos selecionada! O resultado é segredo...\g Post: "+resources
+                message = r"Resource option selected! The result is a secret...\g Post: "+resources
                 
                 if not self.hiddenres.winfo_viewable():
                     self.hiddenres.deiconify()
@@ -764,7 +802,7 @@ class GUI(ctk.CTk):
                 aux=(resultStr=="Success" or resultStr=="Critical success")*send_type+(resultStr=="Fail" or resultStr=="Critical fail")*opposite_message
                 self.hidden_label.configure(text=aux)
             else:
-                message = "Opção de recursos selecionada! O resultado é: "+resultStr+".\g Post: "+resources
+                message = r"Resource option selected! The result is: "+resultStr+r".\g Post: "+resources
                 
                 if self.displaymode.get()=='bar':
                     self.progress['value']=0
@@ -784,7 +822,7 @@ class GUI(ctk.CTk):
                     self.barracrit2.place(relwidth=0.0025, x=crit+1)
                     self.barrap2.place(relwidth=0.0025, x=p+1)
 
-                    x=0;
+                    x=0
                     n=random.randint(2, 15)
                     for i in range(159):
                         sleep(0.01)
@@ -801,6 +839,7 @@ class GUI(ctk.CTk):
                     if not self.dicewindow.winfo_viewable():
                         self.dicewindow.deiconify()
                     self.dicewindow.focus()
+                    self.panel.configure(fg_color="gray20")
 
                     ##### CONSTANTES PARA ADEQUACAO DOS TEMPOS DE ROLAGEM (EM 10^-2s)
 
@@ -815,12 +854,10 @@ class GUI(ctk.CTk):
 
                         currentRoll = rolagem
 
-                        img = Image.open("Dice_Images/"+str(rolagem)+".png")
+                        img = Image.open(os.path.join(DICE_IMAGES_DIR, str(rolagem)+".png"))
                         img = img.convert("RGBA")
                         self.img = ctk.CTkImage(img, size=(250,250))
-                        self.panel.configure(fg_color="gray20")
                         self.panel.configure(image = self.img)
-                        self.panel.configure(fg_color=self.color)
                         
                         sleep(sleepTime)
                         sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
@@ -836,16 +873,14 @@ class GUI(ctk.CTk):
                             roundedRealDiceRoll = ceil(r)
 
                     if resultStr=="Critical success":
-                        img = Image.open("Dice_Images/20"+self.dice_style.get()+'.png')
+                        img = Image.open(os.path.join(DICE_IMAGES_DIR, "20"+self.dice_style.get()+'.png'))
                     elif resultStr=="Critical fail":
-                        img = Image.open("Dice_Images/0"+self.dice_style.get()+'.png')
+                        img = Image.open(os.path.join(DICE_IMAGES_DIR, "0"+self.dice_style.get()+'.png'))
                     else:
-                        img = Image.open("Dice_Images/"+str(roundedRealDiceRoll)+".png")
+                        img = Image.open(os.path.join(DICE_IMAGES_DIR, str(roundedRealDiceRoll)+".png"))
                     img = img.convert("RGBA")
                     self.img = ctk.CTkImage(img, size=(250,250))
-                    self.panel.configure(fg_color="gray20")
-                    self.panel.configure(image = self.img)
-                    self.panel.configure(fg_color=self.color)
+                    self.panel.configure(image = self.img, fg_color=self.color)
 
                     self.ResultLabel.configure(text = resultStr)
                     self.InfoLabel.configure(text = self.InfoLabel.cget("text")+"Rolled: "+str(r))
@@ -861,8 +896,9 @@ class GUI(ctk.CTk):
 
         def on_closing(self):
             self.not_closing=0
-            for filename in os.listdir('Past configs/'):
-                os.remove('Past configs/'+filename)
+            if os.path.exists(PAST_CONFIGS_DIR):
+                for filename in os.listdir(PAST_CONFIGS_DIR):
+                    os.remove(os.path.join(PAST_CONFIGS_DIR, filename))
             self.destroy()
             client.close()
             sys.exit()
@@ -877,8 +913,9 @@ class GUI(ctk.CTk):
 
         ##-----------------------------------------------
         def build_menu(self):
-            for filename in os.listdir('Saved configs/'):
-                self.openmenu.add_command(label=filename[:-4], command=lambda filepath='Saved configs/'+filename: self.openfile(filepath))
+            os.makedirs(SAVED_CONFIGS_DIR, exist_ok=True)
+            for filename in os.listdir(SAVED_CONFIGS_DIR):
+                self.openmenu.add_command(label=filename[:-4], command=lambda filepath=os.path.join(SAVED_CONFIGS_DIR, filename): self.openfile(filepath))
             self.openmenu.add_separator()
             self.openmenu.add_command(label="Open new", command=lambda: self.openfile(0))
             self.menubar.add_cascade(label="Open", menu=self.openmenu)            
@@ -894,19 +931,19 @@ class GUI(ctk.CTk):
             self.aFrame.columnconfigure((0,1) , weight=1)
             self.aFrame.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
 
-            self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6)
+            self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
             self.anteriorLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale, columnspan=2)
 
-            self.aconLabel=ctk.CTkLabel(self.aFrame, text="Constant", fg_color="gray30", corner_radius=6)
+            self.aconLabel=ctk.CTkLabel(self.aFrame, text="Constant", fg_color="gray30", corner_radius=6, font=("Roboto", 12))
             self.aconLabel.grid(row=1, column=0, sticky="w", padx=(self.rescale,0), pady=(0,self.rescale))
 
-            self.aadvLabel=ctk.CTkLabel(self.aFrame, text="Advantage", fg_color="gray30", corner_radius=6)
+            self.aadvLabel=ctk.CTkLabel(self.aFrame, text="Advantage", fg_color="gray30", corner_radius=6, font=("Roboto", 12))
             self.aadvLabel.grid(row=2, column=0, sticky="w", padx=(self.rescale,0), pady=(0,self.rescale))
 
-            self.acontotal=ctk.CTkLabel(self.aFrame, text=(self.premod.const>0)*"+"+str(self.premod.const), fg_color="gray30", corner_radius=6, width=36)
+            self.acontotal=ctk.CTkLabel(self.aFrame, text=(self.premod.const>0)*"+"+str(self.premod.const), fg_color="gray30", corner_radius=6, width=36, font=("Roboto", 12))
             self.acontotal.grid(row=1, column=1, sticky="e", padx=(0,self.rescale), pady=(0,self.rescale))
 
-            self.aadvtotal=ctk.CTkLabel(self.aFrame,text=(self.premod.adv>0)*"+"+str(self.premod.adv), fg_color="gray30", corner_radius=6, width=36)
+            self.aadvtotal=ctk.CTkLabel(self.aFrame,text=(self.premod.adv>0)*"+"+str(self.premod.adv), fg_color="gray30", corner_radius=6, width=36, font=("Roboto", 12))
             self.aadvtotal.grid(row=2, column=1, sticky="e", padx=(0,self.rescale), pady=(0,self.rescale))
             
             for i in range(len(self.resor)):
@@ -918,10 +955,10 @@ class GUI(ctk.CTk):
                 self.resor[i].mainButton=ctk.CTkRadioButton(self.resor[i].mainFrame, 
                                                                         variable = self.selectRes, 
                                                                         value = i+1,
-                                                                        text = aux, fg_color=self.color, bg_color="gray25", border_color="gray30", hover_color=self.color)
+                                                                        text = aux, fg_color=self.color, bg_color="gray25", border_color="gray30", hover_color=self.color, font=("Roboto", 12))
                 self.resor[i].mainButton.grid(row=0, column=0, sticky="w", padx=self.rescale, pady=self.rescale)
 
-                self.resor[i].qntLabel=ctk.CTkLabel(self.resor[i].mainFrame, text=self.resor[i].qnt, fg_color="gray30", corner_radius=6)
+                self.resor[i].qntLabel=ctk.CTkLabel(self.resor[i].mainFrame, text=self.resor[i].qnt, fg_color="gray30", corner_radius=6, font=("Roboto", 12))
                 self.resor[i].qntLabel.grid(row=0, column=1, sticky="e", padx=(0,self.rescale), pady=self.rescale)
     
                 self.resor[i].subButtons=[]
@@ -930,7 +967,7 @@ class GUI(ctk.CTk):
                                                                         text = self.resor[i].listSubres[j].subresName,
                                                                         border_color=self.color,
                                                                         border_width=2, 
-                                                                        fg_color="gray30", hover_color="gray40", command = lambda c=(i, j): self.destroy_subres(c))
+                                                                        fg_color="gray30", hover_color="gray40", font=("Roboto", 12), command = lambda c=(i, j): self.destroy_subres(c))
                     )
                     self.resor[i].subButtons[-1].grid(row=j+1, column=0, sticky="ew", padx=self.rescale, pady=(0,self.rescale), columnspan=2)
 
@@ -939,7 +976,7 @@ class GUI(ctk.CTk):
                                                                         text_color="gray30",
                                                                         border_color=self.color,
                                                                         border_width=2,
-                                                                        fg_color=self.color, hover_color="gray40", command = lambda c=i: self.destroy_res(c))
+                                                                        fg_color=self.color, hover_color="gray40", font=("Roboto", 12), command = lambda c=i: self.destroy_res(c))
                 self.resor[i].deleteButton.grid(row=len(self.resor[i].listSubres)+1, column=0, padx=self.rescale, sticky="ew", pady=(0,self.rescale), columnspan=2)
 
         def destroy_all(self):
@@ -1020,7 +1057,7 @@ class GUI(ctk.CTk):
                 return bloco(self.premod, self.clean_resor(), self.sn.get(), int(self.crit.get())/100, int(self.mini.get()))
             except:
                 print(traceback.format_exc())
-                messagebox.showerror(parent=self.Window2, title="Erro de conversão", message="Algo deu errado, confira seu envio.")
+                messagebox.showerror(parent=self.Window2, title="Conversion error", message="Something went wrong, please check your submission.")
                 return
 
         def clean_resor(self):
@@ -1035,7 +1072,7 @@ class GUI(ctk.CTk):
             message_sent = self.conversao()
             if message_sent:
                 try:
-                    with open('Past configs/'+str(self.past_index_max)+'.txt', 'xb') as file:
+                    with open(os.path.join(PAST_CONFIGS_DIR, str(self.past_index_max)+'.txt'), 'xb') as file:
                         pickle.dump(message_sent, file)
                 except Exception:
                     print(traceback.format_exc())
@@ -1043,7 +1080,7 @@ class GUI(ctk.CTk):
                 self.past_index_max+=1
                 if self.unmoved:
                     self.past_index=self.past_index_max
-                    messagebox.showinfo(parent=self.Window2, title="Dica", message="Browse through past settings with ^ or ⌄.")
+                    messagebox.showinfo(parent=self.Window2, title="Tip", message="Browse through past settings with ^ or ⌄.")
                     self.unmoved=False
                 message_sent=pickle.dumps(message_sent)
                 message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
@@ -1098,7 +1135,7 @@ class GUI(ctk.CTk):
                 self.past_index=self.past_index_max
             except Exception:
                 print(traceback.format_exc())
-                messagebox.showerror(parent=self.Window2, title="Erro de path", message="Path inválido, tente novamente.")
+                messagebox.showerror(parent=self.Window2, title="Path error", message="Invalid path, please try again.")
                 return
 
         def openfile(self, pre_path):
@@ -1132,7 +1169,7 @@ class GUI(ctk.CTk):
                     if self.past_index:
                         self.past_index-=1
                         if self.past_index==self.past_index_max-1:
-                            self.path='Past configs/'+str(self.past_index)+'.txt'
+                            self.path=os.path.join(PAST_CONFIGS_DIR, str(self.past_index)+'.txt')
                             self.openfile(self.path)
                             self.past_index-=1
                             alt=0
@@ -1145,7 +1182,7 @@ class GUI(ctk.CTk):
                     else:
                         alt=0
                 if alt:
-                    self.path='Past configs/'+str(self.past_index)+'.txt'
+                    self.path=os.path.join(PAST_CONFIGS_DIR, str(self.past_index)+'.txt')
                     with open(self.path, 'rb') as file:             
                         content = file.read()
                         self.load_content(content)                                      
@@ -1171,9 +1208,9 @@ class GUI(ctk.CTk):
                 self.modified=0
                 self.who=StringVar(value='we')
                 self.crit=StringVar(value='10')
-                self.crit.trace_variable('w', self.modify)
+                self.crit.trace_add('write', self.modify)
                 self.mini=StringVar(value='0')
-                self.mini.trace_variable('w', self.modify)
+                self.mini.trace_add('write', self.modify)
                 self.res=StringVar(value='0')
                 self.ac=StringVar(value='0')
                 self.ic=StringVar(value='0')
@@ -1200,7 +1237,7 @@ class GUI(ctk.CTk):
                 self.columnconfigure(1 , weight=1)
                 self.rowconfigure(1, weight=1)
 
-                self.sidebarLabel=ctk.CTkLabel(self, text="Players online", fg_color="gray20", corner_radius=6)
+                self.sidebarLabel=ctk.CTkLabel(self, text="Players online", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.sidebarLabel.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.sidebar=ctk.CTkScrollableFrame(self,
@@ -1214,7 +1251,7 @@ class GUI(ctk.CTk):
                                     text="Select all",
                                     border_color=self.color,
                                     border_width=2,
-                                    fg_color="gray20", hover_color="gray30", command = lambda: self.AllClick())
+                                    fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.AllClick())
                 self.allButton.grid(row=2, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.blocbtt= ctk.CTkButton(self, 
@@ -1222,10 +1259,10 @@ class GUI(ctk.CTk):
                                                     width=26,                      
                                                     border_color=self.color,
                                                     border_width=2,
-                                                    fg_color="gray20", hover_color="gray30", command = lambda: self.blocswitch())
+                                                    fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.blocswitch())
                 self.blocbtt.grid(row=0, column=3, padx=self.rescale, pady=self.rescale, sticky="ns", rowspan=3)
                                 
-                self.entryMsg = ctk.CTkEntry(self, fg_color="gray20", border_width=0, placeholder_text_color="gray30", placeholder_text="Write a message") 
+                self.entryMsg = ctk.CTkEntry(self, fg_color="gray20", border_width=0, placeholder_text_color="gray30", placeholder_text="Write a message", font=("Roboto", 12)) 
                 self.entryMsg.grid(row=2, column=1, padx=(0,self.rescale), pady=self.rescale, sticky="ew")
                 #self.entryMsg.after(20, self.entryMsg.focus)
                 
@@ -1233,10 +1270,10 @@ class GUI(ctk.CTk):
                                                             text = "Send",
                                                             border_color=self.color,
                                                             border_width=2,
-                                                            fg_color="gray20", hover_color="gray30", command = lambda : self.sendButton(self.entryMsg.get())) 
+                                                            fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda : self.sendButton(self.entryMsg.get())) 
                 self.buttonMsg.grid(row=2, column=2, pady=self.rescale, sticky="ew")
                 
-                self.textCons=ctk.CTkTextbox(self, fg_color="gray20")
+                self.textCons=ctk.CTkTextbox(self, fg_color="gray20", font=("Roboto", 12))
                 self.textCons.grid(row=0, column=1, pady=(self.rescale,0), sticky="nsew", rowspan=2, columnspan=2)
                 self.textCons.configure(cursor = "arrow") 
                 self.textCons.configure(state = DISABLED) 
@@ -1259,7 +1296,7 @@ class GUI(ctk.CTk):
                 self.openmenu=Menu(self.menubar, tearoff=0)
                 self.build_menu()
 
-                self.selecLabel=ctk.CTkLabel(self.Window2, text="Select to roll", fg_color="gray20", corner_radius=6)
+                self.selecLabel=ctk.CTkLabel(self.Window2, text="Select to roll", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.selecLabel.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.sidebaroll=ctk.CTkScrollableFrame(self.Window2,
@@ -1269,7 +1306,7 @@ class GUI(ctk.CTk):
                 self.sidebaroll.columnconfigure(0 , weight=1)
                 self.sidebaroll.grid(row=1, column=0, padx=self.rescale, sticky="ns")
 
-                self.selectedLabel=ctk.CTkLabel(self.Window2, text="Selected", fg_color="gray20", corner_radius=6)
+                self.selectedLabel=ctk.CTkLabel(self.Window2, text="Selected", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.selectedLabel.grid(row=2, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.label=ctk.CTkScrollableFrame(self.Window2, 
@@ -1283,10 +1320,10 @@ class GUI(ctk.CTk):
                                     text="Roll",
                                     border_color=self.color,
                                     border_width=2,
-                                    fg_color="gray20", hover_color="gray30", command = lambda: self.rollerrola())
+                                    fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.rollerrola())
                 self.rollBtt.grid(row=4, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
-                self.resourcesLabel=ctk.CTkLabel(self.Window2, text="Resources", fg_color="gray20", corner_radius=6)
+                self.resourcesLabel=ctk.CTkLabel(self.Window2, text="Resources", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.resourcesLabel.grid(row=0, column=2, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.terFrame=ctk.CTkScrollableFrame(self.Window2,
@@ -1300,7 +1337,7 @@ class GUI(ctk.CTk):
                                                             text = "Send",
                                                             border_color=self.color,
                                                             border_width=2,
-                                                            fg_color="gray20", hover_color="gray30", command = lambda : self.send_block())
+                                                            fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda : self.send_block())
                 self.button_block.grid(row=4, column=2, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.resor=[]
@@ -1319,40 +1356,40 @@ class GUI(ctk.CTk):
                                                                         variable = self.who, 
                                                                         value = 'me',
                                                                         text = 'Me', fg_color=self.color, border_color="gray25", hover_color=self.color,
-                                                                        width=15)
+                                                                        width=15, font=("Roboto", 12))
                 
                 self.hiddenBtt=ctk.CTkRadioButton(self.stypebar, 
                                                                         variable = self.who, 
                                                                         value = 'hidden',
                                                                         text = 'Hidden', fg_color=self.color, border_color="gray25", hover_color=self.color,
-                                                                        width=15)
+                                                                        width=15, font=("Roboto", 12))
                 self.weBtt=ctk.CTkRadioButton(self.stypebar, 
                                                                         variable = self.who, 
                                                                         value = 'we',
                                                                         text = 'We', fg_color=self.color, border_color="gray25", hover_color=self.color,
-                                                                        width=15)
+                                                                        width=15, font=("Roboto", 12))
 
                 self.youBtt=ctk.CTkRadioButton(self.stypebar, 
                                                                         variable = self.who, 
                                                                         value = 'you',
                                                                         text = 'You', fg_color=self.color, border_color="gray25", hover_color=self.color,
-                                                                        width=15)
+                                                                        width=15, font=("Roboto", 12))
 
                 self.sbtt=ctk.CTkRadioButton(self.stypebar, 
                                                                         variable = self.sn, 
                                                                         value = 's',
                                                                         text = 'Yes', fg_color=self.color, border_color="gray25", hover_color=self.color,
-                                                                        width=15)
+                                                                        width=15, font=("Roboto", 12))
 
                 self.nbtt=ctk.CTkRadioButton(self.stypebar, 
                                                                         variable = self.sn, 
                                                                         value = 'n',
                                                                         text = 'No', fg_color=self.color, border_color="gray25", hover_color=self.color,
-                                                                        width=15)
+                                                                        width=15, font=("Roboto", 12))
 
-                self.sdtypelabel= ctk.CTkLabel(self.stypebar, text='Send type:')
+                self.sdtypelabel= ctk.CTkLabel(self.stypebar, text='Send type:', font=("Roboto", 12))
                 self.separator0= ctk.CTkLabel(self.stypebar, text="")
-                self.messagelabel= ctk.CTkLabel(self.stypebar, text='Hidden message:')
+                self.messagelabel= ctk.CTkLabel(self.stypebar, text='Hidden message:', font=("Roboto", 12))
                 self.sdtypelabel.grid(row=0, column=0, padx=self.rescale)
                 self.weBtt.grid(row=0, column=1, padx=(0,self.rescale))
                 self.meBtt.grid(row=0, column=2, padx=(0,self.rescale))
@@ -1383,7 +1420,7 @@ class GUI(ctk.CTk):
                 self.separator7= ctk.CTkLabel(self.resourcebar2, text="")
                 self.separator7.grid(row=0, column=0, sticky="ew")
 
-                self.reslabel = ctk.CTkEntry(self.resourcebar2, fg_color="gray25", border_width=0, placeholder_text_color="gray35", placeholder_text="Resource name")
+                self.reslabel = ctk.CTkEntry(self.resourcebar2, fg_color="gray25", border_width=0, placeholder_text_color="gray35", placeholder_text="Resource name", font=("Roboto", 12))
                 self.reslabel.grid(row=0, column=1, padx=self.rescale, pady=self.rescale, columnspan=3)
 
                 self.separator8= ctk.CTkLabel(self.resourcebar2, text="")
@@ -1394,7 +1431,7 @@ class GUI(ctk.CTk):
                                                             width=26,
                                                             border_color=self.color,
                                                             border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.callbackRes(self.reslabel.get())) 
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.callbackRes(self.reslabel.get())) 
                 self.resbtt2.grid(row=1, column=1, padx=(0,self.rescale), pady=(0,self.rescale))
                 
                 self.resbox = IntSpinbox(self.resourcebar2,
@@ -1406,10 +1443,10 @@ class GUI(ctk.CTk):
                                                             text = "+", 
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
                 self.resbtt.grid(row=1, column=3, pady=(0,self.rescale))
 
-                self.critlabel= ctk.CTkLabel(self.resourcebar1, text='Crit chance (%)', fg_color="gray25", corner_radius=6)
+                self.critlabel= ctk.CTkLabel(self.resourcebar1, text='Crit chance (%)', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                 self.critlabel.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew", columnspan=2)
 
                 self.critbox = IntSpinbox(self.resourcebar1,
@@ -1418,7 +1455,7 @@ class GUI(ctk.CTk):
                                     step_size = 10)
                 self.critbox.grid(row=1, column=0, pady=(0,self.rescale))
 
-                self.minlabel= ctk.CTkLabel(self.resourcebar3, text='Minimum roll', fg_color="gray25", corner_radius=6)
+                self.minlabel= ctk.CTkLabel(self.resourcebar3, text='Minimum roll', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                 self.minlabel.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.minbox = IntSpinbox(self.resourcebar3,
@@ -1434,52 +1471,56 @@ class GUI(ctk.CTk):
                 self.antebar.columnconfigure((2,7), weight=1)
                 self.antebar.grid(row=1, column=0, sticky="ew", pady=(0,self.rescale))
 
-                self.antelabel= ctk.CTkLabel(self.antebar, text='Anterior', fg_color="gray25", corner_radius=6)           
+                self.antelabel= ctk.CTkLabel(self.antebar, text='Anterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))           
                 self.antelabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=self.rescale, columnspan=11)
 
-                self.aconlabel= ctk.CTkLabel(self.antebar,text='Constant', fg_color="gray25", corner_radius=6)           
+                self.aconlabel= ctk.CTkLabel(self.antebar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+           
                 self.aconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), sticky="ew", columnspan=2)
                 
+
                 self.acon = IntSpinbox(self.antebar,
                                         color=self.color, variable = self.ac)
                 self.acon.grid(row=2, column=0, padx=self.rescale, pady=self.rescale)
 
-                self.aconbtt = ctk.CTkButton(self.antebar, 
-                                                            text = "+", 
+                self.aconbtt = ctk.CTkButton(self.antebar,
+                                                            text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda : self.antepaste(int(self.ac.get()), 1)) 
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda : self.antepaste(int(self.ac.get()), 1))
                 self.aconbtt.grid(row=2, column=1)
 
                 self.separator1= ctk.CTkLabel(self.antebar, text="")
                 self.separator1.grid(row=2, column=2, sticky="ew")
 
-                self.aadvlabel= ctk.CTkLabel(self.antebar,text='Advantage', fg_color="gray25", corner_radius=6)           
+                self.aadvlabel= ctk.CTkLabel(self.antebar,text='Advantage', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.aadvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), sticky="ew", columnspan=2)
 
                 self.aadv = IntSpinbox(self.antebar,
                                         color=self.color, variable = self.aa)
                 self.aadv.grid(row=2, column=8)
 
-                self.aadvbtt = ctk.CTkButton(self.antebar, 
+                self.aadvbtt = ctk.CTkButton(self.antebar,
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda : self.anteadvpaste(int(self.aa.get()))) 
-                
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda : self.anteadvpaste(int(self.aa.get())))
+
                 self.aadvbtt.grid(row=2, column=9, padx=self.rescale)
 
                 self.separator2= ctk.CTkLabel(self.antebar, text="")
                 self.separator2.grid(row=2, column=7, sticky="ew")
 
-                self.adlabel= ctk.CTkLabel(self.antebar,text='Dice', fg_color="gray25", corner_radius=6)           
+                self.adlabel= ctk.CTkLabel(self.antebar,text='Dice', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.adlabel.grid(row=1, column=3, padx=self.rescale, sticky="ew", columnspan=4)
 
                 self.adic = IntSpinbox(self.antebar,
                                     color=self.color, variable = self.ad[0])
                 self.adic.grid(row=2, column=3)
 
-                self.addlabel= ctk.CTkLabel(self.antebar, text='d', width=0)           
+                self.addlabel= ctk.CTkLabel(self.antebar, text='d', width=0, font=("Roboto", 12))
                 self.addlabel.grid(row=2, column=4, padx=10/3)
 
                 self.adic2 = IntSpinbox(self.antebar,
@@ -1487,39 +1528,41 @@ class GUI(ctk.CTk):
                                     from_ = 0)
                 self.adic2.grid(row=2, column=5, padx=(0,self.rescale))
 
-                self.adicbtt = ctk.CTkButton(self.antebar, 
-                                                            text = "+", 
+                self.adicbtt = ctk.CTkButton(self.antebar,
+                                                            text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get()))) 
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get())))
                 self.adicbtt.grid(row=2, column=6)
 
                 self.interbar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.interbar.columnconfigure((2, 7), weight=1)
                 self.interbar.grid(row=3, column=0, sticky="ew")
 
-                self.interlabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6)           
+                self.interlabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
                 self.interlabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=self.rescale, columnspan=11)
 
-                self.iconlabel= ctk.CTkLabel(self.interbar,text='Constant', fg_color="gray25", corner_radius=6)           
+                self.iconlabel= ctk.CTkLabel(self.interbar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.iconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), sticky="ew", columnspan=2)
-                
+
                 self.icon = IntSpinbox(self.interbar,
                                         color=self.color, variable = self.ic)
                 self.icon.grid(row=2, column=0, padx=self.rescale, pady=self.rescale)
 
-                self.iconbtt = ctk.CTkButton(self.interbar, 
-                                                            text = "+", 
+                self.iconbtt = ctk.CTkButton(self.interbar,
+                                                            text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter")) 
-                
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter"))
+
                 self.iconbtt.grid(row=2, column=1)
 
                 self.separator3= ctk.CTkLabel(self.interbar, text="")
                 self.separator3.grid(row=2, column=2, sticky="ew")
 
-                self.iadvlabel= ctk.CTkLabel(self.interbar,text='Advantage', fg_color="gray25", corner_radius=6)           
+                self.iadvlabel= ctk.CTkLabel(self.interbar,text='Advantage', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.iadvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), sticky="ew", columnspan=2)
 
                 self.iadv = IntSpinbox(self.interbar,
@@ -1527,24 +1570,25 @@ class GUI(ctk.CTk):
 
                 self.iadv.grid(row=2, column=8)
 
-                self.iadvbtt = ctk.CTkButton(self.interbar, 
+                self.iadvbtt = ctk.CTkButton(self.interbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter")) 
-                
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter"))
+
                 self.iadvbtt.grid(row=2, column=9, padx=self.rescale)
 
                 self.separator4= ctk.CTkLabel(self.interbar, text="")
                 self.separator4.grid(row=2, column=7, sticky="ew")
 
-                self.idlabel= ctk.CTkLabel(self.interbar,text='Dice', fg_color="gray25", corner_radius=6)           
+                self.idlabel= ctk.CTkLabel(self.interbar,text='Dice', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.idlabel.grid(row=1, column=3, padx=self.rescale, sticky="ew", columnspan=4)
 
                 self.idic = IntSpinbox(self.interbar,
                                     color=self.color, variable = self.id[0])
                 self.idic.grid(row=2, column=3)
 
-                self.iddlabel= ctk.CTkLabel(self.interbar, text='d', width=0)           
+                self.iddlabel= ctk.CTkLabel(self.interbar, text='d', width=0, font=("Roboto", 12))
                 self.iddlabel.grid(row=2, column=4, padx=10/3)
 
                 self.idic2 = IntSpinbox(self.interbar,
@@ -1552,37 +1596,39 @@ class GUI(ctk.CTk):
                                     from_ = 0)
                 self.idic2.grid(row=2, column=5, padx=(0,self.rescale))
 
-                self.idicbtt = ctk.CTkButton(self.interbar, 
-                                                            text = "+", 
+                self.idicbtt = ctk.CTkButton(self.interbar,
+                                                            text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter")) 
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter"))
                 self.idicbtt.grid(row=2, column=6)
 
                 self.postbar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.postbar.columnconfigure((2, 7), weight=1)
                 self.postbar.grid(row=4, column=0, sticky="ew", pady=self.rescale)
 
-                self.postlabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6)           
+                self.postlabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
                 self.postlabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=self.rescale, columnspan=11)
 
-                self.pconlabel= ctk.CTkLabel(self.postbar,text='Constant', fg_color="gray25", corner_radius=6)           
+                self.pconlabel= ctk.CTkLabel(self.postbar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.pconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), sticky="ew", columnspan=2)
-                
+
                 self.pcon = IntSpinbox(self.postbar,
                                         color=self.color, variable = self.pc)
                 self.pcon.grid(row=2, column=0, padx=self.rescale, pady=self.rescale)
 
-                self.pconbtt = ctk.CTkButton(self.postbar, 
-                                                            text = "+", 
+                self.pconbtt = ctk.CTkButton(self.postbar,
+                                                            text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post")) 
-                
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post"))
+
                 self.pconbtt.grid(row=2, column=1)
 
                 self.separator5= ctk.CTkLabel(self.postbar, text="")
                 self.separator5.grid(row=2, column=2, sticky="ew")
 
-                self.padvlabel= ctk.CTkLabel(self.postbar,text='Advantage', fg_color="gray25", corner_radius=6)           
+                self.padvlabel= ctk.CTkLabel(self.postbar,text='Advantage', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.padvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), sticky="ew", columnspan=2)
 
                 self.padv = IntSpinbox(self.postbar,
@@ -1590,24 +1636,25 @@ class GUI(ctk.CTk):
 
                 self.padv.grid(row=2, column=8)
 
-                self.padvbtt = ctk.CTkButton(self.postbar, 
+                self.padvbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post")) 
-                
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post"))
+
                 self.padvbtt.grid(row=2, column=9, padx=self.rescale)
 
                 self.separator6= ctk.CTkLabel(self.postbar, text="")
                 self.separator6.grid(row=2, column=7, sticky="ew")
 
-                self.pdlabel= ctk.CTkLabel(self.postbar,text='Dice', fg_color="gray25", corner_radius=6)           
+                self.pdlabel= ctk.CTkLabel(self.postbar,text='Dice', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+
                 self.pdlabel.grid(row=1, column=3, padx=self.rescale, sticky="ew", columnspan=4)
 
                 self.pdic = IntSpinbox(self.postbar,
                                     color=self.color, variable = self.pd[0])
                 self.pdic.grid(row=2, column=3)
 
-                self.pddlabel= ctk.CTkLabel(self.postbar, text='d', width=0)           
+                self.pddlabel= ctk.CTkLabel(self.postbar, text='d', width=0, font=("Roboto", 12))
                 self.pddlabel.grid(row=2, column=4, padx=10/3)
 
                 self.pdic2 = IntSpinbox(self.postbar,
@@ -1615,10 +1662,10 @@ class GUI(ctk.CTk):
                                     from_ = 0)
                 self.pdic2.grid(row=2, column=5, padx=(0,self.rescale))
 
-                self.pdicbtt = ctk.CTkButton(self.postbar, 
-                                                            text = "+", 
+                self.pdicbtt = ctk.CTkButton(self.postbar,
+                                                            text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post")) 
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post"))
                 self.pdicbtt.grid(row=2, column=6)
 
                 #------------------------
@@ -1644,7 +1691,7 @@ class GUI(ctk.CTk):
                 self.progresswindow.columnconfigure(0, weight=1)
                 self.progresswindow.protocol("WM_DELETE_WINDOW", self.progresswindow.withdraw)
 
-                self.InfoLabel = ctk.CTkLabel(self.dicewindow, text="", fg_color="gray20", corner_radius=6)
+                self.InfoLabel = ctk.CTkLabel(self.dicewindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.InfoLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale)
                 self.ResultFrame = ctk.CTkFrame(self.dicewindow, fg_color="gray20")
                 self.ResultFrame.columnconfigure(0, weight=1)
@@ -1655,7 +1702,7 @@ class GUI(ctk.CTk):
                 self.panel = ctk.CTkLabel(self.ResultFrame, text="", fg_color=self.color)
                 self.panel.grid(row=1, column=0)
 
-                self.InfoLabel2 = ctk.CTkLabel(self.progresswindow, text="", fg_color="gray20", corner_radius=6)
+                self.InfoLabel2 = ctk.CTkLabel(self.progresswindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.InfoLabel2.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale)
                 self.ResultFrame2 = ctk.CTkFrame(self.progresswindow, fg_color="gray20")
                 self.ResultFrame2.columnconfigure(0, weight=1)
@@ -1762,8 +1809,8 @@ class GUI(ctk.CTk):
                         self.textCons.configure(state = NORMAL)
                         textlis=wrap(message.content, width=86)
                         for u in range(len(textlis)):
-                            if textlis[u].startswith('\j'):
-                                textlis[u]=textlis[u].replace('\j','',1)
+                            if textlis[u].startswith(r'\j'):
+                                textlis[u]=textlis[u].replace(r'\j','',1)
                                 textlis[u]=textlis[u].rstrip()
                             else:
                                 textlis[u]=textlis[u].strip()
@@ -1807,7 +1854,7 @@ class GUI(ctk.CTk):
                             self.Window2.deiconify()
                         self.roll_list=[]
                         if message.num!=0:
-                            self.selecLabel.configure(text='Restam '+str(message.num)+" rolagens")
+                            self.selecLabel.configure(text='Remaining: '+str(message.num)+" rolls")
                         else:
                             self.selecLabel.configure(text='Select to roll')
                     else:
@@ -1826,9 +1873,9 @@ class GUI(ctk.CTk):
                             
                             
                             
-                            aux_2=ctk.CTkLabel(possibs, text='Net advantage', fg_color="gray20", corner_radius=6)
+                            aux_2=ctk.CTkLabel(possibs, text='Net advantage', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
                             aux_2.grid(row=0, column=3, padx=(self.rescale, 0), pady=self.rescale)
-                            aux_3=ctk.CTkLabel(possibs, text='Resources', fg_color="gray20", corner_radius=6)
+                            aux_3=ctk.CTkLabel(possibs, text='Resources', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
                             aux_3.grid(row=0, column=4, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                             
@@ -1867,7 +1914,7 @@ class GUI(ctk.CTk):
                                 ind=random.choice(aux1)
                                 probs[ind:]=["-" for i in range(ind, len(message))]
                                 probs[ind]="{:.1%}".format(1-percent)
-                                aux_1=ctk.CTkLabel(possibs, text='% of f->s+', fg_color="gray20", corner_radius=6)
+                                aux_1=ctk.CTkLabel(possibs, text='% of f->s+', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
                                 aux_1.grid(row=0, column=0, padx=(self.rescale, 0), pady=self.rescale)
                                 aux_1_mor=ctk.CTkFrame(possibs, fg_color="gray20")
                                 aux_1_mor.grid_columnconfigure(0, weight=1)
@@ -1879,7 +1926,7 @@ class GUI(ctk.CTk):
                                 ind=random.choice(aux2)
                                 probs_crit[ind:]=["-" for i in range(ind, len(message))]
                                 probs_crit[ind]="{:.1%}".format(1-percent)
-                                aux_12=ctk.CTkLabel(possibs, text='% of s->cs', fg_color="gray20", corner_radius=6)
+                                aux_12=ctk.CTkLabel(possibs, text='% of s->cs', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
                                 aux_12.grid(row=0, column=1, padx=(self.rescale, 0), pady=self.rescale)
                                 aux_12_mor=ctk.CTkFrame(possibs, fg_color="gray20")
                                 aux_12_mor.grid_columnconfigure(0, weight=1)
@@ -1891,7 +1938,7 @@ class GUI(ctk.CTk):
                                 ind=random.choice(aux3)
                                 probs_fail[ind:]=["-" for i in range(ind, len(message))]
                                 probs_fail[ind]="{:.1%}".format(1-percent)
-                                aux_13=ctk.CTkLabel(possibs, text='% of cf->f+', fg_color="gray20", corner_radius=6)
+                                aux_13=ctk.CTkLabel(possibs, text='% of cf->f+', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
                                 aux_13.grid(row=0, column=2, padx=(self.rescale, 0), pady=self.rescale)
                                 aux_13_mor=ctk.CTkFrame(possibs, fg_color="gray20")
                                 aux_13_mor.grid_columnconfigure(0, weight=1)
@@ -1900,28 +1947,30 @@ class GUI(ctk.CTk):
                             for i in range(len(message)):
                                 p, crit, r, resultStr=self.transl(message[i])
                                 if aux1:
-                                    aux_1=ctk.CTkLabel(aux_1_mor, text=probs[i], fg_color="gray25", corner_radius=6)
+                                    aux_1=ctk.CTkLabel(aux_1_mor, text=probs[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                                     aux_1.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                                 if aux2:
-                                    aux_12=ctk.CTkLabel(aux_12_mor, text=probs_crit[i], fg_color="gray25", corner_radius=6)
+                                    aux_12=ctk.CTkLabel(aux_12_mor, text=probs_crit[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                                     aux_12.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                                 if aux3:
-                                    aux_13=ctk.CTkLabel(aux_13_mor, text=probs_fail[i], fg_color="gray25", corner_radius=6)
+                                    aux_13=ctk.CTkLabel(aux_13_mor, text=probs_fail[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                                     aux_13.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                                                 
-                                aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>0)+str(message[i].adv), fg_color="gray25", corner_radius=6)
+                                aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>0)+str(message[i].adv), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                                 aux_2.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
 
                                 text=message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2])
                                 resButton = ctk.CTkButton(aux_3_mor,
                                                 text = text,
                                                 fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
+                                                font=("Roboto", 12),
                                                 command= lambda p=p, crit=crit, r=r, resultStr=resultStr, send_type=send_type: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr, send_type, text]).start())
                                 resButton.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                             
                             resButton = ctk.CTkButton(possibs,
                                                 text = 'Show results',
                                                 fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
+                                                font=("Roboto", 14),
                                                 command=partial(self.show_res, message, send_type))
                             resButton.grid(row=2, column=0, columnspan=5, padx=self.rescale, pady=self.rescale, sticky="ew")
 
@@ -1937,11 +1986,11 @@ class GUI(ctk.CTk):
             possibs=ctk.CTkToplevel(fg_color="gray15")
             possibs.title('Possibilities')
             possibs.resizable(width = False, height = False)
-            aux_1=ctk.CTkLabel(possibs, text='Result', fg_color="gray20", corner_radius=6)
+            aux_1=ctk.CTkLabel(possibs, text='Result', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
             aux_1.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
-            aux_2=ctk.CTkLabel(possibs, text='Net advantage', fg_color="gray20", corner_radius=6)
+            aux_2=ctk.CTkLabel(possibs, text='Net advantage', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
             aux_2.grid(row=0, column=1, padx=(0, self.rescale), pady=self.rescale, sticky="ew")
-            aux_3=ctk.CTkLabel(possibs, text='Resources', fg_color="gray20", corner_radius=6)
+            aux_3=ctk.CTkLabel(possibs, text='Resources', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
             aux_3.grid(row=0, column=2, padx=(0, self.rescale), pady=self.rescale, sticky="ew")
 
             aux_1_mor=ctk.CTkFrame(possibs, fg_color="gray20")
@@ -1960,9 +2009,9 @@ class GUI(ctk.CTk):
                     opposite_message=(send_type=='Yes')*'No'+(send_type=='No')*'Yes'
                     resultStr=(resultStr=="Success" or resultStr=="Critical success")*send_type+(resultStr=="Fail" or resultStr=="Critical fail")*opposite_message
                     
-                aux_1=ctk.CTkLabel(aux_1_mor, text=resultStr, fg_color="gray25", corner_radius=6)
-                aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>=0)+str(message[i].adv), fg_color="gray25", corner_radius=6)
-                aux_3=ctk.CTkLabel(aux_3_mor, text=message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2]), fg_color="gray25", corner_radius=6)
+                aux_1=ctk.CTkLabel(aux_1_mor, text=resultStr, fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>=0)+str(message[i].adv), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                aux_3=ctk.CTkLabel(aux_3_mor, text=message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2]), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
 
                 aux_1.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                                     
@@ -2002,12 +2051,30 @@ class GUI(ctk.CTk):
                         dic={}
                         number=abs(dice_list[index][0])
                         sgn=np.sign(dice_list[index][0])
+                        sides = dice_list[index][1]
+                        
+                        # Extract keep/drop info if present
+                        k_type = dice_list[index][2] if len(dice_list[index]) > 2 else None
+                        k_num = dice_list[index][3] if len(dice_list[index]) > 3 else number
+                        
                         tt_aux=math.factorial(number)
-                        for k in list(itertools.combinations_with_replacement([i for i in range(1, dice_list[index][1]+1)], number)):
+                        for k in list(itertools.combinations_with_replacement([i for i in range(1, sides+1)], number)):
+                            # Apply keep/drop logic to sorted combination k
+                            if k_type == 'kh':
+                                current_sum = sum(k[-k_num:]) if k_num > 0 else 0
+                            elif k_type == 'kl':
+                                current_sum = sum(k[:k_num]) if k_num > 0 else 0
+                            elif k_type == 'dh':
+                                current_sum = sum(k[:-k_num]) if k_num < number else 0
+                            elif k_type == 'dl':
+                                current_sum = sum(k[k_num:]) if k_num < number else 0
+                            else:
+                                current_sum = sum(k)
+                                
                             tt=tt_aux
-                            for i in range(1, dice_list[index][1]+1):
+                            for i in range(1, sides+1):
                                 tt/=math.factorial(k.count(i))
-                            dic_aux=self.rec(tot+sgn*sum(k), num+tt, dice_list, index+1)
+                            dic_aux=self.rec(tot+sgn*current_sum, num+tt, dice_list, index+1)
                             for i in dic_aux.keys():
                                 if i in dic.keys():
                                     dic[i]+=dic_aux[i]
@@ -2021,11 +2088,27 @@ class GUI(ctk.CTk):
                         dic={}
                         number=abs(dice_list[index][0])
                         sgn=np.sign(dice_list[index][0])
+                        sides = dice_list[index][1]
+                        
+                        k_type = dice_list[index][2] if len(dice_list[index]) > 2 else None
+                        k_num = dice_list[index][3] if len(dice_list[index]) > 3 else number
+                        
                         tt_aux=math.factorial(number)
-                        for k in list(itertools.combinations_with_replacement([i for i in range(1, dice_list[index][1]+1)], number)):
-                            aux=sgn*sum(k)
+                        for k in list(itertools.combinations_with_replacement([i for i in range(1, sides+1)], number)):
+                            if k_type == 'kh':
+                                current_sum = sum(k[-k_num:]) if k_num > 0 else 0
+                            elif k_type == 'kl':
+                                current_sum = sum(k[:k_num]) if k_num > 0 else 0
+                            elif k_type == 'dh':
+                                current_sum = sum(k[:-k_num]) if k_num < number else 0
+                            elif k_type == 'dl':
+                                current_sum = sum(k[k_num:]) if k_num < number else 0
+                            else:
+                                current_sum = sum(k)
+                                
+                            aux=sgn*current_sum
                             tt=tt_aux
-                            for i in range(1, dice_list[index][1]+1):
+                            for i in range(1, sides+1):
                                 tt/=math.factorial(k.count(i))
                             if tot+aux in dic.keys():
                                 dic[tot+aux]+=num+tt
@@ -2037,35 +2120,106 @@ class GUI(ctk.CTk):
                     
         def rolldic(self, stri):
             try:
-                stri=re.search("'.*?'", stri).group().replace("'","").replace(' ', '')
-                stri_con=re.findall('-.*?(?=-|\+|$)', stri)+re.findall('(?=^|\+)(?!-).*?(?=-|\+|$)', stri)
+                dice_match = re.search(r"'.*?'", stri)
+                if not dice_match:
+                    return
+                dice_str = dice_match.group()
+                stri=dice_str.replace("'","").replace(' ', '')
+                stri_con=re.findall(r'-.*?(?=-|\+|$)', stri)+re.findall(r'(?=^|\+)(?!-).*?(?=-|\+|$)', stri)
                 dice_list=[]
                 roll=0
                 for i in stri_con:
-                    dice=re.split('d', i)
-                    if dice[0]:
-                        dice[0]=int(dice[0])
-                        if len(dice)>1:
-                            dice[1]=int(dice[1])
-                            sgn=np.sign(dice[0])
-                            for j in range(sgn*dice[0]):
-                                roll+=sgn*random.randint(1, dice[1])
-                            dice_list.append((dice[0], dice[1]))
-                        else:
-                            roll+=dice[0]
-                            dice_list.append((dice[0], 1))
+                    if 'd' in i:
+                        m = re.match(r"([+-]?\d*)d(\d+)([kKdD][hHlL])?(\d+)?", i)
+                        if m:
+                            count_str, sides_str, k_type, k_num_str = m.groups()
+                            
+                            # Count
+                            if count_str == '' or count_str == '+':
+                                count = 1
+                            elif count_str == '-':
+                                count = -1
+                            else:
+                                count = int(count_str)
+                                
+                            # Sides
+                            sides = int(sides_str)
+                            
+                            # Keep type/num
+                            keep_type = k_type.lower() if k_type else None
+                            # Default to 1 if kh/kl present but no number, else default to all dice
+                            if keep_type:
+                                keep_num = int(k_num_str) if k_num_str else 1
+                            else:
+                                keep_num = abs(count)
+                            
+                            # Simulation for initial result
+                            sgn = np.sign(count)
+                            num_dice = abs(count)
+                            rolls_data = [random.randint(1, sides) for _ in range(num_dice)]
+                            rolls_data.sort() # non-decreasing
+                            
+                            if keep_type == 'kh':
+                                rolled_val = sum(rolls_data[-keep_num:]) if keep_num > 0 else 0
+                            elif keep_type == 'kl':
+                                rolled_val = sum(rolls_data[:keep_num]) if keep_num > 0 else 0
+                            elif keep_type == 'dh':
+                                rolled_val = sum(rolls_data[:-keep_num]) if keep_num < num_dice else 0
+                            elif keep_type == 'dl':
+                                rolled_val = sum(rolls_data[keep_num:]) if keep_num < num_dice else 0
+                            else:
+                                rolled_val = sum(rolls_data)
+                                
+                            roll += sgn * rolled_val
+                            dice_list.append((count, sides, keep_type, keep_num))
+                    else:
+                        # Constant
+                        try:
+                            val = int(i)
+                            roll += val
+                            dice_list.append((val, 1))
+                        except:
+                            pass
                 dice_list=sorted(dice_list, key=lambda tup: abs(tup[0]))
+
+                # Send result notice to server
+                result_msg = msg(['broadcast_roll_result'], f"{self.name} rolled {dice_str} and obtained {roll}.")
+                message_sent = pickle.dumps(result_msg)
+                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+                client.send(message_sent_header+message_sent)
+
                 tot=0
                 num=0
                 mini=0
                 maxi=0
                 for i in dice_list:
-                    if i[0]>0:
-                        mini+=i[0]
-                        maxi+=i[0]*i[1]
+                    multiplier = i[0]
+                    sides = i[1]
+                    k_type = i[2] if len(i) > 2 else None
+                    k_num = i[3] if len(i) > 3 else abs(multiplier)
+                    
+                    num_dice = abs(multiplier)
+                    sgn = np.sign(multiplier)
+                    
+                    if sides > 1:
+                        # Effective count for bounds
+                        if k_type in ['kh', 'kl']:
+                            eff_count = k_num
+                        elif k_type in ['dh', 'dl']:
+                            eff_count = max(0, num_dice - k_num)
+                        else:
+                            eff_count = num_dice
+                            
+                        if sgn > 0:
+                            mini += eff_count
+                            maxi += eff_count * sides
+                        else:
+                            mini += eff_count * sides * sgn
+                            maxi += eff_count * 1 * sgn
                     else:
-                        mini+=i[0]*i[1]
-                        maxi+=i[0]
+                        # Constant
+                        mini += multiplier
+                        maxi += multiplier
                 dic=OrderedDict(sorted(self.rec(tot, num, dice_list, 0).items(), reverse=True))
                 total=sum(dic.values())
                 values=[x/total for x in dic.values()]
@@ -2076,67 +2230,132 @@ class GUI(ctk.CTk):
                 try:
                     self.possi.destroy()
                 except Exception:
-                    print(traceback.format_exc())
+                    pass
                 self.possi=Toplevel(bg='black')
-                self.possi.resizable(width = False, height=False)
-                self.possi.configure(width = 500, height = 300)
-                self.possi.pack_propagate(0)
+                self.possi.resizable(width = True, height=True)
+                self.possi.geometry('1000x800')
                 self.possi.title("Dice roll")
-                frame=Label(self.possi, bg='black')
-                frame.pack()
+                frame=ctk.CTkFrame(self.possi, fg_color="black")
+                frame.pack(fill=BOTH, expand=True)
 
-                f = Figure(facecolor='k')
+                self.possi.update() 
+
+                f = Figure(figsize=(8, 6), dpi=100, facecolor='#262626') 
+                p=f.gca()
+                p.set_facecolor('#262626')
+                
+                p.set_xlabel('r', fontsize=12, fontname='Roboto', color='white')
+                p.set_ylabel('p(x>=r)', fontsize=12, fontname='Roboto', color='white')
+                p.tick_params(axis='x', colors='white')
+                p.tick_params(axis='y', colors='white')
+                
+                # Use a more muted base color for bars (gray35)
+                bars = p.bar(dic.keys(), values, color='#595959', edgecolor='none')
+                
+                # Set a placeholder title
+                p.set_title('Calculating roll results...', color='white', fontname='Roboto', fontsize=14)
+                
+                f.tight_layout()
                 
                 canvas=FigureCanvasTkAgg(f, master=frame)
                 canvas.draw()
-                canvas.get_tk_widget().pack()
-                
-                p=f.gca()
-                p.set_facecolor('k')
-                p.set(xlabel='r', ylabel='p(x>=r)')
-                p.xaxis.label.set_color('w')
-                p.yaxis.label.set_color('w')
-                p.tick_params(axis='x', colors='w')
-                p.tick_params(axis='y', colors='w')
-                p.bar(dic.keys(), values, color='w')
-                rolls=[random.randint(mini, maxi)]
-                p.set_title(' ')
+                canvas.get_tk_widget().pack(fill=BOTH, expand=True, padx=0, pady=0)
 
-                for i in range(random.randint(5, 10)):
+                # FORCE LAYOUT REFRESH: Maximize and Restore
+                # The user noted this fixes the scale, so we do it programmatically.
+                self.possi.state('zoomed')
+                self.possi.update()
+                self.possi.state('normal')
+                self.possi.update()
+                
+                # Recalculate layout after the toggle
+                f.tight_layout()
+                canvas.draw()
+                
+                rolls=[random.randint(mini, maxi)]
+
+                # More animation frames (15 to 25 rolls)
+                for i in range(random.randint(15, 25)):
                     c=random.randint(mini, maxi)
                     while c==rolls[-1]:
                         c=random.randint(mini, maxi)
                     rolls.append(c)
                 if rolls[-1]!=roll:
                     rolls.append(roll)
-                l=len(rolls)
-                for j in range(l):
-                    i=rolls[j]
-                    p.bar(i, values[mini-i-1], color=self.color)
-                    f.tight_layout()
-
-                    canvas0=FigureCanvasTkAgg(f, master=frame)
-                    canvas0.draw()
-                    canvas.get_tk_widget().destroy()
-                    canvas0.get_tk_widget().pack()
-                    sleep(0.5)
-                    if j!=l-1:
-                        p.bar(i, values[mini-i-1], color='w')
-                        f.tight_layout()
-
-                        canvas=FigureCanvasTkAgg(f, master=frame)
-                        canvas.draw()
-                        canvas0.get_tk_widget().destroy()
-                        canvas.get_tk_widget().pack()
-                        sleep(0.3)
-                p.set_title('r='+str(roll)+', p(r)='+"{:.1e}".format(dic[roll]/total)+', p(x>=r)='+"{:.1e}".format(values[mini-roll-1]), color='w')
-                f.tight_layout()
                 
-                canvas = FigureCanvasTkAgg(f, master=frame)
-                canvas.draw()
-                canvas0.get_tk_widget().destroy()
-                canvas.get_tk_widget().pack()
+                # Setup animation state
+                self.anim_rolls = rolls
+                self.anim_index = 0
+                self.anim_bars = bars
+                self.anim_dic = dic
+                self.anim_total = total
+                self.anim_values = values
+                self.anim_mini = mini
+                self.anim_roll = roll
+                self.anim_p = p
+                self.anim_canvas = canvas
+                self.anim_f = f
+
+                self.run_animation_step()
+
             except Exception:
+                print(traceback.format_exc())
+
+        def run_animation_step(self):
+            try:
+                # If window closed, stop
+                if not self.possi.winfo_exists():
+                    return
+                
+                roll_val = self.anim_rolls[self.anim_index]
+                # Reset all bars to white first (inefficient but safe) or just reset previous?
+                # The original code re-drew the white bars every time.
+                # Let's just update the specific bar color.
+                
+                # Map roll value to bar index. 
+                # dic.keys() are x values. 
+                # bars are in order of dic.keys()
+                keys_list = list(self.anim_dic.keys())
+                try:
+                    bar_idx = keys_list.index(roll_val)
+                    self.anim_bars[bar_idx].set_color(self.color)
+                except ValueError:
+                    pass # Should not happen if logic is correct
+                
+                self.anim_canvas.draw()
+                
+                if self.anim_index == len(self.anim_rolls) - 1:
+                    # Final state
+                    self.anim_p.set_title('r='+str(self.anim_roll)+', p(r)='+"{:.1e}".format(self.anim_dic[self.anim_roll]/self.anim_total)+', p(x>=r)='+"{:.1e}".format(self.anim_values[self.anim_mini-self.anim_roll-1]), color='white', fontname='Roboto', fontsize=14)
+                    self.anim_f.tight_layout()
+                    self.anim_canvas.draw()
+                    return
+
+                # Schedule reset of this bar
+                # Slowed down slightly: 200ms highlight
+                self.possi.after(200, self.reset_animation_step, roll_val)
+            except Exception:
+                print(traceback.format_exc())
+
+        def reset_animation_step(self, roll_val):
+             try:
+                if not self.possi.winfo_exists():
+                    return
+                    
+                keys_list = list(self.anim_dic.keys())
+                try:
+                    bar_idx = keys_list.index(roll_val)
+                    self.anim_bars[bar_idx].set_color('#595959') # Reset to gray35
+                except ValueError:
+                    pass
+
+                self.anim_canvas.draw()
+                
+                # Schedule next step
+                self.anim_index += 1
+                # Slowed down slightly: 100ms between rolls
+                self.possi.after(100, self.run_animation_step)
+             except Exception:
                 print(traceback.format_exc())
                 
         # function to send messages 
@@ -2148,7 +2367,7 @@ class GUI(ctk.CTk):
             message_sent = pickle.dumps(msg(destinatários, self.msg))
             message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
             client.send(message_sent_header+message_sent)
-            self.rldc = threading.Thread(target=self.rolldic(self.msg)) 
+            self.rolldic(self.msg) 
             
 # create a GUI class object
 g = GUI()
