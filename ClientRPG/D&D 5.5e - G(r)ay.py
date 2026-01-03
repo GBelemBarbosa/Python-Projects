@@ -546,6 +546,13 @@ class GUI(ctk.CTk):
                 
                 self.not_closing=1
                 self.rescale=8
+                self.options = [
+                    "Chico",
+                    "Picardía",
+                    "Pascal",
+                    "Tobey",
+                    "Hide the pain"
+                    ]
                 
                 # chat window which is currently hidden
                 self.configure(fg_color="gray15")
@@ -598,11 +605,14 @@ class GUI(ctk.CTk):
         def askDice(self, name):
             self.login2 = ctk.CTkToplevel(fg_color="gray15") 
             self.login2.title("Display modes")
-            self.login2.geometry('400x132')
+            self.login2.geometry('400x152')
             self.login2.grid_columnconfigure(0, weight=1)
             self.login2.resizable(width = False, height = False)
             self.login2.protocol("WM_DELETE_WINDOW", self.on_closing)
             self.login2.bind('<Return>',(lambda event: self.goAhead2(name)))
+            self.login2.bind('<Up>', self.cycle_display_mode)
+            self.login2.bind('<Down>', self.cycle_display_mode)
+            self.login2.focus_force()
 
             self.displayFrame=ctk.CTkFrame(self.login2, fg_color="gray20")
             self.displayFrame.grid_columnconfigure(0, weight=1)
@@ -616,29 +626,28 @@ class GUI(ctk.CTk):
             self.barbtt=ctk.CTkRadioButton(self.login2, 
                                                                     variable = self.displaymode, 
                                                                     value = 'bar',
-                                                                    text = ' Bar', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
+                                                                    text = '  Bar', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
             self.barbtt.grid(row=1, column=0, padx=(44, 0))
 
             self.dicebtt=ctk.CTkRadioButton(self.login2, 
                                                                     variable = self.displaymode, 
                                                                     value = 'dice',
-                                                                    text = 'Dice', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
-            self.dicebtt.grid(row=2, column=0, padx=(44, 0)) 
+                                                                    text = ' Dice', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
+            self.dicebtt.grid(row=2, column=0, padx=(44, 0))
+
+            self.wheelbtt=ctk.CTkRadioButton(self.login2, 
+                                                                    variable = self.displaymode, 
+                                                                    value = 'wheel',
+                                                                    text = 'Wheel', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
+            self.wheelbtt.grid(row=3, column=0, padx=(44, 0))
             
             # create a Continue Button 
             # along with action 
             self.go2 = ctk.CTkButton(self.login2, 
                                             text = "Continue", border_color=self.color, border_width=2, 
                                             fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead2(name))
-            self.go2.grid(row=3, column=0, pady=self.rescale)
-                
-            self.options = [
-                "Chico",
-                "Picardía",
-                "Pascal",
-                "Tobey",
-                "Hide the pain"
-                ]
+            self.go2.grid(row=4, column=0, pady=self.rescale)
+
 
             self.dice_style = StringVar()
             self.dice_style.set(self.options[0])
@@ -653,6 +662,9 @@ class GUI(ctk.CTk):
                 self.login3.resizable(width = False, height = False)
                 self.login3.protocol("WM_DELETE_WINDOW", self.on_closing)
                 self.login3.bind('<Return>',(lambda event: self.goAhead3(name)))
+                self.login3.bind('<Up>', self.cycle_dice_style_login)
+                self.login3.bind('<Down>', self.cycle_dice_style_login)
+                self.login3.focus_force()
 
                 self.displayCritical=ctk.CTkFrame(self.login3, fg_color="gray20")
                 self.displayCritical.grid_columnconfigure(0, weight=1)
@@ -681,6 +693,36 @@ class GUI(ctk.CTk):
             # the thread to receive messages 
             self.rcv = threading.Thread(target=self.receive) 
             self.rcv.start()
+
+        def cycle_display_mode(self, event):
+            modes = ['bar', 'dice', 'wheel']
+            current = self.displaymode.get()
+            try:
+                idx = modes.index(current)
+            except ValueError:
+                idx = 0
+            
+            if event.keysym == 'Up':
+                idx = (idx - 1) % len(modes)
+            elif event.keysym == 'Down':
+                idx = (idx + 1) % len(modes)
+            
+            self.displaymode.set(modes[idx])
+
+        def cycle_dice_style_login(self, event):
+            current = self.dice_style.get()
+            try:
+                idx = self.options.index(current)
+            except ValueError:
+                idx = 0
+                
+            if event.keysym == 'Up':
+                idx = (idx - 1) % len(self.options)
+            elif event.keysym == 'Down':
+                idx = (idx + 1) % len(self.options)
+                
+            self.dice_style.set(self.options[idx])
+
             
         def goAhead(self, name):
             my_username = name.encode(FORMAT)
@@ -790,12 +832,12 @@ class GUI(ctk.CTk):
                 
                 if not self.hiddenres.winfo_viewable():
                     self.hiddenres.deiconify()
-                if self.displaymode.get()=='bar':    
-                    if self.progresswindow.winfo_viewable():
-                        self.progresswindow.withdraw()
-                else:
-                    if self.dicewindow.winfo_viewable():
-                        self.dicewindow.withdraw()
+                if self.progresswindow.winfo_viewable():
+                    self.progresswindow.withdraw()
+                if self.dicewindow.winfo_viewable():
+                    self.dicewindow.withdraw()
+                if self.wheelwindow.winfo_viewable():
+                    self.wheelwindow.withdraw()
                 self.hiddenres.focus()
 
                 opposite_message=(send_type=='No')*'Yes'+(send_type=='Yes')*'No'
@@ -804,7 +846,8 @@ class GUI(ctk.CTk):
             else:
                 message = r"Resource option selected! The result is: "+resultStr+r".\g Post: "+resources
                 
-                if self.displaymode.get()=='bar':
+                mode = self.displaymode.get().lower()
+                if mode == 'bar':
                     self.progress['value']=0
                     self.InfoLabel2.configure(text = "Success: "+str(p)+"\nCritical success: "+str(crit)+"\n")
                     self.ResultLabel2.configure(text = "")
@@ -832,14 +875,18 @@ class GUI(ctk.CTk):
                     
                     self.ResultLabel2.configure(text = resultStr)
                     self.InfoLabel2.configure(text = self.InfoLabel2.cget("text")+"Rolled: "+str(r))
-                else:
+                elif mode == 'dice':
                     self.InfoLabel.configure(text = "Success: "+str(p)+"\nCritical success: "+str(crit)+"\n")
                     self.ResultLabel.configure(text = "")
 
                     if not self.dicewindow.winfo_viewable():
                         self.dicewindow.deiconify()
                     self.dicewindow.focus()
-                    self.panel.configure(fg_color="gray20")
+                    
+                    # Sync backgrounds to prevent flicker
+                    self.panel.configure(fg_color="gray70")
+                    self.ResultFrame.configure(fg_color="gray20")
+                    self.ResultLabel.configure(fg_color="gray20")
 
                     ##### CONSTANTES PARA ADEQUACAO DOS TEMPOS DE ROLAGEM (EM 10^-2s)
 
@@ -853,11 +900,9 @@ class GUI(ctk.CTk):
                             rolagem = random.randint(0, 20)
 
                         currentRoll = rolagem
-
-                        img = Image.open(os.path.join(DICE_IMAGES_DIR, str(rolagem)+".png"))
-                        img = img.convert("RGBA")
-                        self.img = ctk.CTkImage(img, size=(250,250))
-                        self.panel.configure(image = self.img)
+                        
+                        # Use cached image
+                        self.panel.configure(image = self.dice_images_cache[str(rolagem)+".png"])
                         
                         sleep(sleepTime)
                         sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
@@ -873,17 +918,85 @@ class GUI(ctk.CTk):
                             roundedRealDiceRoll = ceil(r)
 
                     if resultStr=="Critical success":
-                        img = Image.open(os.path.join(DICE_IMAGES_DIR, "20"+self.dice_style.get()+'.png'))
+                        img_name = "20" + self.dice_style.get() + '.png'
                     elif resultStr=="Critical fail":
-                        img = Image.open(os.path.join(DICE_IMAGES_DIR, "0"+self.dice_style.get()+'.png'))
+                        img_name = "0" + self.dice_style.get() + '.png'
                     else:
-                        img = Image.open(os.path.join(DICE_IMAGES_DIR, str(roundedRealDiceRoll)+".png"))
-                    img = img.convert("RGBA")
-                    self.img = ctk.CTkImage(img, size=(250,250))
-                    self.panel.configure(image = self.img, fg_color=self.color)
+                        img_name = str(roundedRealDiceRoll) + ".png"
+
+                    # Show final result with user color
+                    self.panel.configure(image = self.dice_images_cache[img_name], fg_color=self.color)
+                    self.ResultFrame.configure(fg_color="gray20")
+                    self.ResultLabel.configure(fg_color="gray20")
 
                     self.ResultLabel.configure(text = resultStr)
                     self.InfoLabel.configure(text = self.InfoLabel.cget("text")+"Rolled: "+str(r))
+                elif mode == 'wheel':
+                    self.InfoLabel3.configure(text = "Success: "+str(p)+"\nCritical success: "+str(crit)+"\n")
+                    self.ResultLabel3.configure(text = "")
+
+                    if not self.wheelwindow.winfo_viewable():
+                        self.wheelwindow.deiconify()
+                    self.wheelwindow.focus()
+
+                    # Calculate wedge sizes (as percentages of 0-20 scale)
+                    # p and crit are thresholds on 0-20 scale
+                    # Critical fail: r < p/2 → range [0, p/2)
+                    # Fail: p/2 <= r < p → range [p/2, p)
+                    # Success: p <= r < crit → range [p, crit)
+                    # Critical success: r >= crit → range [crit, 20]
+                    crit_fail_size = (p / 2) / 20 * 100        # [0, p/2)
+                    fail_size = (p / 2) / 20 * 100             # [p/2, p)
+                    success_size = (crit - p) / 20 * 100       # [p, crit)
+                    crit_success_size = (20 - crit) / 20 * 100 # [crit, 20]
+                    
+                    sizes = [crit_fail_size, fail_size, success_size, crit_success_size]
+                    labels = ['Critical\nFail', 'Fail', 'Success', 'Critical\nSuccess']
+                    base_colors = ['#444444', '#666666', '#888888', '#AAAAAA']  # grayscale scheme matching the app theme
+                    
+                    # Determine which wedge is the result
+                    result_index = {'Critical fail': 0, 'Fail': 1, 'Success': 2, 'Critical success': 3}[resultStr]
+                    
+                    # Store animation state
+                    self.wheel_sizes = sizes
+                    self.wheel_labels = labels
+                    self.wheel_base_colors = base_colors
+                    self.wheel_result_index = result_index
+                    self.wheel_resultStr = resultStr
+                    self.wheel_p = p
+                    self.wheel_crit = crit
+                    self.wheel_r = r
+                    
+                    # Calculate final angle for the result wedge
+                    # We want the pointer at the top (90 degrees) to land in the result wedge
+                    # Pie starts at startangle=90, wedges go counter-clockwise
+                    # To land pointer on precise position: rotate by -(cumulative + rel_pos * size) * 3.6
+                    cumulative = 0
+                    for i in range(result_index):
+                        cumulative += sizes[i]
+                    
+                    # Calculate relative position within the wedge based on the roll r
+                    if result_index == 0:   # Critical Fail: [0, p/2)
+                        rel_pos = (r - 0) / (p / 2)
+                    elif result_index == 1: # Fail: [p/2, p)
+                        rel_pos = (r - p/2) / (p/2)
+                    elif result_index == 2: # Success: [p, crit)
+                        rel_pos = (r - p) / (crit - p)
+                    else:                   # Critical Success: [crit, 20]
+                        rel_pos = (r - crit) / (20 - crit)
+                    
+                    # Map the relative position to the wedge angle
+                    target_angle = cumulative + rel_pos * sizes[result_index]
+                    
+                    # Spin animation: multiple full rotations + landing angle
+                    full_rotations = random.randint(3, 5)
+                    self.wheel_total_rotation = full_rotations * 360 - target_angle * 3.6  # 3.6 = 360/100
+                    self.wheel_current_rotation = 0
+                    self.wheel_animation_step = 0
+                    self.wheel_total_steps = 60  # 60 frames for smooth animation
+                    
+                    # Start animation
+                    self.animate_wheel()
 
             message_sent = pickle.dumps(msg([player['name'] for player in self.players], message))
             message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
@@ -893,6 +1006,102 @@ class GUI(ctk.CTk):
             # return currentTime + currentTime**2 / 2
             # return currentTime + incrementFraction*currentTime
             return currentTime+limitTime*(1-exp(-currentTime*self.incrementFraction))
+
+        def animate_wheel(self):
+            try:
+                if not self.wheelwindow.winfo_viewable():
+                    return
+                
+                # Easing function for smooth slowdown
+                t = self.wheel_animation_step / self.wheel_total_steps
+                # Ease-out cubic for more dramatic slowdown
+                eased_t = 1 - pow(1 - t, 3)
+                
+                current_rotation = eased_t * self.wheel_total_rotation
+                
+                # Clear the axis
+                self.wheel_ax.clear()
+                self.wheel_ax.set_facecolor('#333333')
+                self.wheel_ax.axis('equal')
+                
+                # Determine colors - highlight result on final frame
+                if self.wheel_animation_step >= self.wheel_total_steps:
+                    colors = []
+                    for i in range(4):
+                        if i == self.wheel_result_index:
+                            colors.append(self.color)  # User's color for result
+                        else:
+                            colors.append(self.wheel_base_colors[i])
+                else:
+                    colors = self.wheel_base_colors
+                
+                # Draw pie chart with rotation
+                wedges, texts = self.wheel_ax.pie(
+                    self.wheel_sizes,
+                    labels=self.wheel_labels if self.wheel_animation_step >= self.wheel_total_steps else [''] * 4,
+                    colors=colors,
+                    startangle=90 + current_rotation,
+                    labeldistance=1.15,  # Standardize label distance from wheel
+                    wedgeprops={'linewidth': 2, 'edgecolor': '#333333'}
+                )
+                
+                # Set label properties
+                for text in texts:
+                    text.set_color('white')
+                    text.set_fontsize(10)
+                    text.set_fontname('Roboto')
+                
+                # Draw pointer at top using a polygon triangle
+                pointer_x = [0, -0.08, 0.08]
+                pointer_y = [1.0, 1.15, 1.15]
+                self.wheel_ax.fill(pointer_x, pointer_y, color='white')
+                
+                self.wheel_canvas.draw()
+                
+                if self.wheel_animation_step < self.wheel_total_steps:
+                    self.wheel_animation_step += 1
+                    # Variable delay - faster at start, slower at end
+                    delay = int(20 + 80 * t)  # 20ms to 100ms
+                    self.wheelwindow.after(delay, self.animate_wheel)
+                else:
+                    # Animation complete - show result
+                    self.ResultLabel3.configure(text=self.wheel_resultStr)
+                    self.InfoLabel3.configure(text=self.InfoLabel3.cget("text") + "Rolled: " + str(self.wheel_r))
+            except Exception:
+                print(traceback.format_exc())
+
+        def show_mode_menu(self):
+            menu = Menu(self, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 10))
+            
+            # Bar and Wheel as direct options
+            menu.add_command(label="Bar", command=lambda: self.set_mode_style("bar"))
+            menu.add_command(label="Wheel", command=lambda: self.set_mode_style("wheel"))
+            
+            # Dice as a cascading menu
+            dice_menu = Menu(menu, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 10))
+            for style in self.options:
+                dice_menu.add_command(label=style, command=lambda s=style: self.set_mode_style("dice", s))
+            
+            menu.add_cascade(label="Dice", menu=dice_menu)
+            
+            # Show menu at button position
+            x = self.mode_button.winfo_rootx()
+            y = self.mode_button.winfo_rooty() + self.mode_button.winfo_height()
+            menu.post(x, y)
+
+        def set_mode_style(self, mode, style=None):
+            self.displaymode.set(mode)
+            if style:
+                self.dice_style.set(style)
+                self.mode_button.configure(text=f"Dice: {style}")
+            else:
+                self.mode_button.configure(text=f"Mode: {mode.capitalize()}")
+            # No need for individual window management here, 
+            # displayres handles showing/hiding windows on roll
+
+        def update_display_mode(self, mode):
+            # This method is now legacy but kept for compatibility if needed elsewhere
+            pass
 
         def on_closing(self):
             self.not_closing=0
@@ -928,23 +1137,23 @@ class GUI(ctk.CTk):
 
         def build_resor(self):  
             self.aFrame=ctk.CTkFrame(self.terFrame, fg_color="gray25")
-            self.aFrame.columnconfigure((0,1) , weight=1)
+            self.aFrame.columnconfigure((0,1), weight=1, uniform="anterior")
             self.aFrame.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
 
             self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
             self.anteriorLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale, columnspan=2)
 
             self.aconLabel=ctk.CTkLabel(self.aFrame, text="Constant", fg_color="gray30", corner_radius=6, font=("Roboto", 12))
-            self.aconLabel.grid(row=1, column=0, sticky="w", padx=(self.rescale,0), pady=(0,self.rescale))
+            self.aconLabel.grid(row=1, column=0, sticky="ew", padx=(self.rescale,self.rescale/2), pady=(0,self.rescale))
 
             self.aadvLabel=ctk.CTkLabel(self.aFrame, text="Advantage", fg_color="gray30", corner_radius=6, font=("Roboto", 12))
-            self.aadvLabel.grid(row=2, column=0, sticky="w", padx=(self.rescale,0), pady=(0,self.rescale))
+            self.aadvLabel.grid(row=1, column=1, sticky="ew", padx=(self.rescale/2,self.rescale), pady=(0,self.rescale))
 
-            self.acontotal=ctk.CTkLabel(self.aFrame, text=(self.premod.const>0)*"+"+str(self.premod.const), fg_color="gray30", corner_radius=6, width=36, font=("Roboto", 12))
-            self.acontotal.grid(row=1, column=1, sticky="e", padx=(0,self.rescale), pady=(0,self.rescale))
+            self.acontotal=ctk.CTkLabel(self.aFrame, text=(self.premod.const>0)*"+"+str(self.premod.const), fg_color="gray30", corner_radius=6, font=("Roboto", 12))
+            self.acontotal.grid(row=2, column=0, sticky="ew", padx=(self.rescale,self.rescale/2), pady=(0,self.rescale))
 
-            self.aadvtotal=ctk.CTkLabel(self.aFrame,text=(self.premod.adv>0)*"+"+str(self.premod.adv), fg_color="gray30", corner_radius=6, width=36, font=("Roboto", 12))
-            self.aadvtotal.grid(row=2, column=1, sticky="e", padx=(0,self.rescale), pady=(0,self.rescale))
+            self.aadvtotal=ctk.CTkLabel(self.aFrame,text=(self.premod.adv>0)*"+"+str(self.premod.adv), fg_color="gray30", corner_radius=6, font=("Roboto", 12))
+            self.aadvtotal.grid(row=2, column=1, sticky="ew", padx=(self.rescale/2,self.rescale), pady=(0,self.rescale))
             
             for i in range(len(self.resor)):
                 aux=("Resource #"+str(i+1))*(self.resor[i].resName.replace(" ", "")=="")+self.resor[i].resName*(self.resor[i].resName.replace(" ", "")!="")
@@ -1349,7 +1558,7 @@ class GUI(ctk.CTk):
                 self.secFrame.grid(row=0, column=1, pady=self.rescale, sticky="nsew", rowspan=5)
 
                 self.stypebar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
-                self.stypebar.columnconfigure(5 , weight=1)
+                self.stypebar.columnconfigure((5, 9) , weight=1)
                 self.stypebar.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
 
                 self.meBtt=ctk.CTkRadioButton(self.stypebar, 
@@ -1399,6 +1608,25 @@ class GUI(ctk.CTk):
                 self.messagelabel.grid(row=0, column=6, padx=(0,self.rescale))
                 self.sbtt.grid(row=0, column=7)
                 self.nbtt.grid(row=0, column=8, padx=self.rescale)
+
+                self.separator1= ctk.CTkLabel(self.stypebar, text="")
+                self.separator1.grid(row=0, column=9, sticky="ew")
+
+                self.mode_button = ctk.CTkButton(self.stypebar, 
+                                                 text=f"Mode: {self.displaymode.get().capitalize()}",
+                                                 width=120, height=24,
+                                                 fg_color="gray25", border_color="gray30",
+                                                 border_width=1, hover_color="gray35",
+                                                 font=("Roboto", 11),
+                                                 command=self.show_mode_menu)
+                self.mode_button.grid(row=0, column=11, padx=self.rescale)
+
+                # Initialize button text correctly if it's dice
+                if self.displaymode.get().lower() == 'dice':
+                    self.mode_button.configure(text=f"Dice: {self.dice_style.get()}")
+
+                # Remove the old switcher setup
+                # self.update_display_mode(self.displaymode.get())
 
                 self.resourcebar=ctk.CTkFrame(self.secFrame, fg_color="gray15")
                 self.resourcebar.columnconfigure((0,1,2), weight=1)
@@ -1693,7 +1921,7 @@ class GUI(ctk.CTk):
 
                 self.InfoLabel = ctk.CTkLabel(self.dicewindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.InfoLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale)
-                self.ResultFrame = ctk.CTkFrame(self.dicewindow, fg_color="gray20")
+                self.ResultFrame=ctk.CTkFrame(self.dicewindow, fg_color="gray20")
                 self.ResultFrame.columnconfigure(0, weight=1)
                 self.ResultFrame.grid(row=1, column=0, sticky="ew", padx=self.rescale, pady=(0,self.rescale))
                 
@@ -1701,6 +1929,14 @@ class GUI(ctk.CTk):
                 self.ResultLabel.grid(row=0, column=0, pady=self.rescale)
                 self.panel = ctk.CTkLabel(self.ResultFrame, text="", fg_color=self.color)
                 self.panel.grid(row=1, column=0)
+
+                # Pre-load dice images to prevent flickering
+                self.dice_images_cache = {}
+                for filename in os.listdir(DICE_IMAGES_DIR):
+                    if filename.endswith(".png"):
+                        img_path = os.path.join(DICE_IMAGES_DIR, filename)
+                        img = Image.open(img_path).convert("RGBA")
+                        self.dice_images_cache[filename] = ctk.CTkImage(img, size=(250,250))
 
                 self.InfoLabel2 = ctk.CTkLabel(self.progresswindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
                 self.InfoLabel2.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale)
@@ -1713,9 +1949,35 @@ class GUI(ctk.CTk):
                 self.progress = ctk.CTkProgressBar(self.ResultFrame2, width=400, fg_color="gray25", progress_color=self.color)
                 self.progress.grid(row=1, column=0, padx=self.rescale, pady=(0,self.rescale))
 
+                # Wheel window setup
+                self.wheelwindow=ctk.CTkToplevel(fg_color="gray15")
+                self.wheelwindow.title("Result (wheel)")
+                self.wheelwindow.resizable(width = False, height = False)
+                self.wheelwindow.columnconfigure(0, weight=1)
+                self.wheelwindow.protocol("WM_DELETE_WINDOW", self.wheelwindow.withdraw)
+
+                self.InfoLabel3 = ctk.CTkLabel(self.wheelwindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+                self.InfoLabel3.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale)
+                self.ResultFrame3 = ctk.CTkFrame(self.wheelwindow, fg_color="gray20")
+                self.ResultFrame3.columnconfigure(0, weight=1)
+                self.ResultFrame3.grid(row=1, column=0, sticky="ew", padx=self.rescale, pady=(0,self.rescale))
+
+                self.ResultLabel3=ctk.CTkLabel(self.ResultFrame3, text="", text_color=self.color, font=("Roboto", 25), fg_color="gray20")
+                self.ResultLabel3.grid(row=0, column=0, pady=self.rescale)
+                
+                # Create matplotlib figure for wheel
+                self.wheel_fig = Figure(figsize=(4, 4), dpi=100, facecolor='#333333')
+                self.wheel_ax = self.wheel_fig.add_subplot(111)
+                self.wheel_ax.set_facecolor('#333333')
+                self.wheel_ax.axis('equal')
+                
+                self.wheel_canvas = FigureCanvasTkAgg(self.wheel_fig, master=self.ResultFrame3)
+                self.wheel_canvas.get_tk_widget().grid(row=1, column=0, padx=self.rescale, pady=(0,self.rescale))
+
                 self.hiddenres.withdraw()
                 self.progresswindow.withdraw()
                 self.dicewindow.withdraw()
+                self.wheelwindow.withdraw()
 
                 self.barrap1=Label(self.progress, bg = 'white')                 
                 self.barrap2=Label(self.progress, bg = 'white')                 
@@ -2240,7 +2502,9 @@ class GUI(ctk.CTk):
 
                 self.possi.update() 
 
-                f = Figure(figsize=(8, 6), dpi=100, facecolor='#262626') 
+                # Use fixed DPI
+                dpi = 100
+                f = Figure(figsize=(10, 8), dpi=dpi, facecolor='#262626') 
                 p=f.gca()
                 p.set_facecolor('#262626')
                 
@@ -2262,7 +2526,6 @@ class GUI(ctk.CTk):
                 canvas.get_tk_widget().pack(fill=BOTH, expand=True, padx=0, pady=0)
 
                 # FORCE LAYOUT REFRESH: Maximize and Restore
-                # The user noted this fixes the scale, so we do it programmatically.
                 self.possi.state('zoomed')
                 self.possi.update()
                 self.possi.state('normal')
