@@ -6,7 +6,7 @@ windll.shcore.SetProcessDpiAwareness(1)
 import socket 
 import threading
 from tkinter import *
-from tkinter import font, ttk, filedialog, messagebox
+from tkinter import font, ttk, filedialog, messagebox, TclError
 import customtkinter as ctk
 import random
 import numpy as np
@@ -27,6 +27,7 @@ from PIL import ImageTk, Image
 from math import exp
 from math import floor, ceil
 import os
+import shutil
 import traceback
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -74,8 +75,8 @@ __all__ = ['TextWrapper', 'wrap', 'fill', 'dedent', 'indent', 'shorten']
 _whitespace = '\t\n\x0b\x0c\r '
 
 def justify(words, width):
-    if len(words)==width:
-        return(words)
+    if len(words) >= width:
+        return words
     line = re.split(r"(\s+)",words)
     if line[0]=='':
         line.pop(0)
@@ -228,7 +229,7 @@ class TextWrapper:
             while chunks:
                 if '\n' in chunks[-1]:
                     chunks.pop()
-                    chunks.append(r'\j'+' -*- '*10)
+                    chunks.append(r'\j')
                 elif r'\k' in chunks[-1] and not r'\\\k' in chunks[-1]:
                         yob=chunks[-1].split(r'\k')
                         chunks.pop()
@@ -271,9 +272,12 @@ class TextWrapper:
                 elif r'\g' in chunks[-1] and not r'\\\g' in chunks[-1]:
                         yob=chunks[-1].split(r'\g')
                         chunks.pop()
-                        if yob[1]!='':
-                            chunks.append(r'\j         '+yob[1])
-                        elif len(chunks)>1:
+                        # Process ALL parts after split (handle multiple \g markers)
+                        # Push in reverse so they maintain correct order when popped
+                        for part in reversed(yob[1:]):
+                            if part != '':
+                                chunks.append(r'\j         '+part)
+                        if not any(yob[1:]) and len(chunks)>1:
                             z=chunks.pop()
                             chunks[-1]=r'\j         '+z+chunks[-1]
                         if yob[0]!='':
@@ -344,11 +348,11 @@ class TextWrapper:
     
 # -- Convenience interface ---------------------------------------------
 
-def wrap(text, width=70, **kwargs):
+def wrap(text, width=1000, **kwargs):
     w = TextWrapper(width=width, **kwargs)
     return w.wrap(text)
 
-def fill(text, width=70, **kwargs):
+def fill(text, width=1000, **kwargs):
     w = TextWrapper(width=width, **kwargs)
     return w.fill(text)
 
@@ -475,22 +479,50 @@ class IntSpinbox(ctk.CTkFrame):
         self.entry.insert(0, value)
         self.variable.set(value)
 
+    def destroy(self):
+        """Safe destroy that processes pending events first and cleans up children."""
+        # Note: Do NOT call update_idletasks() here. It forces redraws on dying widgets.
+            
+        # Explicitly destroy children with safety to stop their internal events
+        for child in [self.add_button, self.subtract_button, self.entry]:
+            try:
+                if hasattr(child, 'winfo_exists') and child.winfo_exists():
+                    child.destroy()
+            except (TclError, Exception):
+                pass
+                
+        try:
+            super().destroy()
+        except (TclError, Exception):
+            pass
+
+class AnteriorItem:
+    def __init__(self, typ, val1, val2=0, hidden=False):
+        self.typ=typ
+        self.val1=val1
+        self.val2=val2
+        self.hidden=hidden
+
 class premod:
-    def __init__(self, adv, const):
+    def __init__(self, adv, const, items=None):
         self.adv=adv
         self.const=const
+        self.items = items if items is not None else []
 
 class posmod:
-    def __init__(self, typ, timing, num1, num2):
+    def __init__(self, typ, timing, num1, num2, hidden=False):
         self.typ=typ
         self.timing=timing
         self.value=num1*(num2+1)*25*(typ!="adv")+num1*(typ=="adv")
-        self.subresName=timing+" Advan"*(typ=="adv")+" "+"+"*(num1>0)+str(num1)+(typ=="dice")*("d"+str(num2))
+        h_marker = " (H)" if hidden else ""
+        self.subresName=timing+" Advan"*(typ=="adv")+" "+"+"*(num1>0)+str(num1)+(typ=="dice")*("d"+str(num2))+h_marker
+        self.hidden=hidden
 
 class resource:
-    def __init__(self, qnt, resName):
+    def __init__(self, qnt, resName, hidden=False):
         self.qnt=qnt
         self.resName=resName
+        self.hidden=hidden
         self.mainFrame=Frame()
         self.mainButton=Frame()
         self.listSubres=[]
@@ -499,10 +531,11 @@ class resource:
         self.deleteButton=Frame()
 
 class resourceSend:
-    def __init__(self, qnt, resName, listSubres):
+    def __init__(self, qnt, resName, listSubres, hidden=False):
         self.qnt=qnt
         self.resName=resName
         self.listSubres=listSubres
+        self.hidden=hidden
 
 class bloco:
     def __init__(self, premods, posmods, sn, crit, mini):
@@ -527,15 +560,21 @@ class roll:
         self.who=who
 
 class res:
-    def __init__(self, p, crit, r, adv):
+    def __init__(self, p, crit, r, adv, hidden=False):
         self.p=p
         self.r=r
         self.crit=crit
         self.adv=adv
         self.mods=''
+        self.hidden=hidden
 
     def __lt__(self, other):
          return self.p < other.p
+
+class posterior_selection:
+    def __init__(self, roll_id, selection_index):
+        self.roll_id = roll_id  # Unique ID for this roll's posterior selection
+        self.selection_index = selection_index  # Index of chosen res option (-1 for N/A)
 
 # GUI class for the chat 
 class GUI(ctk.CTk): 
@@ -559,20 +598,21 @@ class GUI(ctk.CTk):
                 self.dice_style = StringVar(value=self.options[0])
                 self.who = StringVar(value='me')
                 self.sn = StringVar(value='s')
+                self.anterior_items = []
+                self.players = []
                 
                 # chat window which is currently hidden
                 self.configure(fg_color="gray15")
                 self.withdraw()
 
-                os.makedirs(PAST_CONFIGS_DIR, exist_ok=True)
-                for filename in os.listdir(PAST_CONFIGS_DIR):
-                    os.remove(os.path.join(PAST_CONFIGS_DIR, filename))
+                self.user_past_configs_dir = None
+                self.protocol("WM_DELETE_WINDOW", self.on_closing)
                 
                 # login window 
                 self.login = ctk.CTkToplevel(fg_color="gray15") 
                 # set the title 
                 self.login.title("Login") 
-                self.login.geometry("400x125")
+                self.center_window(self.login, 400, 125)
                 self.login.grid_columnconfigure(0, weight=1)
                 self.login.grid_rowconfigure(1, weight=1) # ONLY center row expands
                 self.login.grid_rowconfigure((0, 2), weight=0) # Keep bars at edges
@@ -609,99 +649,43 @@ class GUI(ctk.CTk):
                 self.go.grid(row=2, column=0, pady=(0, self.rescale), padx=self.rescale, sticky="ew") 
                 
 
-        def askDice(self, name):
-            self.login2 = ctk.CTkToplevel(fg_color="gray15") 
-            self.login2.title("Display modes")
-            self.login2.geometry('400x185')
-            self.login2.grid_columnconfigure(0, weight=1)
-            self.login2.grid_rowconfigure((1, 2, 3), weight=1) # Centering interactive elements
-            self.login2.grid_rowconfigure((0, 4), weight=0) # Keep bars at edges
-            self.login2.resizable(width = False, height = False)
-            self.login2.protocol("WM_DELETE_WINDOW", self.on_closing)
-            self.login2.bind('<Return>',(lambda event: self.goAhead2(name)))
-            self.login2.bind('<Up>', self.cycle_display_mode)
-            self.login2.bind('<Down>', self.cycle_display_mode)
-            self.login2.focus_force()
-
-            self.displayFrame=ctk.CTkFrame(self.login2, fg_color="gray20")
-            self.displayFrame.grid_columnconfigure(0, weight=1)
-            self.displayFrame.grid(row=0, column=0, padx=self.rescale, pady=(self.rescale, 0), sticky="ew")
+        def center_window(self, window, width=None, height=None):
+                """Center a window on the screen using its natural spawn as a reference."""
+                if width and height:
+                    window.geometry(f"{width}x{height}")
                 
-            self.display = ctk.CTkLabel(self.displayFrame, text="Display mode", font=("Roboto", 14)) 
-            self.display.grid(row=0, column=0)
-
-            self.displaymode=StringVar(value='bar')
-
-            self.barbtt=ctk.CTkRadioButton(self.login2, 
-                                                                    variable = self.displaymode, 
-                                                                    value = 'bar',
-                                                                    text = '  Bar', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
-            self.barbtt.grid(row=1, column=0, padx=(44, 0), pady=(4, 2))
-
-            self.dicebtt=ctk.CTkRadioButton(self.login2, 
-                                                                    variable = self.displaymode, 
-                                                                    value = 'dice',
-                                                                    text = ' Dice', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
-            self.dicebtt.grid(row=2, column=0, padx=(44, 0), pady=2)
-
-            self.wheelbtt=ctk.CTkRadioButton(self.login2, 
-                                                                    variable = self.displaymode, 
-                                                                    value = 'wheel',
-                                                                    text = 'Wheel', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
-            self.wheelbtt.grid(row=3, column=0, padx=(44, 0), pady=(2, 4))
-
-            self.nonebtt=ctk.CTkRadioButton(self.login2, 
-                                                                    variable = self.displaymode, 
-                                                                    value = 'none',
-                                                                    text = 'None', fg_color=self.color, border_color="gray20", hover_color=self.color, font=("Roboto", 12))
-            self.nonebtt.grid(row=4, column=0, padx=(44, 0), pady=(2, 4))
-            
-            # create a Continue Button 
-            # along with action 
-            self.go2 = ctk.CTkButton(self.login2, 
-                                            text = "Continue", border_color=self.color, border_width=2, 
-                                            fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead2(name))
-            self.go2.grid(row=4, column=0, pady=(0, self.rescale), padx=self.rescale, sticky="ew")
-
-
-            self.dice_style = StringVar()
-            self.dice_style.set(self.options[0])
-                                
-        def goAhead2(self, name):
-            if self.displaymode.get()=='dice':
-                self.login2.destroy()
-                self.login3 = ctk.CTkToplevel(fg_color="gray15") 
-                self.login3.title("Critical styles")
-                self.login3.geometry('400x125')
-                self.login3.grid_columnconfigure(0, weight=1)
-                self.login3.grid_rowconfigure(1, weight=1) # ONLY center row expands
-                self.login3.grid_rowconfigure((0, 2), weight=0) # Keep bars at edges
-                self.login3.resizable(width = False, height = False)
-                self.login3.protocol("WM_DELETE_WINDOW", self.on_closing)
-                self.login3.bind('<Return>',(lambda event: self.goAhead3(name)))
-                self.login3.bind('<Up>', self.cycle_dice_style_login)
-                self.login3.bind('<Down>', self.cycle_dice_style_login)
-                self.login3.focus_force()
-
-                self.displayCritical=ctk.CTkFrame(self.login3, fg_color="gray20")
-                self.displayCritical.grid_columnconfigure(0, weight=1)
-                self.displayCritical.grid(row=0, column=0, padx=self.rescale, pady=(self.rescale, 0), sticky="ew")
-
-                self.dicebar= ctk.CTkLabel(self.displayCritical, text='Critical style', font=("Roboto", 14))
-                self.dicebar.grid(row=0, column=0)
+                window.update()
                 
-                self.dice_style_drop = ctk.CTkComboBox(self.login3, variable=self.dice_style, values=self.options, state='readonly', dropdown_hover_color="gray25", fg_color="gray20", border_width=0, button_color="gray25", font=("Roboto", 12), width=200, justify="center")
-                self.dice_style_drop.grid(row=1, column=0, pady=0) # Centered horizontally by removing sticky="ew"
+                # Get scaling factor (crucial for modern Windows high-DPI)
+                scaling = window._get_window_scaling()
 
-                self.go3 = ctk.CTkButton(self.login3, 
-                                            text = "Continue", border_color=self.color, border_width=2,
-                                            fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead3(name)) 
-                self.go3.grid(row=2, column=0, pady=(0, self.rescale), padx=self.rescale, sticky="ew")
-            else:
-                self.goAhead3(name)
+                # If width/height were not provided, get them from the rendered window
+                # winfo_width/height returns physical pixels, so we convert to logical
+                if width is None: width = window.winfo_width() / scaling
+                if height is None: height = window.winfo_height() / scaling
+                
+                # Get dimensions of the virtual root (current monitor/desktop area)
+                # These are usually in physical pixels, so we divide by scaling
+                v_width = window.winfo_vrootwidth() / scaling
+                v_height = window.winfo_vrootheight() / scaling
+                v_x = window.winfo_vrootx() / scaling
+                v_y = window.winfo_vrooty() / scaling
+
+                # Fallback if vroot is not reporting properly (sometimes returns 0 or 1)
+                if v_width <= 1:
+                    v_width = window.winfo_screenwidth() / scaling
+                    v_height = window.winfo_screenheight() / scaling
+                    v_x = 0
+                    v_y = 0
+
+                # Formula: offset + (total_area - window_size) // 2
+                x = int(v_x + (v_width - width) / 2)
+                y = int(v_y + (v_height - height) / 2) - 20 # Slight upward bias for taskbar
+                
+                print(f"DEBUG Centering: {window.title()} | scaling={scaling:.2f} | vroot: {v_width}x{v_height}+{v_x}+{v_y} | target: {width}x{height} | final: +{x}+{y}")
+                window.geometry(f"+{x}+{y}")
 
         def goAhead3(self, name):
-            self.receive()
             self.layout(name)
             # the thread to receive messages 
             self.rcv = threading.Thread(target=self.receive) 
@@ -738,6 +722,7 @@ class GUI(ctk.CTk):
 
             
         def goAhead(self, name):
+            self.my_name = name
             my_username = name.encode(FORMAT)
             my_username_header = f"{len(my_username):<{HEADER_LENGTH}}".encode(FORMAT)
             client.send(my_username_header + my_username)
@@ -753,27 +738,43 @@ class GUI(ctk.CTk):
                 color_header=f"{len(color):<{HEADER_LENGTH}}".encode(FORMAT)
                 client.send(color_header + color)
                 self.login.destroy()
+
+                # Setup user-specific past configs folder
+                self.user_past_configs_dir = os.path.join(PAST_CONFIGS_DIR, name)
+                os.makedirs(self.user_past_configs_dir, exist_ok=True)
+                for filename in os.listdir(self.user_past_configs_dir):
+                    os.remove(os.path.join(self.user_past_configs_dir, filename))
+
                 self.goAhead3(name)
             else:
                 self.pls.configure(text=server_message)
 
         def onPlayerClick(self, c):
-            if self.players[c]['selected']:
-                self.playerBtts[c].configure(fg_color="gray25")
-            else:
-                self.playerBtts[c].configure(fg_color="gray35")
-            self.players[c]['selected'] = not self.players[c]['selected']
+            try:
+                if self.players[c]['selected']:
+                    self.playerBtts[c].configure(fg_color="gray25")
+                else:
+                    self.playerBtts[c].configure(fg_color="gray35")
+                self.players[c]['selected'] = not self.players[c]['selected']
+            except IndexError:
+                pass
 
         def onPlayerSelec(self, c):
-            tempLabel = ctk.CTkButton(self.label,
-                                                    fg_color="gray25",
-                                                    hover=False,
-                                                    border_color=self.players[c]['color'],
-                                                    border_width=2,
-                                                    text = self.players[c]['name'],
-                                                    font=("Roboto", 12))
-            self.playerSelected.append(tempLabel)
-            self.playerSelected[-1].grid(row=len(self.playerSelected)-1, column=0, pady=(0,self.rescale), sticky="ew")
+            try:
+                player_name = self.players[c]['name']
+                player_color = self.players[c]['color']
+                self.roll_list.append(player_name)  # Add player to roll list
+                tempLabel = ctk.CTkButton(self.label,
+                                                        fg_color="gray25",
+                                                        hover=False,
+                                                        border_color=player_color,
+                                                        border_width=2,
+                                                        text = player_name,
+                                                        font=("Roboto", 12))
+                self.playerSelected.append(tempLabel)
+                self.playerSelected[-1].grid(row=len(self.playerSelected)-1, column=0, pady=(0,self.rescale), sticky="ew")
+            except IndexError:
+                pass
 
         def rollerrola(self):
             message_sent = pickle.dumps(roll(self.roll_list,self.who.get()))
@@ -839,101 +840,131 @@ class GUI(ctk.CTk):
                     resultStr = "Fail"
             return p, crit, r, resultStr
                 
-        def displayres(self, p, crit, r, resultStr, send_type, resources):
-            limits_msg = rf"\n Limits: \g CF: <{p/2:.1f}; F: <{p:.1f}; S: <{crit:.1f}; CS: >={crit:.1f} \g Rolled: {r:.1f}"
-            if send_type:
-                message = r"Resource option selected! The result is a secret...\g Post: "+resources + limits_msg
-                
-                if not self.hiddenres.winfo_viewable():
-                    self.hiddenres.update()
-                    self.hiddenres.deiconify()
-                if self.progresswindow.winfo_viewable():
-                    self.progresswindow.withdraw()
-                if self.dicewindow.winfo_viewable():
-                    self.dicewindow.withdraw()
-                if self.wheelwindow.winfo_viewable():
-                    self.wheelwindow.withdraw()
-                self.hiddenres.focus()
 
-                opposite_message=(send_type=='No')*'Yes'+(send_type=='Yes')*'No'
-                aux=(resultStr=="Success" or resultStr=="Critical success")*send_type+(resultStr=="Fail" or resultStr=="Critical fail")*opposite_message
-                self.hidden_label.configure(text=aux)
-            else:
-                message = r"Resource option selected! The result is: "+resultStr+r".\g Post: "+resources + limits_msg
+        def displayres(self, p, crit, r, resultStr, send_type, resources, caller_name=None, is_hidden=False):
+            try:
+                # Thread-safe window closing
+                def close_windows():
+                    try:
+                        if hasattr(self, 'wheelwindow') and self.wheelwindow.winfo_exists():
+                            self.wheelwindow.withdraw()
+                        if hasattr(self, 'possi') and self.possi.winfo_exists():
+                            self.possi.withdraw()
+                    except (TclError, Exception):
+                        pass
+                self.after(0, close_windows)
+                    
+                destiny=[]
                 
+                # Limits message construction
+                limits_msg = r"\n Limits: \gCF: "+str(round(p/2))+r"; \gS: "+str(p)+r"; \gCS: "+str(crit)+r"; \gRolled: "+str(int(r))
+                
+                if is_hidden or send_type == 'hidden':
+                    # Mystery Mode or Hidden Roll: No limits, no rolled value.
+                    prefix = "Hidden roll result: " if send_type == 'hidden' else "Roll result: "
+                    message = prefix+resultStr+r". \n"+resources
+                else:
+                    message = r"Roll result: "+resultStr+r". \n"+resources + limits_msg
+                
+                # Signal hidden resources to the user who used them
+                if is_hidden and not send_type == 'hidden':
+                    message += r"\n (Some resources were hidden from your opponent)"
+
+                # Send result message to server for broadcast
+                # If it's a synchronized roll (caller_name set), server handles the broadcast
+                # If it's a solo roll or button click, broadcast normally
+                should_broadcast = caller_name is None  # Only broadcast for non-two-player rolls
+                
+                if should_broadcast:
+                    message_sent = pickle.dumps(msg(destiny, message))
+                    message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+                    client.send(message_sent_header+message_sent)
+                
+                # Animation Handling
+                # Disable animations if hidden resources are used
+                if is_hidden or send_type == 'hidden':
+                    return
+
                 info_limits = f"Limits:\nCF: <{p/2:.1f}; F: <{p:.1f}; S: <{crit:.1f}; CS: >={crit:.1f}"
                 info_header_initial = info_limits + "\n "
+                
                 if self.displaymode.get() == 'bar':
-                    self.InfoLabel2.configure(text = info_header_initial)
-                    self.ResultLabel2.configure(text = "")
-                    self.progress.set(0)
+                    def setup_bar_gui():
+                        self.InfoLabel2.configure(text = info_header_initial)
+                        self.ResultLabel2.configure(text = "")
+                        self.progress.set(0)
 
+                        p_norm = p/20
+                        crit_norm = crit/20
+                        cf_norm = p_norm / 2
+                        
+                        self.CFZone.place(relx=0, relwidth=cf_norm, relheight=1)
+                        self.FailZone.place(relx=cf_norm, relwidth=p_norm-cf_norm, relheight=1)
+                        self.SuccessZone.place(relx=p_norm, relwidth=crit_norm-p_norm, relheight=1)
+                        self.CritZone.place(relx=crit_norm, relwidth=1-crit_norm, relheight=1)
+                        
+                        # Place precision markers
+                        self.CFMarker.place(relx=cf_norm, rely=0.5, anchor="center")
+                        self.SMarker.place(relx=p_norm, rely=0.5, anchor="center")
+                        self.CSMarker.place(relx=crit_norm + 0.0025, rely=0.5, anchor="center")
+                        
+                        # Place threshold labels
+                        self.CFThreshLabel.place(relx=cf_norm, anchor="n")
+                        self.SuccessThreshLabel.place(relx=p_norm, anchor="n")
+                        self.CritThreshLabel.place(relx=crit_norm, anchor="n")
+
+                        if not self.progresswindow.winfo_viewable():
+                            self.progresswindow.update()
+                            self.progresswindow.deiconify()
+                        self.progresswindow.focus()
+                    
+                    self.after(0, setup_bar_gui)
+                    
                     p_norm = p/20
                     crit_norm = crit/20
                     cf_norm = p_norm / 2
-                    
-                    self.CFZone.place(relx=0, relwidth=cf_norm, relheight=1)
-                    self.FailZone.place(relx=cf_norm, relwidth=p_norm-cf_norm, relheight=1)
-                    self.SuccessZone.place(relx=p_norm, relwidth=crit_norm-p_norm, relheight=1)
-                    self.CritZone.place(relx=crit_norm, relwidth=1-crit_norm, relheight=1)
-                    
-                    # Place precision markers
-                    self.CFMarker.place(relx=cf_norm, rely=0.5, anchor="center")
-                    self.SMarker.place(relx=p_norm, rely=0.5, anchor="center")
-                    self.CSMarker.place(relx=crit_norm + 0.0025, rely=0.5, anchor="center") # Shift slightly right for better alignment
-
-                    # Store colors for dynamic color logic during animation
-                    self.bar_zone_colors = ["#4d4d4d", "#595959", "#666666", "#737373"] # gray30, 35, 40, 45
-                    
-                    # Place threshold labels
-                    self.CFThreshLabel.place(relx=cf_norm, anchor="n")
-                    self.SuccessThreshLabel.place(relx=p_norm, anchor="n")
-                    self.CritThreshLabel.place(relx=crit_norm, anchor="n")
-
-                    if not self.progresswindow.winfo_viewable():
-                        self.progresswindow.update()
-                        self.progresswindow.deiconify()
-                    self.progresswindow.focus()
-                    
                     x=0
                     n=random.randint(2, 15)
                     r_bar = r/20
                     
-                    for i in range(100): # 100 steps for smoother animation
+                    for i in range(100):
                         sleep(0.02)
                         x+=0.01
                         y=r_bar*n*x/(1+(n-1)*x)
                         
-                        # Grayscale animation until final frame - consistent gray jumps
-                        if y < cf_norm:
-                            self.progress.configure(progress_color="#4d4d4d") # gray30
-                        elif y < p_norm:
-                            self.progress.configure(progress_color="#595959") # gray35
-                        elif y < crit_norm:
-                            self.progress.configure(progress_color="#666666") # gray40
-                        else:
-                            self.progress.configure(progress_color="#737373") # gray45
-                        self.progress.set(value=y)
+                        def update_bar(y=y):
+                            if y < cf_norm:
+                                self.progress.configure(progress_color="#4d4d4d")
+                            elif y < p_norm:
+                                self.progress.configure(progress_color="#595959")
+                            elif y < crit_norm:
+                                self.progress.configure(progress_color="#666666")
+                            else:
+                                self.progress.configure(progress_color="#737373")
+                            self.progress.set(value=y)
+                        self.after(0, update_bar)
                     
-                    self.progress.configure(progress_color=self.color)
-                    self.progress.set(value=r_bar)
-                    self.ResultLabel2.configure(text = resultStr)
-                    self.InfoLabel2.configure(text = info_limits + f"\nRolled: {r:.1f}")
+                    def finalize_bar():
+                        self.progress.configure(progress_color=self.color)
+                        self.progress.set(value=r_bar)
+                        self.ResultLabel2.configure(text = resultStr)
+                        self.InfoLabel2.configure(text = info_limits + f"\nRolled: {r:.1f}")
+                    self.after(0, finalize_bar)
+
                 elif self.displaymode.get() == 'dice':
-                    self.InfoLabel.configure(text = info_header_initial)
-                    self.ResultLabel.configure(text = "")
+                    def setup_dice_gui():
+                        self.InfoLabel.configure(text = info_header_initial)
+                        self.ResultLabel.configure(text = "")
 
-                    if not self.dicewindow.winfo_viewable():
-                        self.dicewindow.update()
-                        self.dicewindow.deiconify()
-                    self.dicewindow.focus()
-                    
-                    # Sync backgrounds to prevent flicker
-                    self.panel.configure(fg_color="gray70")
-                    self.ResultFrame.configure(fg_color="gray20")
-                    self.ResultLabel.configure(fg_color="gray20")
-
-                    ##### CONSTANTES PARA ADEQUACAO DOS TEMPOS DE ROLAGEM (EM 10^-2s)
+                        if not self.dicewindow.winfo_viewable():
+                            self.dicewindow.update()
+                            self.dicewindow.deiconify()
+                        self.dicewindow.focus()
+                        
+                        self.panel.configure(fg_color="gray70")
+                        self.ResultFrame.configure(fg_color="gray20")
+                        self.ResultLabel.configure(fg_color="gray20")
+                    self.after(0, setup_dice_gui)
 
                     sleepTime = random.randint(self.minST,self.maxST)/100
                     maxSleepTime = random.randint(self.minMST,self.maxMST)/100
@@ -943,11 +974,9 @@ class GUI(ctk.CTk):
                         rolagem = random.randint(0, 20)
                         while rolagem == currentRoll:
                             rolagem = random.randint(0, 20)
-
                         currentRoll = rolagem
                         
-                        # Use cached image
-                        self.panel.configure(image = self.dice_images_cache[str(rolagem)+".png"])
+                        self.after(0, lambda r=rolagem: self.panel.configure(image = self.dice_images_cache[str(r)+".png"]))
                         
                         sleep(sleepTime)
                         sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
@@ -969,41 +998,35 @@ class GUI(ctk.CTk):
                     else:
                         img_name = str(roundedRealDiceRoll) + ".png"
 
-                    # Show final result with user color
-                    self.panel.configure(image = self.dice_images_cache[img_name], fg_color=self.color)
-                    self.ResultFrame.configure(fg_color="gray20")
-                    self.ResultLabel.configure(fg_color="gray20")
-
-                    self.ResultLabel.configure(text = resultStr)
-                    self.InfoLabel.configure(text = info_limits + f"\nRolled: {r:.1f}")
+                    def finalize_dice(img=img_name):
+                        self.panel.configure(image = self.dice_images_cache[img], fg_color=self.color)
+                        self.ResultFrame.configure(fg_color="gray20")
+                        self.ResultLabel.configure(fg_color="gray20")
+                        self.ResultLabel.configure(text = resultStr)
+                        self.InfoLabel.configure(text = info_limits + f"\nRolled: {r:.1f}")
+                    self.after(0, finalize_dice)
                 elif self.displaymode.get() == 'wheel':
-                    self.InfoLabel3.configure(text = info_header_initial)
-                    self.ResultLabel3.configure(text = "")
+                    def setup_wheel_gui():
+                        self.InfoLabel3.configure(text = info_header_initial)
+                        self.ResultLabel3.configure(text = "")
 
-                    if not self.wheelwindow.winfo_viewable():
-                        self.wheelwindow.update()
-                        self.wheelwindow.deiconify()
-                    self.wheelwindow.focus()
+                        if not self.wheelwindow.winfo_viewable():
+                            self.wheelwindow.update()
+                            self.wheelwindow.deiconify()
+                        self.wheelwindow.focus()
+                    self.after(0, setup_wheel_gui)
 
-                    # Calculate wedge sizes (as percentages of 0-20 scale)
-                    # p and crit are thresholds on 0-20 scale
-                    # Critical fail: r < p/2 → range [0, p/2)
-                    # Fail: p/2 <= r < p → range [p/2, p)
-                    # Success: p <= r < crit → range [p, crit)
-                    # Critical success: r >= crit → range [crit, 20]
-                    crit_fail_size = (p / 2) / 20 * 100        # [0, p/2)
-                    fail_size = (p / 2) / 20 * 100             # [p/2, p)
-                    success_size = (crit - p) / 20 * 100       # [p, crit)
-                    crit_success_size = (20 - crit) / 20 * 100 # [crit, 20]
+                    # Sizes calculation (from previous code)
+                    sizes = [p/2, p/2, crit-p, 20-crit]
+                    # Map to result index
+                    if r < p/2: result_index = 0
+                    elif r < p: result_index = 1
+                    elif r < crit: result_index = 2
+                    else: result_index = 3
                     
-                    sizes = [crit_fail_size, fail_size, success_size, crit_success_size]
-                    labels = ['Critical\nFail', 'Fail', 'Success', 'Critical\nSuccess']
-                    base_colors = ['#404040', '#4d4d4d', '#595959', '#666666']  # gray25, 30, 35, 40
+                    labels = ["CF", "F", "S", "CS"]
+                    base_colors = ["#4d4d4d", "#595959", "#666666", "#737373"]
                     
-                    # Determine which wedge is the result
-                    result_index = {'Critical fail': 0, 'Fail': 1, 'Success': 2, 'Critical success': 3}[resultStr]
-                    
-                    # Store animation state
                     self.wheel_sizes = sizes
                     self.wheel_labels = labels
                     self.wheel_base_colors = base_colors
@@ -1014,42 +1037,27 @@ class GUI(ctk.CTk):
                     self.wheel_r = r
                     self.wheel_info_limits = info_limits
                     
-                    # Calculate final angle for the result wedge
-                    # We want the pointer at the top (90 degrees) to land in the result wedge
-                    # Pie starts at startangle=90, wedges go counter-clockwise
-                    # To land pointer on precise position: rotate by -(cumulative + rel_pos * size) * 3.6
                     cumulative = 0
                     for i in range(result_index):
                         cumulative += sizes[i]
                     
-                    # Calculate relative position within the wedge based on the roll r
-                    if result_index == 0:   # Critical Fail: [0, p/2)
-                        rel_pos = (r - 0) / (p / 2)
-                    elif result_index == 1: # Fail: [p/2, p)
-                        rel_pos = (r - p/2) / (p/2)
-                    elif result_index == 2: # Success: [p, crit)
-                        rel_pos = (r - p) / (crit - p)
-                    else:                   # Critical Success: [crit, 20]
-                        rel_pos = (r - crit) / (20 - crit)
+                    if result_index == 0: rel_pos = (r - 0) / (p / 2)
+                    elif result_index == 1: rel_pos = (r - p/2) / (p/2)
+                    elif result_index == 2: rel_pos = (r - p) / (crit - p)
+                    else: rel_pos = (r - crit) / (20 - crit)
                     
-                    # Map the relative position to the wedge angle
                     target_angle = cumulative + rel_pos * sizes[result_index]
-                    
-                    # Spin animation: multiple full rotations + landing angle
                     full_rotations = random.randint(3, 5)
-                    self.wheel_total_rotation = full_rotations * 360 - target_angle * 3.6  # 3.6 = 360/100
+                    self.wheel_total_rotation = full_rotations * 360 - target_angle * 18
                     self.wheel_current_rotation = 0
                     self.wheel_animation_step = 0
-                    self.wheel_total_steps = 60  # 60 frames for smooth animation
+                    self.wheel_total_steps = 60
                     
-                    # Start animation
-                    self.animate_wheel()
+                    self.after(0, self.animate_wheel)
                 elif self.displaymode.get() == 'none':
                     pass
-
-            message_sent = pickle.dumps(msg([player['name'] for player in self.players], message))
-            message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
-            client.send(message_sent_header+message_sent)
+            except Exception:
+                print(traceback.format_exc())
 
         def nextSleepTime(self, currentTime, limitTime): # 3 opcoes de incremento de tempo
             # return currentTime + currentTime**2 / 2
@@ -1058,9 +1066,16 @@ class GUI(ctk.CTk):
 
         def animate_wheel(self):
             try:
-                if not self.wheelwindow.winfo_exists():
+                # Ensure window exists and is visible before drawing
+                if not self.wheelwindow.winfo_exists() or not self.wheelwindow.winfo_viewable():
                     return
                 
+                # Update idle tasks to ensure state is consistent
+                try:
+                    self.wheelwindow.update_idletasks()
+                except:
+                    pass
+
                 # Easing function for smooth slowdown
                 t = self.wheel_animation_step / self.wheel_total_steps
                 # Ease-out cubic for more dramatic slowdown
@@ -1116,8 +1131,9 @@ class GUI(ctk.CTk):
                     # Animation complete - show result
                     self.ResultLabel3.configure(text=self.wheel_resultStr)
                     self.InfoLabel3.configure(text=self.wheel_info_limits + f"\nRolled: {self.wheel_r:.1f}")
-            except Exception:
-                print(traceback.format_exc())
+            except (TclError, Exception):
+                # Silence GUI errors during teardown
+                pass
 
         def show_mode_menu(self):
             menu = Menu(self, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 10))
@@ -1184,9 +1200,8 @@ class GUI(ctk.CTk):
 
         def on_closing(self):
             self.not_closing=0
-            if os.path.exists(PAST_CONFIGS_DIR):
-                for filename in os.listdir(PAST_CONFIGS_DIR):
-                    os.remove(os.path.join(PAST_CONFIGS_DIR, filename))
+            if self.user_past_configs_dir and os.path.exists(self.user_past_configs_dir):
+                shutil.rmtree(self.user_past_configs_dir, ignore_errors=True)
             self.destroy()
             client.close()
             sys.exit()
@@ -1214,78 +1229,110 @@ class GUI(ctk.CTk):
         def modify(self, a, b, c):
             self.modified=1           
 
-        def build_resor(self):  
-            self.aFrame=ctk.CTkFrame(self.terFrame, fg_color="gray25")
-            self.aFrame.columnconfigure((0,1), weight=1, uniform="anterior")
-            self.aFrame.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
+        def build_resor(self):
+            # Only create aFrame if there are anterior items
+            if self.anterior_items:
+                self.aFrame=ctk.CTkFrame(self.terFrame, fg_color="gray25")
+                self.aFrame.columnconfigure((0,1), weight=1, uniform="anterior")
+                self.aFrame.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
 
-            self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
-            self.anteriorLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale, columnspan=2)
+                self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
+                self.anteriorLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale, columnspan=2)
 
-            self.aconLabel=ctk.CTkLabel(self.aFrame, text="Constant", fg_color="gray30", corner_radius=6, font=("Roboto", 12))
-            self.aconLabel.grid(row=1, column=0, sticky="ew", padx=(self.rescale,self.rescale/2), pady=(0,self.rescale))
+                # List Anterior Items
+                self.ante_buttons = []
+                for i, item in enumerate(self.anterior_items):
+                    text_label = ""
+                    if item.typ == 'c':
+                        text_label = f"Const: +{item.val1}"
+                    elif item.typ == 'adv':
+                        text_label = f"Adv: {'+' if item.val1 > 0 else ''}{item.val1}"
+                    elif item.typ == 'dice':
+                        text_label = f"Dice: {item.val1}d{item.val2}"
+                    
+                    if item.hidden:
+                        text_label += " (H)"
+                    
+                    btn = ctk.CTkButton(self.aFrame, 
+                                        text=text_label, 
+                                        border_color=self.color,
+                                        border_width=2,
+                                        fg_color="gray30", hover_color="gray40", 
+                                        font=("Roboto", 11), 
+                                        command=lambda idx=i: self.destroy_ante(idx))
+                    btn.grid(row=1+i, column=0, columnspan=2, sticky="ew", padx=self.rescale, pady=(0, self.rescale))
+                    btn.bind("<Button-3>", lambda event, idx=i: self.toggle_hidden_ante(idx))
+                    self.ante_buttons.append(btn)
+                
+                start_row = 1
+            else:
+                start_row = 0
 
-            self.aadvLabel=ctk.CTkLabel(self.aFrame, text="Advantage", fg_color="gray30", corner_radius=6, font=("Roboto", 12))
-            self.aadvLabel.grid(row=1, column=1, sticky="ew", padx=(self.rescale/2,self.rescale), pady=(0,self.rescale))
 
-            self.acontotal=ctk.CTkLabel(self.aFrame, text=(self.premod.const>0)*"+"+str(self.premod.const), fg_color="gray30", corner_radius=6, font=("Roboto", 12))
-            self.acontotal.grid(row=2, column=0, sticky="ew", padx=(self.rescale,self.rescale/2), pady=(0,self.rescale))
-
-            self.aadvtotal=ctk.CTkLabel(self.aFrame,text=(self.premod.adv>0)*"+"+str(self.premod.adv), fg_color="gray30", corner_radius=6, font=("Roboto", 12))
-            self.aadvtotal.grid(row=2, column=1, sticky="ew", padx=(self.rescale/2,self.rescale), pady=(0,self.rescale))
-            
             for i in range(len(self.resor)):
                 aux=("Resource #"+str(i+1))*(self.resor[i].resName.replace(" ", "")=="")+self.resor[i].resName*(self.resor[i].resName.replace(" ", "")!="")
                 self.resor[i].mainFrame=ctk.CTkFrame(self.terFrame, fg_color="gray25")
                 self.resor[i].mainFrame.columnconfigure((0,1) , weight=1)
-                self.resor[i].mainFrame.grid(row=i+1, column=0, sticky="ew", pady=(0,self.rescale))
+                self.resor[i].mainFrame.grid(row=start_row+i, column=0, sticky="ew", pady=(0,self.rescale))
+                
+                hidden_mark = " (H)" if self.resor[i].hidden else ""
 
                 self.resor[i].mainButton=ctk.CTkRadioButton(self.resor[i].mainFrame, 
                                                                         variable = self.selectRes, 
                                                                         value = i+1,
-                                                                        text = aux, fg_color=self.color, bg_color="gray25", border_color="gray30", hover_color=self.color, font=("Roboto", 12))
+                                                                        text = aux + hidden_mark, fg_color=self.color, bg_color="gray25", border_color="gray30", hover_color=self.color, font=("Roboto", 12))
                 self.resor[i].mainButton.grid(row=0, column=0, sticky="w", padx=self.rescale, pady=self.rescale)
+                self.resor[i].mainButton.bind("<Button-3>", lambda event, idx=i: self.toggle_hidden_res(idx))
 
                 self.resor[i].qntLabel=ctk.CTkLabel(self.resor[i].mainFrame, text=self.resor[i].qnt, fg_color="gray30", corner_radius=6, font=("Roboto", 12))
                 self.resor[i].qntLabel.grid(row=0, column=1, sticky="e", padx=(0,self.rescale), pady=self.rescale)
     
                 self.resor[i].subButtons=[]
                 for j in range(len(self.resor[i].listSubres)):
-                    self.resor[i].subButtons.append(ctk.CTkButton(self.resor[i].mainFrame, 
-                                                                        text = self.resor[i].listSubres[j].subresName,
-                                                                        border_color=self.color,
-                                                                        border_width=2, 
-                                                                        fg_color="gray30", hover_color="gray40", font=("Roboto", 12), command = lambda c=(i, j): self.destroy_subres(c))
-                    )
-                    self.resor[i].subButtons[-1].grid(row=j+1, column=0, sticky="ew", padx=self.rescale, pady=(0,self.rescale), columnspan=2)
+                    text = self.resor[i].listSubres[j].subresName
+                    if self.resor[i].hidden and " (H)" not in text:
+                         text += " (H)"
+                    elif getattr(self.resor[i].listSubres[j], 'hidden', False) and " (H)" not in text:
+                         text += " (H)"
 
-                self.resor[i].deleteButton=ctk.CTkButton(self.resor[i].mainFrame, 
-                                                                        text = "Delete resource",
-                                                                        text_color="gray30",
-                                                                        border_color=self.color,
-                                                                        border_width=2,
-                                                                        fg_color=self.color, hover_color="gray40", font=("Roboto", 12), command = lambda c=i: self.destroy_res(c))
-                self.resor[i].deleteButton.grid(row=len(self.resor[i].listSubres)+1, column=0, padx=self.rescale, sticky="ew", pady=(0,self.rescale), columnspan=2)
+                    self.resor[i].subButtons.append(ctk.CTkButton(self.resor[i].mainFrame, 
+                                                                    text = text, 
+                                                                    fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
+                                                                    font=("Roboto", 12),
+                                                                    command = lambda c=(i, j): self.destroy_subres(c)))
+                    self.resor[i].subButtons[-1].grid(row=j+1, column=0, padx=self.rescale, pady=(0,self.rescale), columnspan=2, sticky="ew")
+                    self.resor[i].subButtons[-1].bind("<Button-3>", lambda event, idx=(i, j): self.toggle_hidden_subres(idx))
+
+                self.resor[i].delButton=ctk.CTkButton(self.resor[i].mainFrame, 
+                                                                    text = "Delete resource", 
+                                                                    fg_color=self.color, hover_color="gray35", font=("Roboto", 14), command = lambda idx=i: self.destroy_res(idx), border_width=2)
+                self.resor[i].delButton.grid(row=len(self.resor[i].listSubres)+1, column=0, padx=self.rescale, pady=self.rescale, columnspan=2, sticky="ew")
 
         def destroy_all(self):
-            self.aFrame.destroy()
+            """Safely destroy resources and anterior frames without individual widget destruction
+               which causes race conditions and TclErrors in CustomTkinter."""
+            try:
+                if hasattr(self, 'Window2') and self.Window2.winfo_exists():
+                    self.Window2.update_idletasks()
+            except:
+                pass
 
-            self.anteriorLabel.destroy()
-
-            self.aconLabel.destroy()
-
-            self.aadvLabel.destroy()
-
-            self.acontotal.destroy()
-
-            self.aadvtotal
-            for i in range(len(self.resor)):
-                self.resor[i].mainButton.destroy()
-                self.resor[i].deleteButton.destroy()
-                self.resor[i].qntLabel.destroy()
-                for j in range(len(self.resor[i].subButtons)):
-                    self.resor[i].subButtons[j].destroy()
-                self.resor[i].mainFrame.destroy()
+            # Destroy anterior items frame
+            if hasattr(self, 'aFrame') and self.aFrame.winfo_exists():
+                try:
+                    self.aFrame.destroy()
+                except (TclError, Exception):
+                    pass
+            
+            # Destroy all resource frames
+            if hasattr(self, 'resor'):
+                for r in self.resor:
+                    if hasattr(r, 'mainFrame') and r.mainFrame.winfo_exists():
+                        try:
+                            # Destroying parent Frame is sufficient and safer
+                            r.mainFrame.destroy()
+                        except (TclError, Exception):
+                            pass
 
         def destroy_subres(self, pos):
             self.resor[pos[0]].listSubres.pop(pos[1])
@@ -1293,17 +1340,48 @@ class GUI(ctk.CTk):
             self.build_resor()
             self.modified=1 
 
-        def destroy_res(self, pos):
+            self.modified=1 
+            self.hiddenAnte.set(False)
+            self.hiddenRes.set(False)
+            self.hiddenInter.set(False)
+            self.hiddenPost.set(False)
+
+        def destroy_res(self, index):
             self.destroy_all()
-            self.resor.pop(pos)
+            self.resor.pop(index)
             self.build_resor()
             self.selectRes.set(0)
-            self.modified=1 
+            self.modified=1
+
+        def destroy_ante(self, index):
+            self.anterior_items.pop(index)
+            self.destroy_all()
+            self.build_resor()
+            self.modified=1
+
+        def toggle_hidden_ante(self, index):
+            self.anterior_items[index].hidden = not self.anterior_items[index].hidden
+            self.destroy_all()
+            self.build_resor()
+            self.modified=1
+
+        def toggle_hidden_res(self, index):
+            self.resor[index].hidden = not self.resor[index].hidden
+            self.destroy_all()
+            self.build_resor()
+            self.modified=1
+
+        def toggle_hidden_subres(self, pos):
+            i, j = pos
+            self.resor[i].listSubres[j].hidden = not self.resor[i].listSubres[j].hidden
+            self.destroy_all()
+            self.build_resor()
+            self.modified=1
 
         def resourcepaste(self, num, name):
             if int(num):
-                self.resor.append(resource(num, name))
                 self.destroy_all()
+                self.resor.append(resource(num, name, hidden=False))
                 self.build_resor()
                 self.selectRes.set(len(self.resor))
                 self.modified=1
@@ -1311,7 +1389,7 @@ class GUI(ctk.CTk):
         def anteadvpaste(self, num):
             try:
                 if num:
-                    self.premod.adv+=num
+                    self.anterior_items.append(AnteriorItem('adv', num, hidden=False))
                     self.destroy_all()
                     self.build_resor()                
                     self.modified=1
@@ -1321,7 +1399,8 @@ class GUI(ctk.CTk):
         def antepaste(self, num1, num2):
             try:
                 if num1 and num2:
-                    self.premod.const+=int(num1*(num2+1)/2)
+                    typ = 'c' if num2 == 1 else 'dice'
+                    self.anterior_items.append(AnteriorItem(typ, num1, num2, hidden=False))
                     self.destroy_all()
                     self.build_resor()
                     self.modified=1
@@ -1335,14 +1414,28 @@ class GUI(ctk.CTk):
                         return
                 elif not num1:
                     return
-                self.resor[self.selectRes.get()-1].listSubres.append(posmod(typ, timing, num1, num2))
+                parent = self.resor[self.selectRes.get()-1]
+                hid = parent.hidden
+                parent.listSubres.append(posmod(typ, timing, num1, num2, hidden=hid))
                 self.destroy_all()
                 self.build_resor()
                 self.modified=1
 
         def conversao(self): 
             try:
-                return bloco(self.premod, self.clean_resor(), self.sn.get(), int(self.crit.get())/100, int(self.mini.get()))
+                c_sum = 0
+                a_sum = 0
+                for item in self.anterior_items:
+                    if item.typ == 'c':
+                        c_sum += item.val1
+                    elif item.typ == 'adv':
+                        a_sum += item.val1
+                    elif item.typ == 'dice':
+                        c_sum += int(item.val1 * (item.val2 + 1) / 2)
+                
+                # premod constructor: adv, const, items
+                pm = premod(a_sum, c_sum, self.anterior_items)
+                return bloco(pm, self.clean_resor(), self.sn.get(), int(self.crit.get())/100, int(self.mini.get()))
             except:
                 print(traceback.format_exc())
                 messagebox.showerror(parent=self.Window2, title="Conversion error", message="Something went wrong, please check your submission.")
@@ -1353,14 +1446,14 @@ class GUI(ctk.CTk):
             for i in range(len(self.resor)):
                 aux=("Resource #"+str(i+1))*(self.resor[i].resName.replace(" ", "")=="")+self.resor[i].resName*(self.resor[i].resName.replace(" ", "")!="")
                 if self.resor[i].listSubres:
-                    posmods.append(resourceSend(int(self.resor[i].qnt), aux, self.resor[i].listSubres))
+                    posmods.append(resourceSend(int(self.resor[i].qnt), aux, self.resor[i].listSubres, hidden=self.resor[i].hidden))
             return posmods
 
         def send_block(self):
             message_sent = self.conversao()
             if message_sent:
                 try:
-                    with open(os.path.join(PAST_CONFIGS_DIR, str(self.past_index_max)+'.txt'), 'xb') as file:
+                    with open(os.path.join(self.user_past_configs_dir, str(self.past_index_max)+'.txt'), 'xb') as file:
                         pickle.dump(message_sent, file)
                 except Exception:
                     print(traceback.format_exc())
@@ -1384,6 +1477,15 @@ class GUI(ctk.CTk):
             for i in resor:
                 self.resor.append(resource(str(i.qnt), i.resName))
                 self.resor[-1].listSubres=i.listSubres
+                # Restore hidden status for the resource
+                if hasattr(i, 'hidden'):
+                    self.resor[-1].hidden = i.hidden
+            
+            # Restore anterior items from premods
+            if hasattr(self.premod, 'items') and self.premod.items:
+                self.anterior_items = self.premod.items
+            else:
+                self.anterior_items = []
         
             self.critbox.set(int(100*crit))
             self.minbox.set(mini)
@@ -1457,7 +1559,7 @@ class GUI(ctk.CTk):
                     if self.past_index:
                         self.past_index-=1
                         if self.past_index==self.past_index_max-1:
-                            self.path=os.path.join(PAST_CONFIGS_DIR, str(self.past_index)+'.txt')
+                            self.path=os.path.join(self.user_past_configs_dir, str(self.past_index)+'.txt')
                             self.openfile(self.path)
                             self.past_index-=1
                             alt=0
@@ -1470,7 +1572,7 @@ class GUI(ctk.CTk):
                     else:
                         alt=0
                 if alt:
-                    self.path=os.path.join(PAST_CONFIGS_DIR, str(self.past_index)+'.txt')
+                    self.path=os.path.join(self.user_past_configs_dir, str(self.past_index)+'.txt')
                     with open(self.path, 'rb') as file:             
                         content = file.read()
                         self.load_content(content)                                      
@@ -1521,7 +1623,7 @@ class GUI(ctk.CTk):
                 # self.deiconify() - moved to end of layout to prevent jank
                 self.title("Chatroom") 
                 self.resizable(width = False, height = False) 
-                self.geometry("800x504")
+                self.center_window(self, 800, 504)
                 self.columnconfigure(1 , weight=1)
                 self.rowconfigure(1, weight=1)
 
@@ -1576,7 +1678,7 @@ class GUI(ctk.CTk):
                 self.Window2.withdraw()
                 self.Window2.title("Roll") 
                 self.Window2.resizable(width = False, height = False)
-                self.Window2.geometry("1350x524")
+                self.center_window(self.Window2, 1350, 524)
                 self.Window2.columnconfigure(1 , weight=1)
                 self.Window2.rowconfigure((1, 3), weight=1)
 
@@ -1726,14 +1828,8 @@ class GUI(ctk.CTk):
                 self.resourcebar3.columnconfigure(0, weight=1)
                 self.resourcebar3.grid(row=0, column=2, sticky="ew")
 
-                self.separator7= ctk.CTkLabel(self.resourcebar2, text="")
-                self.separator7.grid(row=0, column=0, sticky="ew")
-
                 self.reslabel = ctk.CTkEntry(self.resourcebar2, fg_color="gray25", border_width=0, placeholder_text_color="gray35", placeholder_text="Resource name", font=("Roboto", 12), justify="center")
-                self.reslabel.grid(row=0, column=1, padx=self.rescale, pady=self.rescale, columnspan=3)
-
-                self.separator8= ctk.CTkLabel(self.resourcebar2, text="")
-                self.separator8.grid(row=0, column=4, sticky="ew")
+                self.reslabel.grid(row=0, column=1, columnspan=3, padx=self.rescale, pady=(self.rescale, 0), sticky="ew")
 
                 self.resbtt2 = ctk.CTkButton(self.resourcebar2, 
                                                             text = '◄', 
@@ -1741,19 +1837,21 @@ class GUI(ctk.CTk):
                                                             border_color=self.color,
                                                             border_width=2,
                                                             fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.callbackRes(self.reslabel.get())) 
-                self.resbtt2.grid(row=1, column=1, padx=(0,self.rescale), pady=(0,self.rescale))
+                self.resbtt2.grid(row=1, column=1, padx=(self.rescale, self.rescale), pady=(self.rescale, self.rescale), sticky="e")
                 
                 self.resbox = IntSpinbox(self.resourcebar2,
                                     color=self.color, variable = self.res,
                                     from_ = 0)
-                self.resbox.grid(row=1, column=2, padx=(0,self.rescale), pady=(0,self.rescale))
+                self.resbox.grid(row=1, column=2, padx=(0, self.rescale), pady=(self.rescale, self.rescale), sticky="ew")
 
                 self.resbtt = ctk.CTkButton(self.resourcebar2, 
                                                             text = "+", 
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
-                self.resbtt.grid(row=1, column=3, pady=(0,self.rescale))
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 14, "bold"), command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
+                self.resbtt.grid(row=1, column=3, padx=(0, self.rescale), pady=(self.rescale, self.rescale), sticky="w")
+                
+
 
                 self.critlabel= ctk.CTkLabel(self.resourcebar1, text='Crit chance (%)', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                 self.critlabel.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew", columnspan=2)
@@ -1778,211 +1876,203 @@ class GUI(ctk.CTk):
 
                 self.antebar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.antebar.columnconfigure((2,7), weight=1)
-                self.antebar.grid(row=1, column=0, sticky="ew", pady=(0,self.rescale))
+                self.antebar.columnconfigure(10, weight=0) # Space for hidden check
+                self.antebar.grid(row=1, column=0, sticky="ew", pady=(0, self.rescale))
 
                 self.antelabel= ctk.CTkLabel(self.antebar, text='Anterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))           
-                self.antelabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=self.rescale, columnspan=11)
+                self.antelabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=(self.rescale, 0), columnspan=10)
 
                 self.aconlabel= ctk.CTkLabel(self.antebar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-           
-                self.aconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), sticky="ew", columnspan=2)
+                self.aconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), pady=(self.rescale, 0), sticky="ew", columnspan=2)
                 
 
                 self.acon = IntSpinbox(self.antebar,
                                         color=self.color, variable = self.ac)
-                self.acon.grid(row=2, column=0, padx=self.rescale, pady=self.rescale)
+                self.acon.grid(row=2, column=0, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.aconbtt = ctk.CTkButton(self.antebar,
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda : self.antepaste(int(self.ac.get()), 1))
-                self.aconbtt.grid(row=2, column=1)
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda : self.antepaste(int(self.ac.get()), 1))
+                self.aconbtt.grid(row=2, column=1, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator1= ctk.CTkLabel(self.antebar, text="")
                 self.separator1.grid(row=2, column=2, sticky="ew")
 
                 self.aadvlabel= ctk.CTkLabel(self.antebar,text='Advantage', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.aadvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), sticky="ew", columnspan=2)
+                self.aadvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), pady=(self.rescale, 0), sticky="ew", columnspan=2)
 
                 self.aadv = IntSpinbox(self.antebar,
                                         color=self.color, variable = self.aa)
-                self.aadv.grid(row=2, column=8)
+                self.aadv.grid(row=2, column=8, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.aadvbtt = ctk.CTkButton(self.antebar,
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda : self.anteadvpaste(int(self.aa.get())))
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda : self.anteadvpaste(int(self.aa.get())))
 
-                self.aadvbtt.grid(row=2, column=9, padx=self.rescale)
+                self.aadvbtt.grid(row=2, column=9, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator2= ctk.CTkLabel(self.antebar, text="")
                 self.separator2.grid(row=2, column=7, sticky="ew")
 
                 self.adlabel= ctk.CTkLabel(self.antebar,text='Dice', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.adlabel.grid(row=1, column=3, padx=self.rescale, sticky="ew", columnspan=4)
+                self.adlabel.grid(row=1, column=3, padx=self.rescale, pady=(self.rescale, 0), sticky="ew", columnspan=4)
 
                 self.adic = IntSpinbox(self.antebar,
                                     color=self.color, variable = self.ad[0])
-                self.adic.grid(row=2, column=3)
+                self.adic.grid(row=2, column=3, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.addlabel= ctk.CTkLabel(self.antebar, text='d', width=0, font=("Roboto", 12))
-                self.addlabel.grid(row=2, column=4, padx=10/3)
+                self.addlabel.grid(row=2, column=4, padx=10/3, pady=(self.rescale, self.rescale))
 
                 self.adic2 = IntSpinbox(self.antebar,
                                     color=self.color, variable = self.ad[1],
                                     from_ = 0)
-                self.adic2.grid(row=2, column=5, padx=(0,self.rescale))
+                self.adic2.grid(row=2, column=5, padx=0, pady=(self.rescale, self.rescale))
 
                 self.adicbtt = ctk.CTkButton(self.antebar,
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get())))
-                self.adicbtt.grid(row=2, column=6)
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get())))
+                self.adicbtt.grid(row=2, column=6, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.interbar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.interbar.columnconfigure((2, 7), weight=1)
-                self.interbar.grid(row=3, column=0, sticky="ew")
+                self.interbar.grid(row=3, column=0, sticky="ew", pady=(0, self.rescale))
 
-                self.interlabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
-                self.interlabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=self.rescale, columnspan=11)
+                self.interLabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
+                self.interLabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=(self.rescale, 0), columnspan=10)
 
                 self.iconlabel= ctk.CTkLabel(self.interbar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.iconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), sticky="ew", columnspan=2)
+                self.iconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), pady=(self.rescale, 0), sticky="ew", columnspan=2)
 
                 self.icon = IntSpinbox(self.interbar,
                                         color=self.color, variable = self.ic)
-                self.icon.grid(row=2, column=0, padx=self.rescale, pady=self.rescale)
+                self.icon.grid(row=2, column=0, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.iconbtt = ctk.CTkButton(self.interbar,
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter"))
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter"))
 
-                self.iconbtt.grid(row=2, column=1)
+                self.iconbtt.grid(row=2, column=1, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator3= ctk.CTkLabel(self.interbar, text="")
                 self.separator3.grid(row=2, column=2, sticky="ew")
 
                 self.iadvlabel= ctk.CTkLabel(self.interbar,text='Advantage', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.iadvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), sticky="ew", columnspan=2)
+                self.iadvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), pady=(self.rescale, 0), sticky="ew", columnspan=2)
 
                 self.iadv = IntSpinbox(self.interbar,
                                         color=self.color, variable = self.ia)
 
-                self.iadv.grid(row=2, column=8)
+                self.iadv.grid(row=2, column=8, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.iadvbtt = ctk.CTkButton(self.interbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter"))
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter"))
 
-                self.iadvbtt.grid(row=2, column=9, padx=self.rescale)
+                self.iadvbtt.grid(row=2, column=9, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator4= ctk.CTkLabel(self.interbar, text="")
                 self.separator4.grid(row=2, column=7, sticky="ew")
 
                 self.idlabel= ctk.CTkLabel(self.interbar,text='Dice', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.idlabel.grid(row=1, column=3, padx=self.rescale, sticky="ew", columnspan=4)
+                self.idlabel.grid(row=1, column=3, padx=self.rescale, pady=(self.rescale, 0), sticky="ew", columnspan=4)
 
                 self.idic = IntSpinbox(self.interbar,
                                     color=self.color, variable = self.id[0])
-                self.idic.grid(row=2, column=3)
+                self.idic.grid(row=2, column=3, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.iddlabel= ctk.CTkLabel(self.interbar, text='d', width=0, font=("Roboto", 12))
-                self.iddlabel.grid(row=2, column=4, padx=10/3)
+                self.iddlabel.grid(row=2, column=4, padx=10/3, pady=(self.rescale, self.rescale))
 
                 self.idic2 = IntSpinbox(self.interbar,
                                     color=self.color, variable = self.id[1],
                                     from_ = 0)
-                self.idic2.grid(row=2, column=5, padx=(0,self.rescale))
+                self.idic2.grid(row=2, column=5, padx=0, pady=(self.rescale, self.rescale))
 
                 self.idicbtt = ctk.CTkButton(self.interbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter"))
-                self.idicbtt.grid(row=2, column=6)
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter"))
+                self.idicbtt.grid(row=2, column=6, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.postbar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.postbar.columnconfigure((2, 7), weight=1)
-                self.postbar.grid(row=4, column=0, sticky="ew", pady=self.rescale)
+                self.postbar.grid(row=4, column=0, sticky="ew", pady=(0, self.rescale))
 
-                self.postlabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
-                self.postlabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=self.rescale, columnspan=11)
+                self.postLabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
+                self.postLabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=(self.rescale, 0), columnspan=10)
 
                 self.pconlabel= ctk.CTkLabel(self.postbar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.pconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), sticky="ew", columnspan=2)
+                self.pconlabel.grid(row=1, column=0, padx=(2*self.rescale,self.rescale), pady=(self.rescale, 0), sticky="ew", columnspan=2)
 
                 self.pcon = IntSpinbox(self.postbar,
                                         color=self.color, variable = self.pc)
-                self.pcon.grid(row=2, column=0, padx=self.rescale, pady=self.rescale)
+                self.pcon.grid(row=2, column=0, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.pconbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post"))
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post"))
 
-                self.pconbtt.grid(row=2, column=1)
+                self.pconbtt.grid(row=2, column=1, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator5= ctk.CTkLabel(self.postbar, text="")
                 self.separator5.grid(row=2, column=2, sticky="ew")
 
                 self.padvlabel= ctk.CTkLabel(self.postbar,text='Advantage', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.padvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), sticky="ew", columnspan=2)
+                self.padvlabel.grid(row=1, column=8, padx=(self.rescale,2*self.rescale), pady=(self.rescale, 0), sticky="ew", columnspan=2)
 
                 self.padv = IntSpinbox(self.postbar,
                                         color=self.color, variable = self.pa)
 
-                self.padv.grid(row=2, column=8)
+                self.padv.grid(row=2, column=8, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.padvbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post"))
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post"))
 
-                self.padvbtt.grid(row=2, column=9, padx=self.rescale)
+                self.padvbtt.grid(row=2, column=9, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator6= ctk.CTkLabel(self.postbar, text="")
                 self.separator6.grid(row=2, column=7, sticky="ew")
 
                 self.pdlabel= ctk.CTkLabel(self.postbar,text='Dice', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-
-                self.pdlabel.grid(row=1, column=3, padx=self.rescale, sticky="ew", columnspan=4)
+                self.pdlabel.grid(row=1, column=3, padx=self.rescale, pady=(self.rescale, 0), sticky="ew", columnspan=4)
 
                 self.pdic = IntSpinbox(self.postbar,
                                     color=self.color, variable = self.pd[0])
-                self.pdic.grid(row=2, column=3)
+                self.pdic.grid(row=2, column=3, padx=(self.rescale, 0), pady=(self.rescale, self.rescale))
 
                 self.pddlabel= ctk.CTkLabel(self.postbar, text='d', width=0, font=("Roboto", 12))
-                self.pddlabel.grid(row=2, column=4, padx=10/3)
+                self.pddlabel.grid(row=2, column=4, padx=10/3, pady=(self.rescale, self.rescale))
 
                 self.pdic2 = IntSpinbox(self.postbar,
                                     color=self.color, variable = self.pd[1],
                                     from_ = 0)
-                self.pdic2.grid(row=2, column=5, padx=(0,self.rescale))
+                self.pdic2.grid(row=2, column=5, padx=0, pady=(self.rescale, self.rescale))
 
                 self.pdicbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post"))
-                self.pdicbtt.grid(row=2, column=6)
+                                                            fg_color="gray25", hover_color="gray35", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post"))
+                self.pdicbtt.grid(row=2, column=6, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
                 #------------------------
                 self.hiddenres=ctk.CTkToplevel(fg_color="gray15")
                 self.hiddenres.withdraw()
                 self.hiddenres.title("Result (hidden)")
                 self.hiddenres.resizable(width = False, height = False)
-                self.hiddenres.geometry('300x100')
+                self.center_window(self.hiddenres, 300, 100)
                 self.hiddenres.protocol("WM_DELETE_WINDOW", self.hiddenres.withdraw)
                 self.hiddenres.columnconfigure(0, weight=1)
                 
@@ -1996,14 +2086,14 @@ class GUI(ctk.CTk):
                 self.dicewindow.columnconfigure(0, weight=1)
                 self.dicewindow.rowconfigure(0, weight=0)
                 self.dicewindow.rowconfigure(1, weight=1)
-                self.dicewindow.geometry('450x400')
+                self.center_window(self.dicewindow, 450, 400)
                 self.dicewindow.protocol("WM_DELETE_WINDOW", self.dicewindow.withdraw)
 
                 self.progresswindow=ctk.CTkToplevel(fg_color="gray15")
                 self.progresswindow.withdraw()
                 self.progresswindow.title("Result (bar)")
                 self.progresswindow.resizable(width = False, height = False)
-                self.progresswindow.geometry('450x190') 
+                self.center_window(self.progresswindow, 450, 190)
                 self.progresswindow.columnconfigure(0, weight=1)
                 self.progresswindow.rowconfigure(0, weight=0) # Pin info label to top
                 self.progresswindow.rowconfigure(1, weight=1) # Let result frame expand
@@ -2074,7 +2164,7 @@ class GUI(ctk.CTk):
                 self.wheelwindow=ctk.CTkToplevel(fg_color="gray15")
                 self.wheelwindow.withdraw()
                 self.wheelwindow.title("Result (wheel)")
-                self.wheelwindow.geometry('450x530')
+                self.center_window(self.wheelwindow, 450, 530)
                 self.wheelwindow.resizable(width = False, height = False)
                 self.wheelwindow.columnconfigure(0, weight=1)
                 self.wheelwindow.rowconfigure(0, weight=0)
@@ -2107,7 +2197,7 @@ class GUI(ctk.CTk):
                 self.possi = ctk.CTkToplevel(fg_color="gray15")
                 self.possi.withdraw()
                 self.possi.title("Dice roll")
-                self.possi.geometry('820x630') # Shorter window to reduce bottom space
+                self.center_window(self.possi, 820, 630)
                 self.possi.resizable(width=True, height=True)
                 self.possi.protocol("WM_DELETE_WINDOW", self.possi.withdraw)
                 
@@ -2240,192 +2330,295 @@ class GUI(ctk.CTk):
                     if type(message).__name__=='msg':
                         # insert messages to text box 
                         self.textCons.configure(state = NORMAL)
-                        textlis=wrap(message.content, width=86)
+                        SYNC_WIDTH = 150
+                        textlis=wrap(message.content, width=SYNC_WIDTH)
                         for u in range(len(textlis)):
+                            # Filter hidden resources if present and I'm not the sender
+                            # (Sender checking logic handled later? No, better to strip content before display if needed)
+                            
+                            if "(H)" in message.content:
+                                 # Checking logic: if I am not the sender.
+                                 # message.sender is the sender NAME.
+                                 if message.sender != self.my_name and message.sender != "Server":
+                                     # Strip hidden parts
+                                     # Regex to remove substring ending in (H)
+                                     # Assuming default server formatting: \gName: Sub (H), Sub2.
+                                     # Sub (H) might be at end of line.
+                                     # Remove: [anything] (H)[comma?]
+                                     
+                                     filtered_content = message.content
+                                     # Pattern: (non-g chars) (H) (, )?
+                                     filtered_content = re.sub(r'[^\\,:]+? \(H\)(?:, )?', '', filtered_content)
+                                     
+                                     # Clean up empty resource entries "Res: ," or "Res: ."
+                                     filtered_content = re.sub(r'(?<=\: )\,+', '', filtered_content) # Leading commas
+                                     filtered_content = re.sub(r'\,\.', '.', filtered_content) # Comma before dot
+                                     filtered_content = re.sub(r'(?<=\: )\.', '.', filtered_content) # Empty entry
+                                     
+                                     message.content = filtered_content
+                                     
+                                     # Update textlis with new content
+                                     textlis=wrap(message.content, width=SYNC_WIDTH)
+
                             if textlis[u].startswith(r'\j'):
                                 textlis[u]=textlis[u].replace(r'\j','',1)
                                 textlis[u]=textlis[u].rstrip()
                             else:
-                                textlis[u]=textlis[u].strip()
+                                textlis[u]=textlis[u].rstrip()
                         textlis.append('')
-                        current_line=int(self.textCons.index(END)[:-2])-1
-                        if message.cor not in self.textCons.tag_names(index=None):
-                            self.textCons.tag_config(message.cor, foreground=message.cor)
-                        self.textCons.insert(END, message.sender+' ', message.cor)
-                        self.textCons.insert(END, datetime.now().strftime("%d/%m/%Y %H:%M")+'\n', 'date')
-                        for u in range(len(textlis)-1):
-                            if textlis[u]=='':
-                                self.textCons.insert(END,'\n')
-                            else:
-                                line_content = textlis[u]
-                                if textlis[u+1]!='' and not textlis[u+1].startswith(' '):
-                                    line_content = justify(textlis[u], 42)
-                                
-                                # Parse for strikethrough tags \s ... \s
-                                parts = re.split(r'(\\s)', line_content)
-                                current_tags = []
-                                for part in parts:
-                                    if part == r'\s':
-                                        if 'overstrike' in current_tags:
-                                            current_tags.remove('overstrike')
+                        def display_message(message=message, textlis=textlis):
+                            self.textCons.configure(state=NORMAL)
+                            current_line=int(self.textCons.index(END)[:-2])-1
+                            if message.cor not in self.textCons.tag_names(index=None):
+                                self.textCons.tag_config(message.cor, foreground=message.cor)
+                            self.textCons.insert(END, message.sender+' ', message.cor)
+                            self.textCons.insert(END, datetime.now().strftime("%d/%m/%Y %H:%M")+'\n', 'date')
+                            for u in range(len(textlis)-1):
+                                if textlis[u]=='':
+                                    self.textCons.insert(END,'\n')
+                                else:
+                                    line_content = textlis[u]
+                                    # Don't justify headers, short lines, or indented lines
+                                    is_header = line_content.strip().endswith(':') or "result:" in line_content.lower() or len(line_content.strip()) < 30
+                                    is_indented = line_content.startswith(' ')
+                                    if textlis[u+1]!='' and not textlis[u+1].startswith(' ') and not is_header and not is_indented:
+                                        line_content = justify(textlis[u], SYNC_WIDTH)
+                                    
+                                    # Parse for strikethrough tags \s ... \s
+                                    parts = re.split(r'(\\s)', line_content)
+                                    current_tags = []
+                                    for part in parts:
+                                        if part == r'\s':
+                                            if 'overstrike' in current_tags:
+                                                current_tags.remove('overstrike')
+                                            else:
+                                                current_tags.append('overstrike')
                                         else:
-                                            current_tags.append('overstrike')
-                                    else:
-                                        self.textCons.insert(END, part, tuple(current_tags))
-                                self.textCons.insert(END, '\n')
-                        self.textCons.insert(END,'\n')
-                        self.textCons.see(END)
-                        self.textCons.configure(state = DISABLED)
-                        end_line=int(self.textCons.index(END)[:-2])-1
-                        self.indexs.pop()
-                        self.indexs+=[current_line, end_line]
-                        self.height=len(self.indexs)-1
+                                            self.textCons.insert(END, part, tuple(current_tags))
+                                    self.textCons.insert(END, '\n')
+                            self.textCons.insert(END,'\n')
+                            self.textCons.see(END)
+                            self.textCons.configure(state = DISABLED)
+                            end_line=int(self.textCons.index(END)[:-2])-1
+                            self.indexs.pop()
+                            self.indexs+=[current_line, end_line]
+                            self.height=len(self.indexs)-1
+                        self.after(0, display_message)
                     elif type(message).__name__=='dict':
-                        playerFlag = True
-                        for i in range(len(self.players)):
-                            if self.players[i]['name'] == message['name']:
-                                self.players.pop(i)
-                                playerFlag = False
-                                break
-                        if playerFlag:
-                            message['selected'] = False
-                            self.players.append(message)
-                        self.createSidebarButtons()                        
-                    elif type(message).__name__=='status':                                    
-                        if not self.Window2.winfo_viewable():
-                            self.Window2.deiconify()
-                            self.blocbtt.configure(text='◄')
-                        else:
-                            self.Window2.deiconify()
-                        self.roll_list=[]
-                        if message.num!=0:
-                            self.selecLabel.configure(text='Remaining: '+str(message.num)+" rolls")
-                        else:
-                            self.selecLabel.configure(text='Select to roll')
+                        def update_players(message=message):
+                            playerFlag = True
+                            for i in range(len(self.players)):
+                                if self.players[i]['name'] == message['name']:
+                                    self.players.pop(i)
+                                    playerFlag = False
+                                    break
+                            if playerFlag:
+                                message['selected'] = False
+                                self.players.append(message)
+                            self.createSidebarButtons()
+                        self.after(0, update_players)
+                    elif type(message).__name__=='status':
+                        def show_roll_window(message=message):
+                            if not self.Window2.winfo_viewable():
+                                self.Window2.deiconify()
+                                self.blocbtt.configure(text='◄')
+                            else:
+                                self.Window2.deiconify()
+                            self.roll_list=[]
+                            if message.num!=0:
+                                self.selecLabel.configure(text='Remaining: '+str(message.num)+" rolls")
+                            else:
+                                self.selecLabel.configure(text='Select to roll')
+                        self.after(0, show_roll_window)
+                    elif type(message).__name__=='tuple' and message[0]=='final_result':
+                        # Handle final result from server after both players selected
+                        final_possib = message[1]
+                        caller_name = message[2] if len(message) > 2 else None
+                        final_res = final_possib[0]
+                        send_type = final_possib[1]
+                        p, crit, r, resultStr = self.transl(final_res)
+                        text = final_res.mods.strip() or 'N/A'
+                        threading.Thread(target=self.displayres, args=[p, crit, r, resultStr, send_type, text, caller_name, final_res.hidden]).start()
                     else:
                         if not message or type(message[0]).__name__!='res':
-                            self.players = []
-                            for dics in message:
-                                dics['selected'] = False
-                                self.players.append(dics)
-                            break
+                            def sync_players(message=message):
+                                self.players = []
+                                for dics in message:
+                                    dics['selected'] = False
+                                    self.players.append(dics)
+                                self.createSidebarButtons()
+                            self.after(0, sync_players)
                         else:
-                            possibs=ctk.CTkToplevel(fg_color="gray15")
-                            possibs.title('Possibilities')
-                            possibs.resizable(width = False, height = False)
-                            send_type=message.pop(-1)
-                            m=max(max(len(i.mods) for i in message), 11)
-                            
-                            
-                            
-                            aux_2=ctk.CTkLabel(possibs, text='Net advantage', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
-                            aux_2.grid(row=0, column=3, padx=(self.rescale, 0), pady=self.rescale)
-                            aux_3=ctk.CTkLabel(possibs, text='Resources', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
-                            aux_3.grid(row=0, column=4, padx=self.rescale, pady=self.rescale, sticky="ew")
-
-                            
-                            
-                            
-                            aux_2_mor=ctk.CTkFrame(possibs, fg_color="gray20")
-                            aux_2_mor.grid_columnconfigure(0, weight=1)
-                            aux_2_mor.grid(row=1, column=3, padx=(self.rescale, 0), sticky="ew")
-                            aux_3_mor=ctk.CTkFrame(possibs, fg_color="gray20")
-                            aux_3_mor.grid_columnconfigure(0, weight=1)
-                            aux_3_mor.grid(row=1, column=4, padx=self.rescale, sticky="ew")
-
-                            diff=[]
-                            diff_crit=[]
-                            diff_fail=[]
-                            border=[]
-                            border_crit=[]
-                            border_fail=[]
-                            p, crit, r, resultStr=self.transl(message[0])
-                            for i in message:
-                                p_old, crit_old=p, crit
-                                p, crit, r, resultStr=self.transl(i)
-                                diff.append(p_old-p)
-                                diff_crit.append(crit_old-crit)
-                                diff_fail.append((p_old-p)/2)
-                                border.append(p)
-                                border_crit.append(crit)
-                                border_fail.append(p/2)
-                            probs=["0%"*(diff[i]!=0)+"-"*(diff[i]==0) for i in range(len(message))]
-                            probs_crit=["0%"*(diff_crit[i]!=0)+"-"*(diff_crit[i]==0) for i in range(len(message))]
-                            probs_fail=["0%"*(diff_fail[i]!=0)+"-"*(diff_fail[i]==0) for i in range(len(message))]
-                            
-                            percent=min(0.5, max(np.random.normal(0.25, 0.1), 0))
-                            aux1=[i for i in range(1, len(diff)) if (r<border[i-1] and r>=border[i]-percent*diff[i])]
-                            if aux1:
-                                ind=random.choice(aux1)
-                                probs[ind:]=["-" for i in range(ind, len(message))]
-                                probs[ind]="{:.1%}".format(1-percent)
-                                aux_1=ctk.CTkLabel(possibs, text='% of f->s+', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
-                                aux_1.grid(row=0, column=0, padx=(self.rescale, 0), pady=self.rescale)
-                                aux_1_mor=ctk.CTkFrame(possibs, fg_color="gray20")
-                                aux_1_mor.grid_columnconfigure(0, weight=1)
-                                aux_1_mor.grid(row=1, column=0, padx=(self.rescale, 0), sticky="ew")
-
-                            percent=min(0.5, max(np.random.normal(0.25, 0.1), 0))
-                            aux2=[i for i in range(1, len(diff_crit)) if (r<border_crit[i-1] and r>=border_crit[i]-percent*diff_crit[i])]
-                            if aux2:
-                                ind=random.choice(aux2)
-                                probs_crit[ind:]=["-" for i in range(ind, len(message))]
-                                probs_crit[ind]="{:.1%}".format(1-percent)
-                                aux_12=ctk.CTkLabel(possibs, text='% of s->cs', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
-                                aux_12.grid(row=0, column=1, padx=(self.rescale, 0), pady=self.rescale)
-                                aux_12_mor=ctk.CTkFrame(possibs, fg_color="gray20")
-                                aux_12_mor.grid_columnconfigure(0, weight=1)
-                                aux_12_mor.grid(row=1, column=1, padx=(self.rescale, 0), sticky="ew")
+                            def show_possibs(message=message):
+                                # Check if this is a two-player roll (has roll_id as last element)
+                                is_two_player = False
+                                roll_id = None
+                                send_type = ""
                                 
-                            percent=min(0.5, max(np.random.normal(0.25, 0.1), 0))
-                            aux3=[i for i in range(1, len(diff_fail)) if (r<border_fail[i-1] and r>=border_fail[i]-percent*diff_fail[i])]
-                            if aux3:
-                                ind=random.choice(aux3)
-                                probs_fail[ind:]=["-" for i in range(ind, len(message))]
-                                probs_fail[ind]="{:.1%}".format(1-percent)
-                                aux_13=ctk.CTkLabel(possibs, text='% of cf->f+', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
-                                aux_13.grid(row=0, column=2, padx=(self.rescale, 0), pady=self.rescale)
-                                aux_13_mor=ctk.CTkFrame(possibs, fg_color="gray20")
-                                aux_13_mor.grid_columnconfigure(0, weight=1)
-                                aux_13_mor.grid(row=1, column=2, padx=(self.rescale, 0), sticky="ew")
+                                # Standard format: [res..., [send_type], [roll_id]]
+                                # We work on a copy to avoid modifying the original message list if it's shared
+                                msg_list = message.copy()
                                 
-                            for i in range(len(message)):
-                                p, crit, r, resultStr=self.transl(message[i])
+                                # We check from the end of the list
+                                if len(msg_list) >= 1:
+                                    last = msg_list[-1]
+                                    if isinstance(last, int):
+                                        # It's a roll_id
+                                        is_two_player = True
+                                        roll_id = msg_list.pop(-1)
+                                        if len(msg_list) >= 1 and isinstance(msg_list[-1], str):
+                                            send_type = msg_list.pop(-1)
+                                    elif isinstance(last, str):
+                                        # It's a send_type (solo roll or non-sync roll)
+                                        send_type = msg_list.pop(-1)
+                                
+                                # Safety check: if msg_list is now empty, we have a problem
+                                if not msg_list:
+                                    print("CRITICAL: Received empty possibilities list after parsing tags.")
+                                    return
+                                
+                                possibs=ctk.CTkToplevel(self, fg_color="gray15")
+                                possibs.title('Possibilities')
+                                possibs.resizable(width = False, height = False)
+                                
+                                main_frame = ctk.CTkFrame(possibs, fg_color="transparent")
+                                main_frame.grid(padx=4, pady=4)
+                                
+                                aux_2=ctk.CTkLabel(main_frame, text='Net advantage', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
+                                aux_2.grid(row=0, column=3, padx=4, pady=4)
+                                aux_3=ctk.CTkLabel(main_frame, text='Resources', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
+                                aux_3.grid(row=0, column=4, padx=4, pady=4, sticky="ew")
+                                
+                                aux_2_mor=ctk.CTkFrame(main_frame, fg_color="gray20")
+                                aux_2_mor.grid_columnconfigure(0, weight=1)
+                                aux_2_mor.grid(row=1, column=3, padx=4, pady=4, sticky="ew")
+                                aux_3_mor=ctk.CTkFrame(main_frame, fg_color="gray20")
+                                aux_3_mor.grid_columnconfigure(0, weight=1)
+                                aux_3_mor.grid(row=1, column=4, padx=4, pady=4, sticky="ew")
+
+                                diff=[]
+                                diff_crit=[]
+                                diff_fail=[]
+                                border=[]
+                                border_crit=[]
+                                border_fail=[]
+                                p, crit, r, resultStr=self.transl(msg_list[0])
+                                for i in msg_list:
+                                    p_old, crit_old=p, crit
+                                    p, crit, r, resultStr=self.transl(i)
+                                    diff.append(p_old-p)
+                                    diff_crit.append(crit_old-crit)
+                                    diff_fail.append((p_old-p)/2)
+                                    border.append(p)
+                                    border_crit.append(crit)
+                                    border_fail.append(p/2)
+                                probs=["0%"*(diff[i]!=0)+"-"*(diff[i]==0) for i in range(len(msg_list))]
+                                probs_crit=["0%"*(diff_crit[i]!=0)+"-"*(diff_crit[i]==0) for i in range(len(msg_list))]
+                                probs_fail=["0%"*(diff_fail[i]!=0)+"-"*(diff_fail[i]==0) for i in range(len(msg_list))]
+                                
+                                percent=min(0.5, max(np.random.normal(0.25, 0.1), 0))
+                                aux1=[i for i in range(1, len(diff)) if (r<border[i-1] and r>=border[i]-percent*diff[i])]
                                 if aux1:
-                                    aux_1=ctk.CTkLabel(aux_1_mor, text=probs[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-                                    aux_1.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
+                                    ind=random.choice(aux1)
+                                    probs[ind:]=["-" for i in range(ind, len(msg_list))]
+                                    probs[ind]="{:.1%}".format(1-percent)
+                                    aux_1=ctk.CTkLabel(main_frame, text='% of f->s+', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
+                                    aux_1.grid(row=0, column=0, padx=4, pady=4)
+                                    aux_1_mor=ctk.CTkFrame(main_frame, fg_color="gray20")
+                                    aux_1_mor.grid_columnconfigure(0, weight=1)
+                                    aux_1_mor.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
+
+                                percent=min(0.5, max(np.random.normal(0.25, 0.1), 0))
+                                aux2=[i for i in range(1, len(diff_crit)) if (r<border_crit[i-1] and r>=border_crit[i]-percent*diff_crit[i])]
                                 if aux2:
-                                    aux_12=ctk.CTkLabel(aux_12_mor, text=probs_crit[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-                                    aux_12.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
+                                    ind=random.choice(aux2)
+                                    probs_crit[ind:]=["-" for i in range(ind, len(msg_list))]
+                                    probs_crit[ind]="{:.1%}".format(1-percent)
+                                    aux_12=ctk.CTkLabel(main_frame, text='% of s->cs', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
+                                    aux_12.grid(row=0, column=1, padx=4, pady=4)
+                                    aux_12_mor=ctk.CTkFrame(main_frame, fg_color="gray20")
+                                    aux_12_mor.grid_columnconfigure(0, weight=1)
+                                    aux_12_mor.grid(row=1, column=1, padx=4, pady=4, sticky="ew")
+                                    
+                                percent=min(0.5, max(np.random.normal(0.25, 0.1), 0))
+                                aux3=[i for i in range(1, len(diff_fail)) if (r<border_fail[i-1] and r>=border_fail[i]-percent*diff_fail[i])]
                                 if aux3:
-                                    aux_13=ctk.CTkLabel(aux_13_mor, text=probs_fail[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-                                    aux_13.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
-                                                
-                                aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>0)+str(message[i].adv), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-                                aux_2.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
+                                    ind=random.choice(aux3)
+                                    probs_fail[ind:]=["-" for i in range(ind, len(msg_list))]
+                                    probs_fail[ind]="{:.1%}".format(1-percent)
+                                    aux_13=ctk.CTkLabel(main_frame, text='% of cf->f+', fg_color="gray20", corner_radius=6, font=("Roboto", 12))
+                                    aux_13.grid(row=0, column=2, padx=4, pady=4)
+                                    aux_13_mor=ctk.CTkFrame(main_frame, fg_color="gray20")
+                                    aux_13_mor.grid_columnconfigure(0, weight=1)
+                                    aux_13_mor.grid(row=1, column=2, padx=4, pady=4, sticky="ew")
+                                    
+                                for i in range(len(msg_list)):
+                                    p, crit, r, resultStr=self.transl(msg_list[i])
+                                    if aux1:
+                                        aux_1=ctk.CTkLabel(aux_1_mor, text=probs[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                                        aux_1.grid(row=i, column=0, padx=8, pady=8, sticky="ew")
+                                    if aux2:
+                                        aux_12=ctk.CTkLabel(aux_12_mor, text=probs_crit[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                                        aux_12.grid(row=i, column=0, padx=8, pady=8, sticky="ew")
+                                    if aux3:
+                                        aux_13=ctk.CTkLabel(aux_13_mor, text=probs_fail[i], fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                                        aux_13.grid(row=i, column=0, padx=8, pady=8, sticky="ew")
+                                                    
+                                    aux_2_text = '+'*(msg_list[i].adv>0)+str(msg_list[i].adv)
+                                    aux_2=ctk.CTkLabel(aux_2_mor, text=aux_2_text, fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                                    aux_2.grid(row=i, column=0, padx=8, pady=8, sticky="ew")
 
-                                text=message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2])
-                                resButton = ctk.CTkButton(aux_3_mor,
-                                                text = text,
-                                                fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
-                                                font=("Roboto", 12),
-                                                command= lambda p=p, crit=crit, r=r, resultStr=resultStr, send_type=send_type: threading.Thread(target = self.displayres, args=[p, crit, r, resultStr, send_type, text]).start())
-                                resButton.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
-                            
-                            resButton = ctk.CTkButton(possibs,
-                                                text = 'Show results',
-                                                fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
-                                                font=("Roboto", 14),
-                                                command=partial(self.show_res, message, send_type))
-                            resButton.grid(row=2, column=0, columnspan=5, padx=self.rescale, pady=self.rescale, sticky="ew")
+                                    text=msg_list[i].mods_button.replace(r'\g', '').strip()
+                                    if not text:
+                                        text = 'N/A'
+                                    full_text = msg_list[i].mods # Keep full text for chat
+                                    if is_two_player:
+                                        # Two-player roll: send selection to server
+                                        resButton = ctk.CTkButton(aux_3_mor,
+                                                        text = text,
+                                                        fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
+                                                        font=("Roboto", 12),
+                                                        command=lambda idx=i, rid=roll_id, win=possibs: self.send_posterior_selection(rid, idx, win))
+                                        resButton.grid(row=i, column=0, padx=8, pady=8, sticky="ew")
+                                    else:
+                                        # Single player or receiver: show button to display result
+                                        # Pass msg_list[i].hidden to displayres
+                                        is_hidden = msg_list[i].hidden
+                                        resButton = ctk.CTkButton(aux_3_mor,
+                                                        text = text,
+                                                        fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
+                                                        font=("Roboto", 12),
+                                                        command=lambda p=p, crit=crit, r=r, resStr=resultStr, st=send_type, txt=full_text, hid=is_hidden: threading.Thread(target = self.displayres, args=[p, crit, r, resStr, st, txt, None, hid]).start())
+                                        resButton.grid(row=i, column=0, padx=8, pady=8, sticky="ew")
+                                
+                                if not is_two_player:
+                                    resButton = ctk.CTkButton(main_frame,
+                                                        text = 'Show results',
+                                                        fg_color="gray25", hover_color="gray35", border_color=self.color, border_width=2,
+                                                        font=("Roboto", 14),
+                                                        command=partial(self.show_res, msg_list, send_type))
+                                    resButton.grid(row=2, column=0, columnspan=5, padx=4, pady=4, sticky="ew")
 
-                            possibs.focus()
+                                possibs.focus()
+                                self.center_window(possibs)
+                            self.after(0, show_possibs)
                 except Exception:
                     print(traceback.format_exc())
                     if self.not_closing:
                         self.on_closing()
                     else:
                         break
+
+        def send_posterior_selection(self, roll_id, selection_index, window):
+            """Send posterior selection to server for synchronized two-player rolls."""
+            try:
+                selection = posterior_selection(roll_id, selection_index)
+                message_sent = pickle.dumps(selection)
+                message_sent_header = f"{len(message_sent):<{HEADER_LENGTH}}".encode(FORMAT)
+                client.send(message_sent_header + message_sent)
+                window.destroy()  # Close the possibilities window
+            except Exception as e:
+                print(f"Error sending posterior selection: {e}")
 
         def show_res(self, message, send_type):                
             possibs=ctk.CTkToplevel(fg_color="gray15")
@@ -2456,7 +2649,7 @@ class GUI(ctk.CTk):
                     
                 aux_1=ctk.CTkLabel(aux_1_mor, text=resultStr, fg_color="gray25", corner_radius=6, font=("Roboto", 12))
                 aux_2=ctk.CTkLabel(aux_2_mor, text='+'*(message[i].adv>=0)+str(message[i].adv), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
-                aux_3=ctk.CTkLabel(aux_3_mor, text=message[i].mods[:-2]+'N/A'*(not message[i].mods[:-2]), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
+                aux_3=ctk.CTkLabel(aux_3_mor, text=(message[i].mods.strip() or 'N/A'), fg_color="gray25", corner_radius=6, font=("Roboto", 12))
 
                 aux_1.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
                                     
@@ -2464,6 +2657,7 @@ class GUI(ctk.CTk):
                 
                 aux_3.grid(row=i, column=0, padx=self.rescale, pady=((i==0)*self.rescale, self.rescale), sticky="ew")
             possibs.focus()
+            self.center_window(possibs)
             
         def calc_change(self, old, new, r, prob_old):
             old*=100
@@ -2851,8 +3045,14 @@ class GUI(ctk.CTk):
         def run_animation_step(self, anim_id):
             try:
                 # If window closed or a new animation started, stop
-                if not self.possi.winfo_exists() or anim_id != self.current_anim_id:
+                if not self.possi.winfo_exists() or not self.possi.winfo_viewable() or anim_id != self.current_anim_id:
                     return
+                
+                # Update idle tasks to ensure state is consistent
+                try:
+                    self.possi.update_idletasks()
+                except:
+                    pass
                 
                 roll_val = self.anim_rolls[self.anim_index]
 
@@ -2883,12 +3083,12 @@ class GUI(ctk.CTk):
                 # Slowed down slightly: 200ms highlight
                 self.possi.after(200, self.reset_animation_step, roll_val, anim_id)
 
-            except Exception:
-                print(traceback.format_exc())
+            except (TclError, Exception):
+                pass
 
         def reset_animation_step(self, roll_val, anim_id):
              try:
-                if not self.possi.winfo_exists() or anim_id != self.current_anim_id:
+                if not self.possi.winfo_exists() or not self.possi.winfo_viewable() or anim_id != self.current_anim_id:
                     return
 
                     
@@ -2906,15 +3106,20 @@ class GUI(ctk.CTk):
                 # Slowed down slightly: 100ms between rolls
                 self.possi.after(100, self.run_animation_step, anim_id)
 
-             except Exception:
-                print(traceback.format_exc())
+             except (TclError, Exception):
+                pass
 
         def run_wheel_rolldic_animation_step(self, anim_id):
             try:
-                if not self.possi.winfo_exists() or anim_id != self.current_anim_id:
+                if not self.possi.winfo_exists() or not self.possi.winfo_viewable() or anim_id != self.current_anim_id:
                     return
 
-                
+                # Update idle tasks to ensure state is consistent
+                try:
+                    self.possi.update_idletasks()
+                except:
+                    pass
+
                 t = self.wheel_anim_step / self.wheel_total_steps
                 # Ease-out cubic
                 eased_t = 1 - pow(1 - t, 3)
@@ -2964,8 +3169,8 @@ class GUI(ctk.CTk):
                     self.possi.after(delay, self.run_wheel_rolldic_animation_step, anim_id)
 
                 
-            except Exception:
-                print(traceback.format_exc())
+            except (TclError, Exception):
+                pass
                 
         # function to send messages 
         def sendMessage(self):
