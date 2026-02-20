@@ -649,8 +649,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.title("Character Sheet")
         self.geometry("580x900")
         self.configure(fg_color="gray15")
-        # self.attributes("-topmost", True)  # Removed: too intrusive
         self.protocol("WM_DELETE_WINDOW", self.withdraw)
+        self._loaded_filepath = None
         
         # Styling
         self.color = getattr(parent, 'color', "#d63384")
@@ -683,8 +683,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.spell_widgets = {} # {id: (row_frame, prep_var, name_ent, source_ent, qprep_lbl)}
         self.quick_prep_used = BooleanVar(value=False)
         self.hit_dice_vars = {die: [StringVar(value="0"), StringVar(value="0")] for die in ["d6", "d8", "d10", "d12"]}
-
         
+        # Phase 2: New State Variables
+        self.conditions_vars = {c: BooleanVar(value=False) for c in [
+            "Blinded", "Charmed", "Deafened", "Frightened", "Grappled", 
+            "Incapacitated", "Invisible", "Paralyzed", "Petrified", 
+            "Poisoned", "Prone", "Restrained", "Stunned", "Unconscious"
+        ]}
+        self.pet_widgets = {} # {id: (name_ent, type_ent, pcn_cur, pcn_max, aa_ent, spd_ent, desc_data, row_frame)}
+
         # Main scrollable frame
         self.main_frame = ctk.CTkScrollableFrame(self, fg_color="gray15",
                                                   scrollbar_button_color="gray25",
@@ -698,12 +705,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.create_header()
         self.create_stats_section()
         self.create_combat_section()
+        self.create_conditions_section()
         self.create_rest_section()
         self.create_aspects_section()
         self.create_knowledge_section()
         self.create_tools_section()
         self.create_equipment_section()
         self.create_features_section()
+        self.create_pets_section()
         self.create_shards_section()
         self.create_spells_section()
         self.create_footer()
@@ -719,7 +728,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
     def create_section_header(self, parent, text, row=0, colspan=1, pack=True):
         """Section header in a lighter label (Packed)"""
         lbl = ctk.CTkLabel(parent, text=text, font=("Roboto", 12, "bold"),
-                           fg_color="gray25", corner_radius=6, text_color="white")
+                           fg_color="gray25", corner_radius=6, text_color="white",
+                           anchor="w")
         if pack:
             lbl.pack(fill="x", padx=self.p, pady=(self.p, 2))
         return lbl
@@ -734,13 +744,20 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         content.columnconfigure((1, 3), weight=1)
         
         fields = [("Name:", "name_entry", 0, 0), ("Class:", "class_entry", 0, 2),
-                  ("Race:", "race_entry", 1, 0), ("Lvl:", "level_entry", 1, 2)]
+                  ("Race:", "race_entry", 1, 0), ("Lvl:", "level_entry", 1, 2),
+                  ("Bkg:", "background_entry", 2, 0), ("Lang:", "languages_entry", 2, 2)]
         for lbl, attr, r, c in fields:
-            pad_y = (4, 4) if r == 0 else (2, self.p)  # Row 0: small bottom; row 1: full bottom margin
+            pad_y = (4, 4) if r == 0 else (2, self.p)
             ctk.CTkLabel(content, text=lbl, font=("Roboto", 12)).grid(row=r, column=c, padx=self.p, pady=pad_y, sticky="e")
-            w = 50 if lbl == "Lvl:" else 140
+            if lbl == "Lvl:":
+                w = 50
+            elif lbl == "Lang:":
+                w = 140
+            else:
+                w = 140
             entry = ctk.CTkEntry(content, font=("Roboto", 12), fg_color="gray25", border_width=0, width=w)
             entry.grid(row=r, column=c+1, padx=self.p, pady=pad_y, sticky="ew" if lbl != "Lvl:" else "w")
+            entry.bind("<FocusOut>", self.autosave_roll_configs)
             setattr(self, attr, entry)
 
     def create_stats_section(self):
@@ -757,6 +774,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             entry = ctk.CTkEntry(content, font=("Roboto", 12), width=50, justify="center",
                                  fg_color="gray25", border_width=0)
             entry.grid(row=1, column=i, padx=self.p, pady=(0, 0))
+            entry.bind("<FocusOut>", self.autosave_roll_configs)
             self.stat_entries[stat] = entry
 
     def create_combat_section(self):
@@ -785,7 +803,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             entry = ctk.CTkEntry(sub, font=("Roboto", 12), width=42, justify="center",
                                  fg_color="gray25", border_width=0)
             entry.pack(pady=(0, 4))
+            entry.bind("<FocusOut>", self.autosave_roll_configs)
             self.combat_entries[key] = entry
+            
+            if key == "Spd":
+                entry.bind("<FocusIn>", lambda e: setattr(self, '_base_speed_val', self.combat_entries["Spd"].get()))
+                entry.bind("<FocusOut>", lambda e: setattr(self, '_base_speed_val', self.combat_entries["Spd"].get()))
         
         # Exhaustion (0-10)
         exh_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
@@ -830,6 +853,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                        fg_color="gray20", border_width=0)
             base_entry.pack(side="left", padx=2)
             base_entry.bind("<KeyRelease>", lambda _, s=stat: self.update_save_total(s))
+            base_entry.bind("<FocusOut>", self.autosave_roll_configs)
             self.save_entries[stat] = base_entry
             
             # 3) Prof Buttons
@@ -857,6 +881,29 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
             self.save_widgets[stat] = (prof_var, adv_var, total_lbl)
 
+    def create_conditions_section(self):
+        """Dedicated tracker for D&D Conditions"""
+        frame = self.create_bordered_frame(self.main_frame)
+        frame.pack(fill="x", pady=(0, 6))
+        self.create_section_header(frame, "Conditions Tracker")
+        
+        main_content = ctk.CTkFrame(frame, fg_color="transparent")
+        main_content.pack(fill="x", padx=self.p, pady=self.p)
+        
+        cond_frame = ctk.CTkFrame(main_content, fg_color="gray25", corner_radius=6)
+        cond_frame.pack(fill="x", pady=(0, 4))
+        # 3 or 4 columns to make it look full
+        cond_frame.columnconfigure((0, 1, 2), weight=1)
+        
+        cond_list = sorted(list(self.conditions_vars.keys()))
+        for i, cond in enumerate(cond_list):
+            r, c = i // 3, i % 3
+            cb = ctk.CTkCheckBox(cond_frame, text=cond, variable=self.conditions_vars[cond],
+                                  font=("Roboto", 10), checkbox_width=16, checkbox_height=16,
+                                  fg_color=self.color, border_color=self.color, hover_color=self.color,
+                                  command=self.on_condition_change)
+            cb.grid(row=r, column=c, padx=8, pady=4, sticky="w")
+
     def create_aspect_row(self, parent, aspect_name, row):
         """Aspect row: Name | Value | Prof(None/Half/Full) | Adv(spinbox)"""
         aspect_name = aspect_name.strip()
@@ -880,6 +927,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                   fg_color="gray20", border_width=0, corner_radius=4)
         val_entry.grid(row=0, column=1, padx=2, pady=4, sticky="ew")
         val_entry.bind("<KeyRelease>", lambda e: self.update_aspect_total(aspect_name))
+        val_entry.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Proficiency: segmented button (-, ½, F, E)
         prof_var = StringVar(value="-")
@@ -1233,6 +1281,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         bonus = self.calculate_bonus(prof)
         total = base_val + bonus
         total_lbl.configure(text=f"{total:+}")
+        self.autosave_roll_configs()
 
     def create_footer(self):
         """Centered Save/Load"""
@@ -1288,6 +1337,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Trigger updates for linked fields
         self.update_knowledge_fields()
         self.update_tool_fields()
+        self.autosave_roll_configs()
 
     def on_global_prof_change(self, event=None):
         """Called when user types in Prof input"""
@@ -1372,6 +1422,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.aa_extra_const = ctk.CTkEntry(controls_frame, font=("Roboto", 11), width=35, height=22, placeholder_text="",
                                            justify="center", fg_color="gray17", border_width=0)
         self.aa_extra_const.pack(side="left", padx=(0, 2))
+        self.aa_extra_const.bind("<FocusOut>", self.autosave_roll_configs)
         self.aa_extra_const.insert(0, "") # Default empty
         
         # AA Extra Adv (Dropdown)
@@ -1399,7 +1450,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         ctk.CTkLabel(hdr_frame, text="+", font=("Roboto", 11, "bold"), width=35).grid(row=0, column=4, padx=2)
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 11, "bold"), width=50).grid(row=0, column=5, padx=2)
         ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 11, "bold"), width=40).grid(row=0, column=6, padx=4)
-        ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=7, padx=(2,4))
+        ctk.CTkLabel(hdr_frame, text="Desc", font=("Roboto", 11, "bold"), width=30).grid(row=0, column=7, padx=2)
+        ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=8, padx=(2,4))
 
         # Items List
         self.items_container = ctk.CTkFrame(content_frame, fg_color="transparent", height=0)
@@ -1412,7 +1464,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                  command=self._add_weapon_row)
         add_btn.pack(pady=self.p)
 
-    def _add_weapon_row(self, name="", linked_aspect="Precision", prof=False, roll_type="Atk", extra_const="", extra_adv=""):
+    def _add_weapon_row(self, name="", linked_aspect="Precision", prof=False, roll_type="Atk", extra_const="", extra_adv="", desc=""):
         """Add a dynamic weapon/item row with Atk/AS toggle and extra modifiers"""
         # Unique ID generation
         if self.weapon_widgets:
@@ -1421,7 +1473,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             row_id = "0"
             
         row_frame = ctk.CTkFrame(self.items_container, fg_color="gray25", corner_radius=6)
-        row_frame.pack(fill="x", pady=2)
+        row_frame.pack(fill="x", padx=self.p, pady=2)
         row_frame.columnconfigure(0, weight=1) # Name
         
         # Name Entry
@@ -1429,6 +1481,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                 fg_color="gray17", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
         name_ent.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
+        name_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Aspect Menu
         aspects = sorted(list(self.aspect_widgets.keys()))
@@ -1463,6 +1516,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         extra_const_ent.insert(0, extra_const)
         extra_const_ent.grid(row=0, column=4, padx=2, pady=4)
         extra_const_ent.bind("<KeyRelease>", self.update_weapon_bonuses)
+        extra_const_ent.bind("<FocusOut>", self.autosave_roll_configs)
 
         # Extra Adv (Dropdown)
         adv_values = ["-3", "-2", "-1", "", "1", "2", "3"]
@@ -1482,14 +1536,21 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         bonus_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 10, "bold"), width=40)
         bonus_lbl.grid(row=0, column=6, padx=4, pady=4)
         
+        # Description button
+        desc_data = [desc]
+        desc_btn = ctk.CTkButton(row_frame, text="📝", width=30, height=22, fg_color="gray25", hover_color="gray35",
+                                  border_color=self.color, border_width=2,
+                                  command=lambda: self._open_feature_description(name_ent, desc_data))
+        desc_btn.grid(row=0, column=7, padx=2, pady=4)
+        
         # Remove button
         rem_btn = ctk.CTkButton(row_frame, text="×", width=22, height=22,
                                  fg_color="gray25", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  command=lambda: self._remove_weapon_row(row_id))
-        rem_btn.grid(row=0, column=7, padx=(2, 4), pady=4)
+        rem_btn.grid(row=0, column=8, padx=(2, 4), pady=4)
         
-        self.weapon_widgets[row_id] = (name_ent, asp_var, p_var, type_var, extra_const_ent, extra_adv_var, bonus_lbl, row_frame)
+        self.weapon_widgets[row_id] = (name_ent, asp_var, p_var, type_var, extra_const_ent, extra_adv_var, bonus_lbl, desc_data, row_frame)
         self.update_weapon_bonuses()
 
     def _remove_weapon_row(self, row_id):
@@ -1775,11 +1836,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Hit Dice
         self._restore_hit_dice()
         
-        # Arcane Recovery
-        self.arcane_recovery_used_var.set(False)
-        self.arcane_recovery_used_cb.configure(state="normal")
-        
-        # Shards & Saturation (Existing)
+        # Shards & Saturation (Handles Arcane Recovery reset)
         self._shard_long_rest()
         
         # Quick Prep
@@ -1914,6 +1971,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                 fg_color="gray17", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
         name_ent.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
+        name_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Uses (Current)
         cur_var = StringVar(value=str(current) if current else "0")
@@ -1928,6 +1986,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                fg_color="gray17", border_width=0)
         max_ent.insert(0, max_uses)
         max_ent.grid(row=0, column=3, padx=2, pady=4)
+        max_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Reset Type
         reset_var = StringVar(value=reset)
@@ -2024,13 +2083,23 @@ class CharacterSheetWindow(ctk.CTkToplevel):
     def _open_feature_description(self, name_ent, desc_data):
         """Popup to edit description"""
         top = ctk.CTkToplevel(self)
-        top.title(f"Description: {name_ent.get()}")
-        top.geometry("400x300")
+        title_text = name_ent.get() if hasattr(name_ent, 'get') else name_ent
+        top.title(f"Description: {title_text}")
+        top.geometry("400x340")
         top.attributes("-topmost", True)
         
         txt = ctk.CTkTextbox(top, font=("Roboto", 12))
-        txt.pack(fill="both", expand=True, padx=10, pady=10)
+        txt.pack(fill="both", expand=True, padx=10, pady=(10, 5))
         txt.insert("0.0", desc_data[0])
+        
+        def save_desc():
+            desc_data[0] = txt.get("0.0", "end").strip()
+            self.autosave_roll_configs()
+            top.destroy()
+            
+        btn = ctk.CTkButton(top, text="Save Description", font=("Roboto", 12, "bold"),
+                            fg_color=self.color, hover_color=self.color, command=save_desc)
+        btn.pack(pady=(5, 10))
         
     # ---------------- SPELLS SECTION ----------------
     def create_spells_section(self):
@@ -2130,6 +2199,180 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             # Spells
             for spell in spells:
                 self._render_spell_row(spell)
+
+    def create_pets_section(self):
+        """Companion tracking (João-com-braço, etc.)"""
+        frame = self.create_bordered_frame(self.main_frame)
+        frame.pack(fill="x", pady=(0, 6))
+        
+        self.create_section_header(frame, "Pets & Companions")
+        
+        # Header Row (Hidden by default)
+        self.pets_header_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        # Don't pack immediately
+        self.pets_header_frame.columnconfigure(0, weight=1)
+        
+        # Match the widths and padding from _add_pet_row
+        ctk.CTkLabel(self.pets_header_frame, text="Pet Name", font=("Roboto", 11, "bold"), anchor="w").grid(row=0, column=0, padx=4, sticky="ew")
+        ctk.CTkLabel(self.pets_header_frame, text="Type", font=("Roboto", 11, "bold"), width=60, anchor="w").grid(row=0, column=1, padx=2)
+        ctk.CTkLabel(self.pets_header_frame, text="PCN", font=("Roboto", 11, "bold"), width=40, anchor="center").grid(row=0, column=2, padx=2)
+        ctk.CTkLabel(self.pets_header_frame, text="/", font=("Roboto", 11, "bold"), width=10, anchor="center").grid(row=0, column=3)
+        ctk.CTkLabel(self.pets_header_frame, text="Max", font=("Roboto", 11, "bold"), width=40, anchor="center").grid(row=0, column=4, padx=2)
+        ctk.CTkLabel(self.pets_header_frame, text="AA", font=("Roboto", 11, "bold"), width=30, anchor="center").grid(row=0, column=5, padx=2)
+        ctk.CTkLabel(self.pets_header_frame, text="Spd", font=("Roboto", 11, "bold"), width=30, anchor="center").grid(row=0, column=6, padx=2)
+        ctk.CTkLabel(self.pets_header_frame, text="Desc", font=("Roboto", 11, "bold"), width=30, anchor="center").grid(row=0, column=7, padx=2)
+        ctk.CTkLabel(self.pets_header_frame, text="", width=28).grid(row=0, column=8, padx=(2,4))
+        
+        # Pets Container
+        self.pets_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
+        self.pets_container.pack(fill="x", padx=self.p, pady=(0, 2))
+        self.pets_container.columnconfigure(0, weight=1)
+        
+        # Buttons Container (Add / Import side-by-side)
+        btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        btn_frame.pack(pady=(2, 6))
+        
+        add_btn = ctk.CTkButton(btn_frame, text="+ Add Companion", font=("Roboto", 11),
+                                 fg_color="gray25", hover_color="gray35",
+                                 border_color=self.color, border_width=2,
+                                 command=self._add_pet_row)
+        add_btn.pack(side="left", padx=4)
+        
+        import_btn = ctk.CTkButton(btn_frame, text="📥 Import Monster", font=("Roboto", 11),
+                                    fg_color="gray25", hover_color="gray35",
+                                    border_color=self.color, border_width=2,
+                                    command=self._import_monster_stat_block_popup)
+        import_btn.pack(side="left", padx=4)
+
+    def _add_pet_row(self, name="", type_="", cur_pcn="", max_pcn="", aa="", spd="", desc=""):
+        if not self.pet_widgets:
+            # Show header if this is the first item
+            self.pets_header_frame.pack(fill="x", padx=self.p, pady=(0, 2), before=self.pets_container)
+            
+        row_id = str(uuid.uuid4())
+        row_frame = ctk.CTkFrame(self.pets_container, fg_color="gray25", corner_radius=6)
+        row_frame.pack(fill="x", pady=2)
+        row_frame.columnconfigure(0, weight=1)
+        
+        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), height=22, fg_color="gray17", border_width=1, border_color=self.color)
+        name_ent.insert(0, name); name_ent.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
+        
+        type_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=60, height=22, fg_color="gray17", border_width=0)
+        type_ent.insert(0, type_); type_ent.grid(row=0, column=1, padx=2, pady=4)
+        
+        pcn_cur = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=40, height=22, justify="center", fg_color="gray17", border_width=0)
+        pcn_cur.insert(0, cur_pcn); pcn_cur.grid(row=0, column=2, padx=2, pady=4)
+        
+        ctk.CTkLabel(row_frame, text="/", width=10).grid(row=0, column=3)
+        
+        pcn_max = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=40, height=22, justify="center", fg_color="gray17", border_width=0)
+        pcn_max.insert(0, max_pcn); pcn_max.grid(row=0, column=4, padx=2, pady=4)
+        
+        aa_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=30, height=22, justify="center", fg_color="gray17", border_width=0)
+        aa_ent.insert(0, aa); aa_ent.grid(row=0, column=5, padx=2, pady=4)
+        
+        spd_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=30, height=22, justify="center", fg_color="gray17", border_width=0)
+        spd_ent.insert(0, spd); spd_ent.grid(row=0, column=6, padx=2, pady=4)
+        
+        # Bind all entries for autosave
+        for e in [name_ent, type_ent, pcn_cur, pcn_max, aa_ent, spd_ent]:
+            e.bind("<FocusOut>", self.autosave_roll_configs)
+        
+        desc_data = [desc]
+        desc_btn = ctk.CTkButton(row_frame, text="📝", width=30, height=22, fg_color="gray25", hover_color="gray35",
+                                  border_color=self.color, border_width=2,
+                                  command=lambda: self._open_feature_description(name_ent, desc_data))
+        desc_btn.grid(row=0, column=7, padx=2, pady=4)
+        
+        rem_btn = ctk.CTkButton(row_frame, text="×", width=22, height=22, fg_color="gray25", hover_color="gray35",
+                                 border_color=self.color, border_width=2,
+                                 command=lambda: self._remove_pet_row(row_id))
+        rem_btn.grid(row=0, column=8, padx=(2, 4), pady=4)
+        
+        self.pet_widgets[row_id] = (name_ent, type_ent, pcn_cur, pcn_max, aa_ent, spd_ent, desc_data, row_frame)
+        self.autosave_roll_configs()
+
+    def _import_monster_stat_block_popup(self):
+        """Popup to paste a monster stat block for automatic row creation"""
+        top = ctk.CTkToplevel(self)
+        top.title("Import Monster Stat Block")
+        top.geometry("500x400")
+        top.attributes("-topmost", True)
+        
+        ctk.CTkLabel(top, text="Paste D&D 5e Stat Block (e.g. from Wikidot/Roll20/PDF):",
+                     font=("Roboto", 12, "bold")).pack(pady=10)
+        
+        txt = ctk.CTkTextbox(top, font=("Roboto", 11))
+        txt.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        def do_import():
+            content = txt.get("0.0", "end")
+            if content.strip():
+                self._process_monster_import(content)
+                top.destroy()
+        
+        ctk.CTkButton(top, text="Import", command=do_import,
+                      fg_color=self.color, hover_color=self.color).pack(pady=20)
+
+    def _process_monster_import(self, text):
+        """Parse text for Name, AC, HP, Speed and add row"""
+        # Translate the content using Monster Translator.py
+        translated_text = text
+        try:
+            import importlib.util, os, sys
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Monster Translator.py")
+            if os.path.exists(script_path):
+                spec = importlib.util.spec_from_file_location("monster_translator", script_path)
+                mt = importlib.util.module_from_spec(spec)
+                sys.modules["monster_translator"] = mt
+                spec.loader.exec_module(mt)
+                translated_text = mt.translate_monster(text)
+        except Exception as e:
+            print(f"Monster translation error: {e}")
+            
+        # Clean text
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        if not lines: return
+        
+        name = lines[0] # Assume first line is name
+        # Better name detection: skip if it looks like "Armor Class" or "Hit Points"
+        for line in lines:
+            if not any(x in line.lower() for x in ["armor class", "hit points", "speed", "size", "actions"]):
+                name = line
+                break
+        
+        # Regex extraction
+        import re
+        ac_match = re.search(r"Armor\s+Class\s+(\d+)", text, re.I)
+        hp_match = re.search(r"Hit\s+Points\s+(\d+)", text, re.I)
+        spd_match = re.search(r"Speed\s+(\d+)", text, re.I)
+        
+        ac = 10
+        if ac_match: ac = int(ac_match.group(1))
+        
+        hp = ""
+        if hp_match: hp = hp_match.group(1)
+        
+        spd = ""
+        if spd_match: spd = spd_match.group(1)
+        
+        # G(r)ay AA logic: -(AC-10)*2
+        aa = -(ac - 10) * 2
+        
+        # Determine type (Size/Type line usually follows name)
+        m_type = ""
+        for line in lines:
+            if any(x in line.lower() for x in ["tiny", "small", "medium", "large", "huge", "gargantuan"]):
+                m_type = line
+                break
+                
+        self._add_pet_row(name=name, type_=m_type, cur_pcn=hp, max_pcn=hp, aa=str(aa), spd=spd, desc=translated_text)
+
+
+    def _remove_pet_row(self, row_id):
+        if row_id in self.pet_widgets:
+            self.pet_widgets[row_id][-1].destroy()
+            del self.pet_widgets[row_id]
 
     def _add_spell_row(self, spell_data=None):
         """Adds a new spell to data and refreshes UI"""
@@ -2483,6 +2726,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.shard_widgets[row_id] = (source_ent, type_var, shard_type_var,
                                        current_ent, total_ent, max_out_ent,
                                        arcane_var, rest_var, row_frame)
+        # Bind for autosave
+        for e in [source_ent, current_ent, total_ent, max_out_ent]:
+            e.bind("<FocusOut>", self.autosave_roll_configs)
+        
         self._update_pact_visibility()
 
     def _remove_shard_row(self, row_id):
@@ -2672,13 +2919,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 self.combat_entries["AA"].delete(0, "end")
                 self.combat_entries["AA"].insert(0, f"{aa_melee} / {aa_ranged}")
             else:
-                # Standard (Resilience or No Shield)
                 aa_total = aa_base + shield_bonus
                 self.combat_entries["AA"].delete(0, "end")
                 self.combat_entries["AA"].insert(0, str(aa_total))
         
+        # New: Update Speed based on conditions
+        self.update_speed()
+        
         # Re-generate configs to apply potential proficiency penalties
-        self.generate_roll_configs()
+        self.autosave_roll_configs()
         self.update_net_adv()
 
     def update_net_adv(self, event=None):
@@ -2699,14 +2948,99 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             penalty -= max(0, min(10, exh))  # Clamp 0-10
         except (ValueError, TclError):
             pass
+
+        # Conditions (General penalties)
+        penalty += self.get_condition_modifiers('General')
         
         sign = "+" if penalty >= 0 else ""
         self.net_adv_label.configure(text=f"{sign}{penalty}")
+        self.autosave_roll_configs()
+
+    def on_condition_change(self):
+        """Update everything that depends on conditions"""
+        self.update_net_adv()
+        self.update_speed()
+        self.update_weapon_bonuses() 
+        self.update_knowledge_fields()
+        self.update_tool_fields()
+        for stat in ["Mind", "Soul", "Senses", "Body"]:
+            self.update_save_total(stat)
+        self.update_aa() # This implicitly calls generate_roll_configs
+
+    def update_speed(self):
+        """Handle immobilizing conditions affecting Speed"""
+        if "Spd" not in self.combat_entries: return
+        
+        active = {c for c, v in self.conditions_vars.items() if v.get()}
+        immobilizers = ["Grappled", "Paralyzed", "Petrified", "Restrained", "Stunned", "Unconscious"]
+        
+        entry = self.combat_entries["Spd"]
+        if any(c in active for c in immobilizers):
+            # Capture current as base before zeroing if not already tracking
+            # But only if it's NOT already 0 (to avoid capturing the penalty state as base)
+            current = entry.get()
+            if not hasattr(self, '_base_speed_val') or self._base_speed_val is None:
+                if current != "0":
+                    self._base_speed_val = current
+            
+            if entry.get() != "0":
+                 entry.delete(0, "end")
+                 entry.insert(0, "0")
+            entry.configure(text_color="#ff4d4d") # Soft red
+        else:
+            # Restore base speed if we have one stored
+            if hasattr(self, '_base_speed_val') and self._base_speed_val is not None:
+                if entry.get() == "0":
+                    entry.delete(0, "end")
+                    entry.insert(0, self._base_speed_val)
+                self._base_speed_val = None
+            entry.configure(text_color="white")
+        self.autosave_roll_configs()
+
+    def get_condition_modifiers(self, roll_type, name=None):
+        """
+        Calculate total advantage/disadvantage modifier from active conditions.
+        roll_type: 'Attack', 'Check', 'Save', 'AA', 'General'
+        """
+        mod = 0
+        active = {c for c, v in self.conditions_vars.items() if v.get()}
+        
+        if roll_type == 'Attack':
+            if "Blinded" in active: mod -= 1
+            if "Frightened" in active: mod -= 1
+            if "Invisible" in active: mod += 1
+            if "Poisoned" in active: mod -= 1
+            if "Prone" in active: mod -= 1
+            if "Restrained" in active: mod -= 1
+            
+        elif roll_type == 'Check':
+            if "Frightened" in active: mod -= 1
+            if "Poisoned" in active: mod -= 1
+            if name == "Awareness" and "Blinded" in active: mod -= 1
+            if name in ["Mobility", "Acrobatics", "Dexterity"] and "Restrained" in active: mod -= 1
+            
+        elif roll_type == 'Save':
+            # In this system, saves use stat categories (Senses=Dex, Body=Str/Con)
+            if name == "Senses": # Dex
+                if "Restrained" in active: mod -= 1
+                if any(c in active for c in ["Paralyzed", "Petrified", "Stunned", "Unconscious"]): mod -= 1
+            if name == "Body": # Str/Con
+                if any(c in active for c in ["Paralyzed", "Petrified", "Stunned", "Unconscious"]): mod -= 1
+        
+        elif roll_type == 'AA':
+            if "Invisible" in active: mod += 1
+            if any(c in active for c in ["Blinded", "Paralyzed", "Petrified", "Restrained", "Stunned", "Unconscious"]): mod -= 1
+            
+        elif roll_type == 'General':
+            if "Poisoned" in active: mod -= 1
+            if "Frightened" in active: mod -= 1
+            
+        return mod
 
     def update_weapon_bonuses(self, event=None):
         """Update Atk/AS label for all items based on selection and extras"""
         pb = self.get_prof_bonus()
-        for wid, (name_ent, asp_var, p_var, type_var, const_ent, adv_ent, bonus_lbl, _) in self.weapon_widgets.items():
+        for wid, (name_ent, asp_var, p_var, type_var, const_ent, adv_ent, bonus_lbl, _, _) in self.weapon_widgets.items():
             aspect_name = asp_var.get()
             is_prof = p_var.get()
             roll_type = type_var.get()
@@ -2767,7 +3101,28 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 
                 as_val = 4 - base_bonus
                 bonus_lbl.configure(text=f"AS: {as_val:+}")
+        self.autosave_roll_configs()
         
+    def autosave_roll_configs(self, event=None):
+        """Silently generate roll configs periodically or on focus out"""
+        if hasattr(self, '_autosave_after_id'):
+            self.after_cancel(self._autosave_after_id)
+        
+        def _do_both():
+            self.generate_roll_configs()
+            self._silent_master_save()
+            
+        self._autosave_after_id = self.after(500, _do_both)
+        
+    def _silent_master_save(self):
+        """Automatically saves the master character tracking object to the loaded filepath."""
+        if getattr(self, '_loaded_filepath', None) and os.path.exists(self._loaded_filepath):
+            try:
+                with open(self._loaded_filepath, "wb") as f:
+                    pickle.dump(self.gather_data(), f)
+            except Exception as e:
+                print(f"Master Sheet Autosave Error: {e}")
+
     def update_knowledge_fields(self):
         """Recalculate all knowledge field values based on linked aspects and prof"""
         pb = self.get_prof_bonus()
@@ -2799,6 +3154,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
             val_lbl.configure(text=f"{total:+}")
             print(f"DEBUG: {field} -> Linked: {linked_aspect} ({aspect_val}) | Prof: {prof} | Aspect Prof: {aspect_prof} | Total: {total}")
+        self.autosave_roll_configs()
 
     def update_tool_fields(self):
         """Recalculate all tool field values (same rules as knowledge fields)"""
@@ -2827,6 +3183,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 print(f"DEBUG: Linked aspect '{linked_aspect}' not found for tool '{tool}'")
             
             val_lbl.configure(text=f"{total:+}")
+        self.autosave_roll_configs()
 
     def gather_data(self):
         return {
@@ -2843,8 +3200,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             "tools": {k: (pv.get(), av.get(), la) for k, (pv, _, la, av) in self.tool_widgets.items()},
             "saves": {k: (pv.get(), av.get(), self.save_entries[k].get() if k in self.save_entries else "0") 
                       for k, (pv, av, _) in self.save_widgets.items()},
-            "weapons": [(n.get(), a.get(), p.get(), t.get(), ec.get(), ea.get()) 
-                        for _, (n, a, p, t, ec, ea, _, _) in self.weapon_widgets.items()],
+            "weapons": [(n.get(), a.get(), p.get(), t.get(), ec.get(), ea.get(), d[0]) 
+                        for _, (n, a, p, t, ec, ea, _, d, _) in self.weapon_widgets.items()],
             "armor": {
                 "type": self.armor_settings["type"].get(),
                 "aspect": self.armor_settings["aspect"].get(),
@@ -2871,11 +3228,19 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             ],
             "spells": self.spells,
             "quick_prep_used": self.quick_prep_used.get(),
-            "hit_dice": {d: [v[0].get(), v[1].get()] for d, v in self.hit_dice_vars.items()}
+            "hit_dice": {d: [v[0].get(), v[1].get()] for d, v in self.hit_dice_vars.items()},
+            "background": self.background_entry.get(),
+            "languages": self.languages_entry.get(),
+            "conditions": {c: v.get() for c, v in self.conditions_vars.items()},
+            "pets": [
+                (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[4].get(), w[5].get(), w[6][0])
+                for _, w in self.pet_widgets.items()
+            ]
         }
 
     def load_data(self, data):
-        for attr in ["name_entry", "class_entry", "race_entry", "level_entry"]:
+        for attr in ["name_entry", "class_entry", "race_entry", "level_entry", "background_entry", "languages_entry"]:
+            if not hasattr(self, attr): continue
             entry = getattr(self, attr)
             entry.delete(0, "end")
             entry.insert(0, data.get(attr.replace("_entry", ""), ""))
@@ -2955,8 +3320,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             child.destroy()
         
         for weapon_data in data.get("weapons", []):
-            if len(weapon_data) == 6:
-                self._add_weapon_row(*weapon_data)
+            if len(weapon_data) >= 6:
+                self._add_weapon_row(*weapon_data[:7])
             elif len(weapon_data) == 3: # Compat
                 self._add_weapon_row(weapon_data[0], weapon_data[1], weapon_data[2])
             
@@ -3035,6 +3400,20 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 self.hit_dice_vars[die][0].set(vals[0])
                 self.hit_dice_vars[die][1].set(vals[1])
 
+        # Load Conditions
+        cond_data = data.get("conditions", {})
+        for c, v in cond_data.items():
+            if c in self.conditions_vars:
+                self.conditions_vars[c].set(v)
+                
+        # Load Pets
+        self.pet_widgets.clear()
+        for child in self.pets_container.winfo_children():
+            child.destroy()
+        for pet_data in data.get("pets", []):
+            if len(pet_data) == 7:
+                self._add_pet_row(*pet_data)
+
         # Trigger regeneration of roll configs to ensure metadata (like aspect) is up to date
         self.generate_roll_configs()
         self.update_aa()
@@ -3082,6 +3461,19 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                     final_adv -= max(0, min(10, exh))
             except (ValueError, TclError):
                 pass
+            
+            # --- Condition Penalties ---
+            c_p = 0
+            if "save" in name.lower():
+                c_p = self.get_condition_modifiers('Save', aspect)
+            elif name in self.aspect_widgets or name in self.knowledge_widgets or name in self.tool_widgets:
+                c_p = self.get_condition_modifiers('Check', name)
+            elif "AA" in name:
+                c_p = self.get_condition_modifiers('AA')
+            else: # Usually weapons/features
+                c_p = self.get_condition_modifiers('Attack')
+            
+            final_adv += c_p
 
             filepath = os.path.join(self.roll_configs_dir, f"{safe_name}.pkl")
             
@@ -3249,6 +3641,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
     def save_character(self):
         filepath = filedialog.asksaveasfilename(defaultextension=".pkl", filetypes=[("Character File", "*.pkl")])
         if filepath:
+            self._loaded_filepath = filepath
             with open(filepath, "wb") as f:
                 pickle.dump(self.gather_data(), f)
             
@@ -3267,28 +3660,21 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 try: os.makedirs(self.roll_configs_dir)
                 except: pass
                 
-            # Sync with Main GUI (Chat Window)
+            # Sync Main GUI silently
             if hasattr(self.parent, 'roll_configs_dir'):
                 self.parent.roll_configs_dir = self.roll_configs_dir
                 if hasattr(self.parent, 'populate_roll_list'):
                     self.parent.populate_roll_list()
-                # Rebuild File menu to show new configs
                 if hasattr(self.parent, 'menubar'):
                     try:
                         self.parent.menubar.delete(0, "end")
                         self.parent.openmenu.delete(0, "end")
                         self.parent.build_menu()
-                    except Exception:
-                        pass
+                    except: pass
             
-            # Generate auto-configs
             self.generate_roll_configs()
-
-            # Focus back on the sheet window
             self.lift()
             self.focus_force()
-            
-            messagebox.showinfo("Success", f"Character saved and roll configs updated!\nLocation: {self.roll_configs_dir}")
 
     def load_character(self):
         filepath = filedialog.askopenfilename(filetypes=[("Character File", "*.pkl")])
@@ -3296,19 +3682,16 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             try:
                 with open(filepath, "rb") as f:
                     data = pickle.load(f)
-                
-                # Validation: Character files must be dictionaries
                 if not isinstance(data, dict):
                     messagebox.showerror("Error", "Invalid file format.\nThis appears to be a Roll Config or other file.\nPlease select a Character Sheet file.")
                     return
-                
                 self.load_data(data)
-            
+                self._loaded_filepath = filepath
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load character:\n{e}")
                 return
             
-            # Update roll_configs_dir based on load name
+            # Silent update after load
             basename = os.path.basename(filepath)
             name_no_ext = os.path.splitext(basename)[0]
             
@@ -3321,8 +3704,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             if not os.path.exists(self.roll_configs_dir):
                 try: os.makedirs(self.roll_configs_dir)
                 except: pass
-            
-            # Sync with Main GUI (Chat Window)
+                
+            # Sync with main GUI silently
             if hasattr(self.parent, 'roll_configs_dir'):
                 self.parent.roll_configs_dir = self.roll_configs_dir
                 if hasattr(self.parent, 'populate_roll_list'):
@@ -3336,6 +3719,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                     except Exception:
                         pass
             
+            self.generate_roll_configs()
             # Focus back on the sheet window
             self.lift()
             self.focus_force()

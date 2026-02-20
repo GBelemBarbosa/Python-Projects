@@ -1,0 +1,42 @@
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Users\gggt4\AppData\Local\Python\pythoncore-3.14-64\Lib\tkinter\__init__.py", line 2082, in __call__
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "C:\Users\gggt4\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\customtkinter\windows\widgets\ctk_button.py", line 554, in _clicked
+    self._command()
+    ~~~~~~~~~~~~~^^
+  File "c:\Users\gggt4\OneDrive\Desktop\Python-Projects\ClientRPG\D&D 5.5e - G(r)ay.py", line 3742, in <lambda>
+    fg_color="gray20", hover_color="gray30", font=("Roboto", 12), command = lambda: self.goAhead(self.entryName.get()))
+                                                                                    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\gggt4\OneDrive\Desktop\Python-Projects\ClientRPG\D&D 5.5e - G(r)ay.py", line 3842, in goAhead
+    self.goAhead3(name)
+    ~~~~~~~~~~~~~^^^^^^
+  File "c:\Users\gggt4\OneDrive\Desktop\Python-Projects\ClientRPG\D&D 5.5e - G(r)ay.py", line 3783, in goAhead3
+    self.layout(name)
+    ~~~~~~~~~~~^^^^^^
+  File "c:\Users\gggt4\OneDrive\Desktop\Python-Projects\ClientRPG\D&D 5.5e - G(r)ay.py", line 4914, in layout
+    self.SheetWindow = CharacterSheetWindow(self)
+                       ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "c:\Users\gggt4\OneDrive\Desktop\Python-Projects\ClientRPG\D&D 5.5e - G(r)ay.py", line 715, in __init__
+    self.create_pets_section()
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "c:\Users\gggt4\OneDrive\Desktop\Python-Projects\ClientRPG\D&D 5.5e - G(r)ay.py", line 2198, in create_pets_section
+    ctk.CTkLabel(self.pets_header_frame, text="PCN", font=("Roboto", 11, "bold"), width=40, anchor="c").grid(row=0, column=2, padx=2)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gggt4\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\customtkinter\windows\widgets\ctk_label.py", line 103, in __init__
+    self._create_grid()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\gggt4\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\customtkinter\windows\widgets\ctk_label.py", line 155, in _create_grid
+    self._label.grid(row=0, column=0, sticky=text_label_grid_sticky,
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     padx=self._apply_widget_scaling(min(self._corner_radius, round(self._current_height / 2))))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\gggt4\AppData\Local\Python\pythoncore-3.14-64\Lib\tkinter\__init__.py", line 2707, in grid_configure
+    self.tk.call(
+    ~~~~~~~~~~~~^
+          ('grid', 'configure', self._w)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          + self._options(cnf, kw))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+_tkinter.TclError: bad stickyness value "c": must be a string containing n, e, s, and/or w
