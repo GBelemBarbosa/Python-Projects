@@ -1,0 +1,141 @@
+                aspects_by_stat = {
+                    "Mind": [a.lower() for a in ["Concentration", "Investigation", "Convincing", "Simulation"]],
+                    "Soul": [a.lower() for a in ["Meditation", "Awareness", "Performance", "Trustworthiness"]],
+                    "Senses": [a.lower() for a in ["Precision", "Mobility", "Acrobatics", "Dexterity"]],
+                    "Body": [a.lower() for a in ["Potency", "Resilience", "Athletics", "Constitution"]]
+                }
+                save_names = [s.lower() for s in ["Body save", "Mind save", "Soul save", "Senses save"]]
+                equip_keywords = ["spell", "attack", "as", "dagger", "sword", "bow", "switchblade", "crossbow", "hammer", "axe", "whip"]
+
+                try:
+                    files = sorted([f for f in os.listdir(rc_dir) if f.endswith(".pkl")])
+                    for filename in files:
+                        name_orig = os.path.splitext(filename)[0]
+                        name = name_orig.lower()
+                        filepath = os.path.join(rc_dir, filename)
+                        cmd = lambda f=filepath: self.openfile(f)
+                        
+                        # Load config to check for aspect metadata
+                        config_aspect = None
+                        try:
+                            with open(filepath, "rb") as f:
+                                cfg = pickle.load(f)
+                                config_aspect = getattr(cfg, 'aspect', None)
+                        except: pass
+
+                        # 1. Saves and AA
+                        if name in save_names or "aa" in name:
+                            saves_menu.add_command(label=name_orig, command=cmd)
+                            continue
+
+                        # 2. Aspects
+                        placed = False
+                        for stat, asp_list in aspects_by_stat.items():
+                            if name in asp_list:
+                                stat_menus[stat].add_command(label=name_orig, command=cmd)
+                                placed = True
+                                break
+                        if placed: continue
+
+                        # 3. Categorize by metadata or name matching
+                        target_menu = None
+                        aspect_tracking_dict = None
+                        
+                        # Use CharacterSheetWindow for lookup (case-insensitive keys)
+                        known_fields_lower = {k.lower(): v for k, v in CharacterSheetWindow.KNOWLEDGE_ASPECTS.items()}
+                        
+                        if name in known_fields_lower:
+                            target_menu = knowledge_menu
+                            aspect_tracking_dict = knowledge_aspect_menus
+                            if not config_aspect: config_aspect = known_fields_lower[name]
+                        elif any(k.lower() in name for k in CharacterSheetWindow.TOOL_SET_OPTIONS + CharacterSheetWindow.INSTRUMENT_OPTIONS + CharacterSheetWindow.GAMING_SET_OPTIONS) or "tools" in name:
+                            target_menu = tools_menu
+                            aspect_tracking_dict = tools_aspect_menus
+                            if not config_aspect: config_aspect = self.SheetWindow._guess_linked_aspect(name_orig)
+                        elif config_aspect: # Metadata exists but not a known Knowledge/Tool
+                            target_menu = equip_menu
+                            aspect_tracking_dict = equip_aspect_menus
+                        elif any(k in name for k in equip_keywords):
+                            target_menu = equip_menu
+                            aspect_tracking_dict = equip_aspect_menus
+                        
+                        if target_menu is not None:
+                            asp_name = config_aspect if config_aspect else "Other"
+                            if asp_name not in aspect_tracking_dict:
+                                aspect_tracking_dict[asp_name] = Menu(target_menu, tearoff=0)
+                                target_menu.add_cascade(label=asp_name, menu=aspect_tracking_dict[asp_name])
+                            aspect_tracking_dict[asp_name].add_command(label=name_orig, command=cmd)
+                        else:
+                            custom_menu.add_command(label=name_orig, command=cmd)
+                except Exception as e:
+                    print(f"DEBUG: Error building roll menu: {e}")
+                
+        def modify(self, a, b, c):
+            self.modified=1           
+
+        def build_resor(self):
+            # Only create aFrame if there are anterior items
+            if self.anterior_items:
+                self.aFrame=ctk.CTkFrame(self.terFrame, fg_color="gray25")
+                self.aFrame.columnconfigure((0,1), weight=1, uniform="anterior")
+                self.aFrame.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
+
+                self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
+                self.anteriorLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale, columnspan=2)
+
+                # List Anterior Items
+                self.ante_buttons = []
+                for i, item in enumerate(self.anterior_items):
+                    text_label = ""
+                    if item.typ == 'c':
+                        text_label = f"Const: {item.val1:+}"
+                    elif item.typ == 'adv':
+                        text_label = f"Adv: {'+' if item.val1 > 0 else ''}{item.val1}"
+                    elif item.typ == 'dice':
+                        text_label = f"Dice: {item.val1}d{item.val2}"
+                    
+                    if item.hidden:
+                        text_label += " (H)"
+                    
+                    btn = ctk.CTkButton(self.aFrame, 
+                                        text=text_label, 
+                                        border_color=self.color,
+                                        border_width=2,
+                                        fg_color="gray30", hover_color="gray40", 
+                                        font=("Roboto", 11), 
+                                        command=lambda idx=i: self.destroy_ante(idx))
+                    btn.grid(row=1+i, column=0, columnspan=2, sticky="ew", padx=self.rescale, pady=(0, self.rescale))
+                    btn.bind("<Button-3>", lambda event, idx=i: self.toggle_hidden_ante(idx))
+                    self.ante_buttons.append(btn)
+                
+                start_row = 1
+            else:
+                start_row = 0
+
+
+            for i in range(len(self.resor)):
+                aux=("Resource #"+str(i+1))*(self.resor[i].resName.replace(" ", "")=="")+self.resor[i].resName*(self.resor[i].resName.replace(" ", "")!="")
+                self.resor[i].mainFrame=ctk.CTkFrame(self.terFrame, fg_color="gray25")
+                self.resor[i].mainFrame.columnconfigure((0,1) , weight=1)
+                self.resor[i].mainFrame.grid(row=start_row+i, column=0, sticky="ew", pady=(0,self.rescale))
+                
+                hidden_mark = " (H)" if self.resor[i].hidden else ""
+
+                self.resor[i].mainButton=ctk.CTkRadioButton(self.resor[i].mainFrame, 
+                                                                        variable = self.selectRes, 
+                                                                        value = i+1,
+                                                                        text = aux + hidden_mark, fg_color=self.color, bg_color="gray25", border_color="gray30", hover_color=self.color, font=("Roboto", 12))
+                self.resor[i].mainButton.grid(row=0, column=0, sticky="w", padx=self.rescale, pady=self.rescale)
+                self.resor[i].mainButton.bind("<Button-3>", lambda event, idx=i: self.toggle_hidden_res(idx))
+
+                self.resor[i].qntLabel=ctk.CTkLabel(self.resor[i].mainFrame, text=self.resor[i].qnt, fg_color="gray30", corner_radius=6, font=("Roboto", 12))
+                self.resor[i].qntLabel.grid(row=0, column=1, sticky="e", padx=(0,self.rescale), pady=self.rescale)
+    
+                self.resor[i].subButtons=[]
+                for j in range(len(self.resor[i].listSubres)):
+                    text = self.resor[i].listSubres[j].subresName
+                    if self.resor[i].hidden and " (H)" not in text:
+                         text += " (H)"
+                    elif getattr(self.resor[i].listSubres[j], 'hidden', False) and " (H)" not in text:
+                         text += " (H)"
+

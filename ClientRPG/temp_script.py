@@ -682,7 +682,6 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.spells = [] # List of dicts: {id, name, level, prepared, source, time, range, comp, dur, desc}
         self.spell_widgets = {} # {id: (row_frame, prep_var, name_ent, source_ent, qprep_lbl)}
         self.quick_prep_used = BooleanVar(value=False)
-        self.hit_dice_vars = {die: [StringVar(value="0"), StringVar(value="0")] for die in ["d6", "d8", "d10", "d12"]}
 
         
         # Main scrollable frame
@@ -1614,13 +1613,13 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                        fg_color="gray25", hover_color="gray35", 
                        border_color=self.color, border_width=2,
                        width=90, height=28,
-                       command=self._long_rest).pack(side="left", padx=(0, 15))
+                       command=self._shard_long_rest).pack(side="left", padx=(0, 15))
         
         ctk.CTkButton(btn_frame, text="Short Rest", font=("Roboto", 11, "bold"),
                        fg_color="gray25", hover_color="gray35", 
                        border_color=self.color, border_width=2,
                        width=90, height=28,
-                       command=self._short_rest).pack(side="left", padx=(0, 15))
+                       command=self._shard_short_rest).pack(side="left", padx=(0, 15))
         
         # Arcane Recovery
         ctk.CTkButton(btn_frame, text="Arcane Recovery", font=("Roboto", 11, "bold"),
@@ -1635,18 +1634,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.arcane_recovery_entry.pack(side="left", padx=(0, 10))
         self.arcane_recovery_entry.insert(0, "0")
         
-        def toggle_ar():
-            if self.arcane_recovery_used_var.get():
-                self.arcane_recovery_used_cb.configure(state="disabled", text_color="gray50")
-
         self.arcane_recovery_used_var = BooleanVar(value=False)
-        self.arcane_recovery_used_cb = ctk.CTkCheckBox(btn_frame, text="Used (1/LR)", variable=self.arcane_recovery_used_var,
+        self.arcane_recovery_used_cb = ctk.CTkCheckBox(btn_frame, text="Used", variable=self.arcane_recovery_used_var,
                                                         font=("Roboto", 10), checkbox_width=18, checkbox_height=18,
                                                         fg_color=self.color, hover_color=self.color,
-                                                        border_color=self.color, text_color="gray60",
-                                                        command=toggle_ar)
-        if self.arcane_recovery_used_var.get():
-            self.arcane_recovery_used_cb.configure(state="disabled", text_color="gray50")
+                                                        border_color=self.color,
+                                                        state="disabled")
         self.arcane_recovery_used_cb.pack(side="left")
 
     def _short_rest(self):
@@ -1665,98 +1658,6 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 w[5].configure(state="normal")
         # Call Shard Short Rest
         self._shard_short_rest()
-        
-        # Trigger Hit Dice Spending Prompt
-        self._prompt_hit_dice()
-
-    def _restore_hit_dice(self):
-        """Restore all hit dice to maximum"""
-        for die, vars in self.hit_dice_vars.items():
-            max_val = vars[1].get()
-            if max_val and max_val != "0":
-                vars[0].set(max_val)
-
-    def _prompt_hit_dice(self):
-        """Popup to select and roll hit dice to restore PCN"""
-        available = {d: int(v[0].get() or 0) for d, v in self.hit_dice_vars.items() if (v[0].get() and v[0].get() != "0")}
-        if not available:
-            return
-            
-        popup = ctk.CTkToplevel(self)
-        popup.title("Spend Hit Dice")
-        popup.geometry("300x400")
-        popup.configure(fg_color="gray20")
-        popup.attributes("-topmost", True)
-        popup.grab_set()
-
-        ctk.CTkLabel(popup, text="Spend Hit Dice", font=("Roboto", 14, "bold")).pack(pady=10)
-        
-        try:
-            vit_mod = int(self.combat_entries["Vit"].get() or 0)
-        except ValueError:
-            vit_mod = 0
-            
-        ctk.CTkLabel(popup, text=f"Vitality Modifier: {vit_mod:+}", font=("Roboto", 12)).pack(pady=(0, 10))
-
-        spend_vars = {}
-        for die, count in available.items():
-            frame = ctk.CTkFrame(popup, fg_color="transparent")
-            frame.pack(fill="x", padx=20, pady=5)
-            ctk.CTkLabel(frame, text=f"{die} (Avail: {count}) " , font=("Roboto", 12)).pack(side="left")
-            spend_vars[die] = IntVar(value=0)
-
-            sub = ctk.CTkFrame(frame, fg_color="gray25", height=24)
-            sub.pack(side="right")
-            
-            val_lbl = ctk.CTkLabel(sub, textvariable=spend_vars[die], width=30)
-            
-            def make_cmd(d, c, v_lbl, sp_var, diff):
-                def cmd():
-                    new_val = sp_var.get() + diff
-                    if 0 <= new_val <= c:
-                        sp_var.set(new_val)
-                return cmd
-                
-            ctk.CTkButton(sub, text="-", width=20, height=24, fg_color="gray30", 
-                          command=make_cmd(die, count, val_lbl, spend_vars[die], -1)).pack(side="left")
-            val_lbl.pack(side="left", padx=5)
-            ctk.CTkButton(sub, text="+", width=20, height=24, fg_color="gray30", 
-                          command=make_cmd(die, count, val_lbl, spend_vars[die], 1)).pack(side="left")
-
-        def roll_and_heal():
-            total_healed = 0
-            log_texts = []
-            
-            for die, var in spend_vars.items():
-                num = var.get()
-                if num > 0:
-                    sides = int(die[1:])
-                    for _ in range(num):
-                        r = random.randint(1, sides)
-                        total_healed += r + vit_mod
-                        log_texts.append(f"1{die} ({r}) + {vit_mod}")
-                    
-                    # Deduct spent dice
-                    current = int(self.hit_dice_vars[die][0].get())
-                    self.hit_dice_vars[die][0].set(str(current - num))
-
-            if total_healed > 0:
-                try:
-                    curr_pcn = int(self.combat_entries["PCN"].get() or 0)
-                except ValueError:
-                    curr_pcn = 0
-                self.combat_entries["PCN"].delete(0, "end")
-                self.combat_entries["PCN"].insert(0, str(curr_pcn + total_healed))
-                
-                log_str = " + ".join(log_texts)
-                messagebox.showinfo("Hit Dice Rolled", f"Rolled: {log_str}\n\nTotal PCN Restored: {total_healed}", parent=popup)
-                
-            popup.destroy()
-
-        ctk.CTkButton(popup, text="Roll & Heal", fg_color="gray25", border_width=2, 
-                      border_color=self.color, hover_color="gray35",
-                      command=roll_and_heal).pack(pady=20)
-
 
     def _long_rest(self):
         """Global Long Rest"""
@@ -1771,13 +1672,6 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                         pass
                 w[4].set(False)
                 w[5].configure(state="normal")
-                
-        # Hit Dice
-        self._restore_hit_dice()
-        
-        # Arcane Recovery
-        self.arcane_recovery_used_var.set(False)
-        self.arcane_recovery_used_cb.configure(state="normal")
         
         # Shards & Saturation (Existing)
         self._shard_long_rest()
@@ -1836,30 +1730,6 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             ctk.CTkButton(content, text=txt, font=("Roboto", 11, "bold"),
                           fg_color=c, hover_color="gray35", border_color=self.color, border_width=2,
                           command=cmd).grid(row=0, column=i, padx=4, pady=(4,0), sticky="ew")
-
-        # Hit Dice Sub-section
-        hd_frame = ctk.CTkFrame(frame, fg_color="gray25", corner_radius=6)
-        hd_frame.pack(fill="x", padx=self.p, pady=(4, self.p))
-        
-        lbl = ctk.CTkLabel(hd_frame, text="Hit Dice (Current / Max)", font=("Roboto", 11, "bold"))
-        lbl.pack(pady=(4,2))
-        
-        hd_boxes = ctk.CTkFrame(hd_frame, fg_color="transparent")
-        hd_boxes.pack(fill="x", pady=(0,4))
-        hd_boxes.columnconfigure((0,1,2,3), weight=1)
-        
-        for i, die in enumerate(["d6", "d8", "d10", "d12"]):
-            sub = ctk.CTkFrame(hd_boxes, fg_color="transparent")
-            sub.grid(row=0, column=i, padx=4)
-            ctk.CTkLabel(sub, text=f"{die}: ", font=("Roboto", 11, "bold")).pack(side="left")
-            
-            cur_entry = ctk.CTkEntry(sub, textvariable=self.hit_dice_vars[die][0], width=30, height=22, font=("Roboto", 11), justify="center", fg_color="gray17", border_width=0)
-            cur_entry.pack(side="left", padx=2)
-            
-            ctk.CTkLabel(sub, text="/", font=("Roboto", 10)).pack(side="left")
-            
-            max_entry = ctk.CTkEntry(sub, textvariable=self.hit_dice_vars[die][1], width=30, height=22, font=("Roboto", 11), justify="center", fg_color="gray17", border_width=0)
-            max_entry.pack(side="left", padx=2)
 
     def create_features_section(self):
         """Features & Limited Uses with Description and Auto-Reset"""
@@ -2467,7 +2337,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Arcane Rest
         arcane_var = BooleanVar(value=arcane_rest)
-        ctk.CTkCheckBox(bot, text="Arc. Rest", variable=arcane_var,
+        ctk.CTkCheckBox(bot, text="Arc.Rest", variable=arcane_var,
                          font=("Roboto", 11), checkbox_width=18, checkbox_height=18,
                          hover_color=self.color, fg_color=self.color,
                          border_color=self.color).pack(side="left", padx=(0, 15))
@@ -2547,8 +2417,16 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self._update_res_h(idx, self.resonance_count_entries, self.resonance_saturation_entries, self.normal_mult_labels)
 
     def _shard_long_rest(self):
-        """Long Rest: reset ALL slots, Shards, Resonance"""
-        # (Features and Hit Dice are handled by _long_rest calling this)
+        """Long Rest: reset ALL slots, Features (SR/LR/Dawn), HD, HP(opt), Arcane Recovery"""
+        # Reset Features (SR, LR, Dawn)
+        for _, widgets in self.feature_widgets.items():
+            if widgets[3].get() in ["SR", "LR", "Dawn"]:
+                max_val = widgets[2].get()
+                if max_val:
+                    try:
+                        widgets[1].set(int(max_val))
+                    except ValueError:
+                        pass
 
         # Reset All Shards
         for _, widgets in self.shard_widgets.items():
@@ -2570,14 +2448,21 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self._update_res_h(i, self.pact_count_entries, self.pact_saturation_entries, self.pact_mult_labels)
             
         self.arcane_recovery_used_var.set(False)
-        self.arcane_recovery_used_cb.configure(state="normal", text_color="gray60")
         self.quick_prep_used.set(False)
         if hasattr(self, "qp_chk"):
             self.qp_chk.configure(state="normal")
 
     def _shard_short_rest(self):
-        """Short Rest: reset Warlock Pact slots"""
-        # (SR Features and Hit Dice are handled by _short_rest calling this)
+        """Short Rest: reset Warlock Pact slots and Features (SR)"""
+        # Reset Features (SR)
+        for _, widgets in self.feature_widgets.items():
+            if widgets[3].get() == "SR":
+                max_val = widgets[2].get()
+                if max_val:
+                    try:
+                        widgets[1].set(int(max_val))
+                    except ValueError:
+                        pass
 
         # Reset Pact Slots
         found_pact = False
@@ -2620,7 +2505,6 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 current_ent.insert(0, str(current + can_recover))
                 remaining -= can_recover
         self.arcane_recovery_used_var.set(True)
-        self.arcane_recovery_used_cb.configure(state="disabled", text_color="gray50")
 
     def _guess_linked_aspect(self, name):
         """Helper for backward compatibility to guess aspect for tool"""
@@ -2870,8 +2754,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 for _, w in self.feature_widgets.items()
             ],
             "spells": self.spells,
-            "quick_prep_used": self.quick_prep_used.get(),
-            "hit_dice": {d: [v[0].get(), v[1].get()] for d, v in self.hit_dice_vars.items()}
+            "quick_prep_used": self.quick_prep_used.get()
         }
 
     def load_data(self, data):
@@ -3028,12 +2911,6 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.arcane_recovery_entry.delete(0, "end")
         self.arcane_recovery_entry.insert(0, data.get("arcane_recovery_amount", "0"))
         self.arcane_recovery_used_var.set(data.get("arcane_recovery_used", False))
-
-        # Load Hit Dice
-        for die, vals in data.get("hit_dice", {}).items():
-            if die in self.hit_dice_vars and len(vals) == 2:
-                self.hit_dice_vars[die][0].set(vals[0])
-                self.hit_dice_vars[die][1].set(vals[1])
 
         # Trigger regeneration of roll configs to ensure metadata (like aspect) is up to date
         self.generate_roll_configs()

@@ -1,0 +1,51 @@
+3868:        def build_menu(self):
+3869-            self.menubar.add_cascade(label="File", menu=self.openmenu)
+3870-            self.openmenu.add_command(label="Open new...", command=lambda: self.openfile(0))
+3871-            self.openmenu.add_command(label="Save", command=self.savefile)
+3872-            self.openmenu.add_command(label="Save as..", command=self.savefileas)
+3873-            
+3874-            # Roll Configs dropdown
+3875-            rc_dir = getattr(self, 'roll_configs_dir', None)
+3876-            if rc_dir and os.path.isdir(rc_dir):
+3877-                self.openmenu.add_separator()
+3878-                
+3879-                # Main Categories
+3880-                saves_menu = Menu(self.openmenu, tearoff=0)
+3881-                aspects_menu = Menu(self.openmenu, tearoff=0)
+3882-                knowledge_menu = Menu(self.openmenu, tearoff=0)
+3883-                tools_menu = Menu(self.openmenu, tearoff=0)
+3884-                equip_menu = Menu(self.openmenu, tearoff=0)
+3885-                custom_menu = Menu(self.openmenu, tearoff=0)
+3886-                
+3887-                self.openmenu.add_cascade(label="Saves and AA", menu=saves_menu)
+3888-                self.openmenu.add_cascade(label="Aspects", menu=aspects_menu)
+3889-                self.openmenu.add_cascade(label="Knowledge Fields", menu=knowledge_menu)
+3890-                self.openmenu.add_cascade(label="Tools", menu=tools_menu)
+3891-                self.openmenu.add_cascade(label="Equipment / Spells / Features", menu=equip_menu)
+3892-                self.openmenu.add_cascade(label="Custom", menu=custom_menu)
+3893-
+3894-                # Nested Aspect Submenus (Stats) - Use UPPERCASE for labels to match UI
+3895-                stat_menus = {
+3896-                    "Mind": Menu(aspects_menu, tearoff=0),
+3897-                    "Soul": Menu(aspects_menu, tearoff=0),
+3898-                    "Senses": Menu(aspects_menu, tearoff=0),
+3899-                    "Body": Menu(aspects_menu, tearoff=0)
+3900-                }
+3901-                for stat, m in stat_menus.items():
+3902-                    aspects_menu.add_cascade(label=stat, menu=m)
+3903-
+3904-                # Track Aspect Submenus for other categories
+3905-                knowledge_aspect_menus = {}
+3906-                tools_aspect_menus = {}
+3907-                equip_aspect_menus = {}
+3908-
+3909-                # Mappings (Lowercase keys for robust matching)
+3910-                aspects_by_stat = {
+3911-                    "Mind": [a.lower() for a in ["Concentration", "Investigation", "Convincing", "Simulation"]],
+3912-                    "Soul": [a.lower() for a in ["Meditation", "Awareness", "Performance", "Trustworthiness"]],
+3913-                    "Senses": [a.lower() for a in ["Precision", "Mobility", "Acrobatics", "Dexterity"]],
+3914-                    "Body": [a.lower() for a in ["Potency", "Resilience", "Athletics", "Constitution"]]
+3915-                }
+3916-                save_names = [s.lower() for s in ["Body save", "Mind save", "Soul save", "Senses save"]]
+3917-                equip_keywords = ["spell", "attack", "as", "dagger", "sword", "bow", "switchblade", "crossbow", "hammer", "axe", "whip"]
+3918-

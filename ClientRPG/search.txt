@@ -1,0 +1,6 @@
+1369:        # AA Extra Modifiers
+1415:        """Add a dynamic weapon/item row with Atk/AS toggle and extra modifiers"""
+2633:                # Let's assume AS is another roll modifier.
+2922:        """Generate/Update roll config files for all modifiers (Stats, Combat, Aspects, Tools) as bloco objects"""
+4285:                    with open(os.path.join(self.user_past_configs_dir, str(self.past_index_max)+'.txt'), 'xb') as file:
+4378:                        self.path = filedialog.askopenfile(parent=self.Window2, filetypes = [("Roll Configs", "*.pkl"), ("Text files", "*.txt"), ("All files", "*.*")]).name                              

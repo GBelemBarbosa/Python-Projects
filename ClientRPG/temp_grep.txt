@@ -1,0 +1,47 @@
+451: class IntSpinbox(ctk.CTkFrame):
+673: self.shard_widgets = {}  # {id: (source_entry, source_type_var, shard_type_var, total_entry, max_output_entry, arcane_rest_var, rest_type_var, row_frame)}
+705: self.create_features_section()
+707: self.create_spells_section()
+860: """Aspect row: Name | Value | Prof(None/Half/Full) | Adv(spinbox)"""
+1629: command=self._shard_arcane_recovery).pack(side="left", padx=(0, 8))
+1632: self.arcane_recovery_entry = ctk.CTkEntry(btn_frame, font=("Roboto", 11), width=35, height=22,
+1634: self.arcane_recovery_entry.pack(side="left", padx=(0, 10))
+1635: self.arcane_recovery_entry.insert(0, "0")
+1637: self.arcane_recovery_used_var = BooleanVar(value=False)
+1638: self.arcane_recovery_used_cb = ctk.CTkCheckBox(btn_frame, text="Used", variable=self.arcane_recovery_used_var,
+1643: self.arcane_recovery_used_cb.pack(side="left")
+1675: # Quick Prep
+1724: def create_features_section(self):
+1754: command=self._add_feature_row)
+1757: def _add_feature_row(self, name="", current="", max_uses="", reset="LR", description="", used=False):
+1868: def create_spells_section(self):
+1892: # Footer (Add Button + Quick Prep)
+1908: self.qp_chk = ctk.CTkCheckBox(footer, text="Quick Prep (1/LR)", variable=self.quick_prep_used,
+2404: self.arcane_recovery_used_var.set(False)
+2428: def _shard_arcane_recovery(self):
+2430: if self.arcane_recovery_used_var.get():
+2433: recovery = int(self.arcane_recovery_entry.get() or 0)
+2457: self.arcane_recovery_used_var.set(True)
+2700: "arcane_recovery_amount": self.arcane_recovery_entry.get(),
+2701: "arcane_recovery_used": self.arcane_recovery_used_var.get(),
+2832: # _add_feature_row extracts name, cur, max, reset, desc, used from tuple
+2833: self._add_feature_row(*feat_data[:6])
+2861: self.arcane_recovery_entry.delete(0, "end")
+2862: self.arcane_recovery_entry.insert(0, data.get("arcane_recovery_amount", "0"))
+2863: self.arcane_recovery_used_var.set(data.get("arcane_recovery_used", False))
+4643: self.resbox = IntSpinbox(self.resourcebar2,
+4660: self.critbox = IntSpinbox(self.resourcebar1,
+4669: self.minbox = IntSpinbox(self.resourcebar3,
+4690: self.acon = IntSpinbox(self.antebar,
+4707: self.aadv = IntSpinbox(self.antebar,
+4725: self.adic = IntSpinbox(self.antebar,
+4732: self.adic2 = IntSpinbox(self.antebar,
+4754: self.icon = IntSpinbox(self.interbar,
+4772: self.iadv = IntSpinbox(self.interbar,
+4790: self.idic = IntSpinbox(self.interbar,
+4797: self.idic2 = IntSpinbox(self.interbar,
+4818: self.pcon = IntSpinbox(self.postbar,
+4835: self.padv = IntSpinbox(self.postbar,
+4853: self.pdic = IntSpinbox(self.postbar,
+4860: self.pdic2 = IntSpinbox(self.postbar,
+5084: self.s.configure("TSpinbox", foreground="white", background= "black", fieldbackground="black", arrowcolor="white", selectbackground='white',
