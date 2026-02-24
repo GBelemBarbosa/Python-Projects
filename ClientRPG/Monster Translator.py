@@ -66,20 +66,18 @@ def translate_monster(stat):
     stat=stat.lower()
     stat=stat.replace("armor class", "AA")
     stat=re.sub("AA -?\d+", lambda m: "AA "+str(-(int(re.search("-?\d+", m.group()).group())-10)*2), stat)
-    aux=re.search("\nstr \d.+?cha.+?\)", stat, re.DOTALL)
-    if aux:
-        aux2=re.search("\nstr.+?cha?.*?\n(\d|\(|\)| |\+|-)+", stat, re.DOTALL)
-        if aux2:
-            if len(aux2.group())>len(aux.group()):
-                aux=aux2
-    else:
-        aux=re.search("\nstr.+?cha?.*?\n(\d|\(|\)| |\+|-)+", stat, re.DOTALL)
+    # Consume preceding whitespace so we don't double up \n when replacing
+    aux = re.search(r'\s*\bstr\b(?:.*?\d+\s*\([+-]?\d+\)){6}', stat, re.DOTALL)
     
     if aux:
         scores=[int(x) for x in re.findall("-?\d+", aux.group())]
         scores2=[int((scores[0]+scores[4]+1)/2)-10, scores[2]-10, int((scores[6]+scores[10]+1)/2)-10, int((scores[8]+scores[10]+1)/2)-10,0]
         bloqueto=str(int((scores[0]+scores[4]+1)/2))+' ('+str(scores2[0])+") "+str(scores[2])+' ('+str(scores2[1])+") "+str(int((scores[6]+scores[10]+1)/2))+' ('+str(scores2[2])+") "+str(int((scores[8]+scores[10]+1)/2))+' ('+str(scores2[3])+") "+str(scores[5])
-        stat=stat[:stat.find("\nstr")]+"\nBody Senses Mind Soul Vitality\n"+bloqueto+stat[aux.end():]
+        
+        # Determine if we need a trailing newline based on what follows
+        trailing = "\n" if aux.end() < len(stat) and stat[aux.end()] != '\n' else ""
+        
+        stat=stat[:aux.start()]+"\nBody Senses Mind Soul Vitality\n"+bloqueto+trailing+stat[aux.end():]
         
         aux_perc=re.search("passive perception.+?\n", stat)
         if aux_perc:
@@ -97,6 +95,32 @@ def translate_monster(stat):
                 for i in dic_skill:
                     auxau=re.sub(i+".+?\d+\D", lambda m: skill_swap(m, dic_skill[i], i, scores, scores2), auxau)
                 stat=stat[:aux_sk.start()]+auxau+stat[aux_sk.end():]
+                
+        # Handle "saving throws" line specifically
+        aux_save_line=re.search("saving throws.+?\n", stat)
+        if aux_save_line:
+            auxau=aux_save_line.group()
+            # Find and replace all saves in format "str +5" or "dex -1"
+            shorthand_save_map = {'str': 'body', 'dex': 'senses', 'con': 'body', 'int': 'mind', 'wis': 'soul/mind', 'cha': 'soul/mind'}
+            scores_idx_map = {'str': (0,1), 'dex': (2,3), 'con': (4,5), 'int': (6,7), 'wis': (8,9), 'cha': (10,11)}
+            scores2_idx_map = {'body':0, 'senses':1, 'mind':2, 'soul/mind':3, 'soul':3}
+            
+            for k, v in shorthand_save_map.items():
+                idx_score, idx_mod = scores_idx_map[k]
+                g_stat_idx = scores2_idx_map[v]
+                
+                def save_line_swap(m, k=k, v=v, idx_mod=idx_mod, g_stat_idx=g_stat_idx):
+                    match_str = m.group()
+                    raw_bonus_str = re.search("-?\d+", match_str).group()
+                    dnd_prof_bonus = int(raw_bonus_str) - scores[idx_mod]
+                    gray_bonus = (dnd_prof_bonus * 2) + scores2[g_stat_idx]
+                    return match_str.replace(k, v).replace(raw_bonus_str, signe(gray_bonus)+str(gray_bonus)).replace("+", "")
+                    
+                # Matches 'dex +6' or 'con -1' allowing punctuation
+                auxau=re.sub(r'\b'+k+r'\s+-?\+?\d+\b', save_line_swap, auxau)
+            
+            # Reconstruct string
+            stat=stat[:aux_save_line.start()]+auxau+stat[aux_save_line.end():]
                 
     for i in dic_skill:
         stat=re.sub("dc.+?\d+?.+?"+i+".+?check", lambda m: AC_swap(m, dic_skill[i][2], i), stat, re.DOTALL)
@@ -124,8 +148,8 @@ def translate_monster(stat):
                     stat=chain_gang_sav(p, dic_save, stat)
                     
     stat=re.sub(":.+?to hit", lambda m: ": "+"+"*("+" in m.group())+str(int(re.search("-?\d+", m.group()).group())*2)+" to hit", stat, re.DOTALL)
-    stat=stat.replace("hit points", "pcn")
-    stat=stat.replace("hit point", "pcn")
+    stat=re.sub("hit points", "pcn", stat, flags=re.IGNORECASE)
+    stat=re.sub("hit point", "pcn", stat, flags=re.IGNORECASE)
     return stat
 
 if __name__ == "__main__":

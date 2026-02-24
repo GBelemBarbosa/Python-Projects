@@ -1114,10 +1114,20 @@ while True:
                             messagepf.sender=user['data']+" (private)"
                             message['data']=pickle.dumps(messagepf)
                             message["header"]=f"{len(message['data']):<{HEADER_LENGTH}}".encode('utf-8')
-                            for client_socket in clients:
-                                if clients[client_socket]['data'] in messagepf.destiny:
-                                    client_socket.send(message["header"] + message['data'])
-                            notified_socket.send(message["header"] + message['data'])
+                            # Collect unique targets for the message
+                            targets = set()
+                            for s in clients:
+                                if clients[s]['data'] in messagepf.destiny:
+                                    targets.add(s)
+                            
+                            # Ensure sender is also a recipient
+                            targets.add(notified_socket)
+                            
+                            # Send message to each unique target exactly once
+                            header = message["header"]
+                            data = message['data']
+                            for target_socket in targets:
+                                target_socket.send(header + data)
 
                 elif type(messagepf).__name__=='roll':
                     if not user["rolling"]:
@@ -1272,6 +1282,21 @@ while True:
                     except Exception:
                         print(f"ERROR in posterior_selection handler:")
                         print(traceback.format_exc())
+                
+                elif type(messagepf).__name__=='dict' and messagepf.get('type') == 'portrait_update':
+                    # Handle async portrait update from client
+                    portrait_data = messagepf.get('portrait_data')
+                    user['portrait_data'] = portrait_data
+                    # Broadcast update to all clients
+                    update_msg = pickle.dumps({
+                        'type': 'portrait_update',
+                        'name': user['data'],
+                        'portrait_data': portrait_data,
+                        'color': user.get('cor')
+                    })
+                    update_header = f"{len(update_msg):<{HEADER_LENGTH}}".encode('utf-8')
+                    for client_socket in clients:
+                        client_socket.send(update_header + update_msg)
                             
             elif notified_socket in espera_de_cor:
                 cor=receive_message(notified_socket)
@@ -1279,22 +1304,33 @@ while True:
                         sockets_list.remove(notified_socket)
                 else:
                     cordec=cor['data'].decode('utf-8')
-                    newuser=pickle.dumps({'name': espera_de_cor[notified_socket]['data'], 'color': cordec})
-                    newuser_header=f"{len(newuser):<{HEADER_LENGTH}}".encode('utf-8')
-                    alreadyuser=[]
-                    for client_socket in clients:
-                        alreadyuser.append({'name': clients[client_socket]['data'], 'color': clients[client_socket]['cor']})
-                        client_socket.send(newuser_header+newuser)
-                    # print(alreadyuser)
-                    alreadyuser=pickle.dumps(alreadyuser)
-                    auser_header=f"{len(alreadyuser):<{HEADER_LENGTH}}".encode('utf-8')
-                    notified_socket.send(auser_header+alreadyuser)
-                    # Save username and username header                        
+                    # Receive portrait data (sent immediately after color)
+                    portrait_msg = receive_message(notified_socket)
+                    portrait_data = None
+                    if portrait_msg is not False:
+                        try:
+                            portrait_data = pickle.loads(portrait_msg['data'])
+                        except:
+                            portrait_data = None
+                    
                     clients[notified_socket] = espera_de_cor[notified_socket]
                     clients[notified_socket]['calling'] = []
                     clients[notified_socket]['rolling'] = 0
                     clients[notified_socket]['cor']=cordec
+                    clients[notified_socket]['portrait_data']=portrait_data
                     print('Accepted new connection from user: {}.'.format(clients[notified_socket]['data']))
+
+                    newuser=pickle.dumps({'name': clients[notified_socket]['data'], 'color': cordec, 'portrait_data': portrait_data})
+                    newuser_header=f"{len(newuser):<{HEADER_LENGTH}}".encode('utf-8')
+                    alreadyuser=[]
+                    for client_socket in clients:
+                        alreadyuser.append({'name': clients[client_socket]['data'], 'color': clients[client_socket]['cor'], 'portrait_data': clients[client_socket].get('portrait_data')})
+                        if client_socket != notified_socket:
+                            client_socket.send(newuser_header+newuser)
+                    
+                    alreadyuser=pickle.dumps(alreadyuser)
+                    auser_header=f"{len(alreadyuser):<{HEADER_LENGTH}}".encode('utf-8')
+                    notified_socket.send(auser_header+alreadyuser)
                 del espera_de_cor[notified_socket]
             else:
                     # Client should send his name right away, receive it
