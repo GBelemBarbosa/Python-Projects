@@ -1,0 +1,23 @@
+743:        lbl = ctk.CTkLabel(parent, text=text, font=("Roboto", 14, "bold"),
+1818:        ctk.CTkLabel(popup, text="Spend Hit Dice", font=("Roboto", 14, "bold")).pack(pady=self.p)
+2063:                                       width=60, height=22, font=("Roboto", 14),
+4524:            menu = Menu(self, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 14))
+4533:            dice_menu = Menu(menu, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 14))
+4944:                self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
+5013:                                                                    fg_color="gray30", hover_color="gray35", font=("Roboto", 14), command = lambda idx=i: self.destroy_res(idx), border_color=self.color, border_width=2)
+5421:                self.sidebarLabel=ctk.CTkLabel(self, text="Players online", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+5490:                self.selecLabel=ctk.CTkLabel(self.Window2, text="Select to roll", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+5500:                self.selectedLabel=ctk.CTkLabel(self.Window2, text="Selected", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+5517:                self.resourcesLabel=ctk.CTkLabel(self.Window2, text="Resources", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+5545:                                                   font=("Roboto", 14, "bold"),
+5665:                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 14, "bold"), command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
+5696:                self.antelabel= ctk.CTkLabel(self.antebar, text='Anterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))           
+5761:                self.interLabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
+5825:                self.postLabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
+5918:                self.InfoLabel = ctk.CTkLabel(self.dicewindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14), pady=self.rescale)
+5938:                self.InfoLabel2 = ctk.CTkLabel(self.progresswindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14), pady=self.rescale)
+5975:                self.CFThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="CF", font=("Roboto", 14, "bold"), text_color="gray90")
+5976:                self.SuccessThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="S", font=("Roboto", 14, "bold"), text_color="gray90")
+5977:                self.CritThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="CS", font=("Roboto", 14, "bold"), text_color="gray90")
+5990:                self.InfoLabel3 = ctk.CTkLabel(self.wheelwindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14), pady=self.rescale)
+6436:                                                        font=("Roboto", 14),

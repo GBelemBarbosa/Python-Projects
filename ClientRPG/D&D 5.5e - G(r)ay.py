@@ -475,14 +475,19 @@ class IntSpinbox(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)  # entry expands
 
         self.subtract_button = ctk.CTkButton(self, text="▼", width=height-6, border_color=color, border_width=2,
-                                             fg_color=fg_color, hover_color=hover_color, font=("Roboto", 12), command = self.subtract_button_callback)
+                                             fg_color=fg_color, hover_color=hover_color, 
+                                             text_color="gray90", text_color_disabled="gray50",
+                                             font=("Roboto", 12), command = self.subtract_button_callback)
         self.subtract_button.grid(row=0, column=0)
 
-        self.entry = ctk.CTkEntry(self, width=width-(2*height), border_width=0, fg_color=fg_color, font=("Roboto", 12))
+        self.entry = ctk.CTkEntry(self, width=width-(2*height), border_width=0, fg_color=fg_color, 
+                                  text_color="gray90", font=("Roboto", 12))
         self.entry.grid(row=0, column=1, columnspan=1, padx=self.rescale/3, sticky="ew")
 
         self.add_button = ctk.CTkButton(self, text="▲", width=height-6, border_color=color, border_width=2,
-                                          fg_color=fg_color, hover_color=hover_color, font=("Roboto", 12), command = self.add_button_callback)
+                                          fg_color=fg_color, hover_color=hover_color, 
+                                          text_color="gray90", text_color_disabled="gray50",
+                                          font=("Roboto", 12), command = self.add_button_callback)
         self.add_button.grid(row=0, column=2)
 
         # default value
@@ -735,8 +740,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         """Section header in a lighter label (Packed)"""
         if pady is None:
             pady = (self.p, 0)
-        lbl = ctk.CTkLabel(parent, text=text, font=("Roboto", 12, "bold"),
-                           fg_color="gray25", corner_radius=6, text_color="white",
+        lbl = ctk.CTkLabel(parent, text=text, font=("Roboto", 14, "bold"),
+                           fg_color="gray25", corner_radius=6, text_color="gray90",
                            anchor="w")
         if pack:
             lbl.pack(fill="x", padx=self.p, pady=pady)
@@ -757,7 +762,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         portrait_frame.pack_propagate(False)  # Fixed size
         
         self.portrait_label = ctk.CTkLabel(portrait_frame, text="📷\nPortrait",
-                                           font=("Roboto", 11), text_color="gray50",
+                                           font=("Roboto", 12), text_color="gray50",
                                            cursor="hand2")
         self.portrait_label.pack(expand=True, fill="both")
         self.portrait_label.bind("<Button-1>", lambda e: self._load_portrait())
@@ -829,7 +834,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         content.columnconfigure((0, 1, 2, 3), weight=1)
         
         for i, stat in enumerate(["Mind", "Soul", "Senses", "Body"]):
-            ctk.CTkLabel(content, text=stat, font=("Roboto", 12, "bold")).grid(row=0, column=i, padx=(0, self.p), pady=(2, 0))
+            ctk.CTkLabel(content, text=stat, font=("Roboto", 12)).grid(row=0, column=i, padx=(0, self.p), pady=(2, 0))
             entry = ctk.CTkEntry(content, font=("Roboto", 12), width=50, justify="center",
                                  fg_color="gray25", border_width=0)
             entry.grid(row=1, column=i, padx=(0, self.p), pady=(0, self.p if i != 3 else 0))
@@ -858,7 +863,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             sub.grid(row=0, column=i, sticky="nsew", padx=(0, self.p))
             sub.columnconfigure(0, weight=1)
             
-            ctk.CTkLabel(sub, text=lbl, font=("Roboto", 11, "bold")).pack()
+            ctk.CTkLabel(sub, text=lbl, font=("Roboto", 12)).pack()
             entry = ctk.CTkEntry(sub, font=("Roboto", 12), width=42, justify="center",
                                  fg_color="gray25", border_width=0)
             entry.pack()
@@ -873,7 +878,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         exh_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
         exh_sub.grid(row=0, column=5, sticky="nsew", padx=(0, self.p))
         exh_sub.columnconfigure(0, weight=1)
-        ctk.CTkLabel(exh_sub, text="Exh", font=("Roboto", 11, "bold")).pack()
+        ctk.CTkLabel(exh_sub, text="Exh", font=("Roboto", 12)).pack()
         exh_entry = ctk.CTkEntry(exh_sub, font=("Roboto", 12), width=42, justify="center",
                                   fg_color="gray25", border_width=0,
                                   textvariable=self.exhaustion_var)
@@ -884,8 +889,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         nadv_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
         nadv_sub.grid(row=0, column=6, sticky="nsew", padx=(0, self.p))
         nadv_sub.columnconfigure(0, weight=1)
-        ctk.CTkLabel(nadv_sub, text="Net Adv", font=("Roboto", 11, "bold")).pack()
-        self.net_adv_label = ctk.CTkLabel(nadv_sub, text="0", font=("Roboto", 12, "bold"),
+        ctk.CTkLabel(nadv_sub, text="Net Adv", font=("Roboto", 12)).pack()
+        self.net_adv_label = ctk.CTkLabel(nadv_sub, text="0", font=("Roboto", 12),
                                            fg_color="gray25", corner_radius=4, width=42, height=28)
         self.net_adv_label.pack()
 
@@ -902,13 +907,13 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             s_card.columnconfigure(0, weight=1) # Center content
             
             # 1) Stat Name
-            ctk.CTkLabel(s_card, text=stat, font=("Roboto", 11, "bold")).pack(pady=(self.p, 0))
+            ctk.CTkLabel(s_card, text=stat, font=("Roboto", 12)).pack()
             
             # 2) Base Entry
             base_frame = ctk.CTkFrame(s_card, fg_color="transparent")
             base_frame.pack()
-            ctk.CTkLabel(base_frame, text="Base:", font=("Roboto", 10), text_color="gray60").pack(side="left", padx=self.p)
-            base_entry = ctk.CTkEntry(base_frame, font=("Roboto", 11), width=35, justify="center",
+            ctk.CTkLabel(base_frame, text="Base:", font=("Roboto", 12), text_color="gray90").pack(side="left")
+            base_entry = ctk.CTkEntry(base_frame, font=("Roboto", 12), width=35, justify="center",
                                        fg_color="gray30", border_width=0)
             base_entry.pack(side="left", padx=self.p)
             base_entry.bind("<KeyRelease>", lambda _, s=stat: self.update_save_total(s))
@@ -918,23 +923,23 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             # 3) Prof Buttons
             prof_var = StringVar(value="-")
             prof_seg = ctk.CTkSegmentedButton(s_card, values=["-", "½", "F", "E"], variable=prof_var,
-                                               font=("Roboto", 10), width=80, height=20,
-                                               fg_color="gray25", bg_color="gray30", selected_color=self.color,
+                                               font=("Roboto", 12), width=80, height=20,
+                                               fg_color="gray25", bg_color="transparent", selected_color=self.color,
                                                selected_hover_color="gray35",
                                                command=lambda _, s=stat: self.update_save_total(s))
             prof_seg.pack(pady=(self.p, 0))
             
             # 4) Total (Big)
-            total_lbl = ctk.CTkLabel(s_card, text="+0", font=("Roboto", 14, "bold"))
+            total_lbl = ctk.CTkLabel(s_card, text="+0", font=("Roboto", 12), fg_color="gray30", corner_radius=6)
             total_lbl.pack(pady=(self.p, 0))
             
             # 5) Advantage
             adv_frame = ctk.CTkFrame(s_card, fg_color="transparent")
-            adv_frame.pack(pady=(0, self.p))
-            ctk.CTkLabel(adv_frame, text="Adv:", font=("Roboto", 10), text_color="gray60").pack(side="left", padx=self.p)
+            adv_frame.pack(pady=self.p)
+            ctk.CTkLabel(adv_frame, text="Adv:", font=("Roboto", 12), text_color="gray90").pack(side="left")
             adv_var = StringVar(value="0")
             adv_menu = ctk.CTkOptionMenu(adv_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
-                                          font=("Roboto", 10), width=50, height=20,
+                                          font=("Roboto", 12), width=50, height=20,
                                           fg_color="gray30", bg_color="gray25", button_color="gray35", button_hover_color="gray40")
             adv_menu.pack(side="left", padx=self.p)
             
@@ -944,7 +949,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         """Dedicated tracker for D&D Conditions"""
         frame = self.create_bordered_frame(self.main_frame)
         frame.pack(fill="x", pady=self.p)
-        self.create_section_header(frame, "Conditions Tracker")
+        self.create_section_header(frame, "Conditions tracker")
         
         main_content = ctk.CTkFrame(frame, fg_color="transparent")
         main_content.pack(fill="x", padx=self.p, pady=(0,self.p))
@@ -958,7 +963,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         for i, cond in enumerate(cond_list):
             r, c = i // 3, i % 3
             cb = ctk.CTkCheckBox(cond_frame, text=cond, variable=self.conditions_vars[cond],
-                                  font=("Roboto", 10), checkbox_width=16, checkbox_height=16,
+                                  font=("Roboto", 12), checkbox_width=16, checkbox_height=16,
                                   fg_color=self.color, border_color=self.color, hover_color=self.color,
                                   command=self.on_condition_change)
             cb.grid(row=r, column=c, padx=(self.p, 0), pady=(self.p if r == 0 else 0, self.p), sticky="w")
@@ -983,7 +988,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Base value entry
         val_entry = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=45, justify="center",
-                                  fg_color="gray25", border_width=0, corner_radius=4)
+                                  fg_color="gray30", border_width=0, corner_radius=4)
         val_entry.grid(row=0, column=1, padx=(0, self.p), pady=self.p, sticky="ew")
         val_entry.bind("<KeyRelease>", lambda e: self.update_aspect_total(aspect_name))
         val_entry.bind("<FocusOut>", self.autosave_roll_configs)
@@ -993,8 +998,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Offensive aspects don't have proficiency
         if aspect_name not in ["Concentration", "Meditation", "Precision", "Potency"]:
             prof_seg = ctk.CTkSegmentedButton(row_frame, values=["-", "½", "F", "E"], variable=prof_var,
-                                               font=("Roboto", 11), width=80, height=24,
-                                               fg_color="gray25", bg_color="gray30", selected_color=self.color,
+                                               font=("Roboto", 12), width=80, height=24,
+                                               fg_color="gray25", bg_color="transparent", selected_color=self.color,
                                            selected_hover_color="gray35",
                                                command=lambda v, a=aspect_name: self.on_aspect_prof_change(a, v))
             prof_seg.grid(row=0, column=2, padx=(0, self.p), pady=self.p, sticky="ew")
@@ -1004,13 +1009,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 row=0, column=2, padx=(0, self.p), pady=self.p, sticky="ew")
 
         # Total Label
-        total_lbl = ctk.CTkLabel(row_frame, text="+0", fg_color="gray30", font=("Roboto", 12, "bold"), width=45)
+        total_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=45,
+                                  fg_color="gray30", corner_radius=6)
         total_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p, sticky="ew")
         
         # Advantage: option menu with valid values
         adv_var = StringVar(value="0")
         adv_menu = ctk.CTkOptionMenu(row_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
-                                      font=("Roboto", 11), width=75, height=24,
+                                      font=("Roboto", 12), width=75, height=24,
                                       fg_color="gray30", bg_color="gray25", button_color="gray35", button_hover_color="gray40",
                                       dropdown_fg_color="gray25")
         adv_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p, sticky="ew")
@@ -1045,15 +1051,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hdr_frame.columnconfigure(3, weight=0, minsize=45)  # Total match
         hdr_frame.columnconfigure(4, weight=0, minsize=75)  # Adv match
 
-        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 11, "bold"), anchor="w").grid(
+        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), anchor="w").grid(
             row=0, column=0, padx=(self.p, 0), sticky="w")
-        ctk.CTkLabel(hdr_frame, text="Val", font=("Roboto", 11, "bold"), width=45).grid(
+        ctk.CTkLabel(hdr_frame, text="Val", font=("Roboto", 12), width=45).grid(
             row=0, column=1, padx=(0, self.p), sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 11, "bold"), width=82).grid(
+        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=82).grid(
             row=0, column=2, padx=(0, self.p), sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 11, "bold"), width=45).grid(
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=45).grid(
             row=0, column=3, padx=(0, self.p), sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 11, "bold"), width=75).grid(
+        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=75).grid(
             row=0, column=4, padx=(0, self.p), sticky="ew")
         
         aspects_by_category = [
@@ -1066,7 +1072,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         row = 1
         for category, aspects in aspects_by_category:
             # Revert to standard divider look
-            ctk.CTkLabel(content_frame, text=f"─ {category} ─", font=("Roboto", 9, "bold"), text_color="gray50").grid(
+            ctk.CTkLabel(content_frame, text=f"─ {category} ─", font=("Roboto", 12), text_color="gray50").grid(
                 row=row, column=0, padx=self.p, pady=(self.p, 0), sticky="ew")
             row += 1
             for aspect in aspects:
@@ -1103,15 +1109,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hdr_frame.columnconfigure(2, weight=0)
         hdr_frame.columnconfigure(3, weight=0)
         hdr_frame.columnconfigure(4, weight=0)
-        ctk.CTkLabel(hdr_frame, text="Field", font=("Roboto", 11, "bold"), anchor="w").grid(
+        ctk.CTkLabel(hdr_frame, text="Field", font=("Roboto", 12), anchor="w").grid(
             row=0, column=0, padx=self.p, sticky="w")
-        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 11, "bold"), width=70).grid(
+        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=70).grid(
             row=0, column=1, padx=self.p)
-        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 11, "bold"), anchor="w").grid(
+        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), anchor="w").grid(
             row=0, column=2, padx=self.p)
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 11, "bold"), width=30).grid(
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30).grid(
             row=0, column=3, padx=self.p)
-        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 11, "bold"), width=60).grid(
+        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=60).grid(
             row=0, column=4, padx=self.p)
         
         for i, (field, linked_aspect) in enumerate(self.KNOWLEDGE_ASPECTS.items()):
@@ -1129,24 +1135,26 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
             prof_var = StringVar(value="-")
             prof_seg = ctk.CTkSegmentedButton(row_frame, values=["-", "½", "F"], variable=prof_var,
-                                               font=("Roboto", 11), width=70, height=20,
-                                               fg_color="gray25", bg_color="gray30", selected_color=self.color,
+                                               font=("Roboto", 12), width=70, height=20,
+                                               fg_color="gray25", bg_color="transparent", selected_color=self.color,
                                                selected_hover_color="gray35",
                                                command=lambda _, f=field: self.update_knowledge_fields())
             prof_seg.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
             
-            ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", font=("Roboto", 11), text_color="gray50", width=105, anchor="w").grid(
+            ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", font=("Roboto", 12), text_color="gray90", 
+                         fg_color="gray30", corner_radius=6, width=105, anchor="w").grid(
                 row=0, column=2, padx=(0, self.p), pady=self.p, sticky="w")
             
             # Calculated Value Label
-            val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12, "bold"), width=30)
+            val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=30,
+                                   fg_color="gray30", corner_radius=6)
             val_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
             
             # Advantage
             adv_var = StringVar(value="0")
             adv_menu = ctk.CTkOptionMenu(row_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
-                                          font=("Roboto", 11), width=60, height=24,
-                                          fg_color="gray20", button_color="gray25", button_hover_color="gray30",
+                                          font=("Roboto", 12), width=60, height=24,
+                                          fg_color="gray30", button_color="gray35", button_hover_color="gray40",
                                           dropdown_fg_color="gray25")
             adv_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
             
@@ -1179,15 +1187,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hdr_frame.columnconfigure(3, weight=0)
         hdr_frame.columnconfigure(4, weight=0)
         hdr_frame.columnconfigure(5, weight=0)
-        ctk.CTkLabel(hdr_frame, text="Tool", font=("Roboto", 11, "bold")).grid(
+        ctk.CTkLabel(hdr_frame, text="Tool", font=("Roboto", 12)).grid(
             row=0, column=0, padx=(self.p, 0))
-        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 11, "bold"), width=70).grid(
+        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=70).grid(
             row=0, column=1, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 11, "bold")).grid(
+        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12)).grid(
             row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 11, "bold"), width=30).grid(
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30).grid(
             row=0, column=3, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 11, "bold"), width=60).grid(
+        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=60).grid(
             row=0, column=4, padx=(0, self.p))
         # Spacer for × button column
         ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=5, padx=(0, self.p))
@@ -1203,7 +1211,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self._tool_set_var = StringVar(value="Add Tool Set...")
         ctk.CTkOptionMenu(add_footer, variable=self._tool_set_var,
                           values=self.TOOL_SET_OPTIONS,
-                          font=("Roboto", 10), width=130, height=24,
+                          font=("Roboto", 12), width=130, height=24,
                           fg_color="gray25", button_color="gray30",
                           button_hover_color="gray35", dropdown_fg_color="gray20",
                           command=lambda v: self._add_tool_item(v, "Dexterity", self._tool_set_var, "Add Tool Set...")).pack(side="left", padx=(0, self.p))
@@ -1211,7 +1219,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self._instrument_var = StringVar(value="Add Instrument...")
         ctk.CTkOptionMenu(add_footer, variable=self._instrument_var,
                           values=self.INSTRUMENT_OPTIONS,
-                          font=("Roboto", 10), width=130, height=24,
+                          font=("Roboto", 12), width=130, height=24,
                           fg_color="gray25", button_color="gray30",
                           button_hover_color="gray35", dropdown_fg_color="gray20",
                           command=lambda v: self._add_tool_item(v, "Performance", self._instrument_var, "Add Instrument...")).pack(side="left", padx=(0, self.p))
@@ -1219,20 +1227,20 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self._gaming_var = StringVar(value="Add Gaming Set...")
         ctk.CTkOptionMenu(add_footer, variable=self._gaming_var,
                           values=self.GAMING_SET_OPTIONS,
-                          font=("Roboto", 10), width=130, height=24,
+                          font=("Roboto", 12), width=130, height=24,
                           fg_color="gray25", button_color="gray30",
                           button_hover_color="gray35", dropdown_fg_color="gray20",
                           command=lambda v: self._add_tool_item(v, "Awareness", self._gaming_var, "Add Gaming Set...")).pack(side="left", padx=(0, self.p))
         
         # Separator
-        ctk.CTkLabel(add_footer, text="|", font=("Roboto", 11), text_color="gray40").pack(side="left", padx=(0, self.p))
+        ctk.CTkLabel(add_footer, text="|", font=("Roboto", 12), text_color="gray50").pack(side="left", padx=(0, self.p))
         
         # Custom tool: name entry + aspect dropdown Add button
         aspect_names = ["Dexterity", "Performance", "Awareness", "Investigation",
                         "Convincing", "Simulation", "Meditation", "Trustworthiness",
                         "Acrobatics", "Athletics", "Constitution", "Concentration"]
         
-        self._custom_tool_name = ctk.CTkEntry(add_footer, font=("Roboto", 10), width=120, height=24,
+        self._custom_tool_name = ctk.CTkEntry(add_footer, font=("Roboto", 12), width=120, height=24,
                                                fg_color="gray25", border_width=0,
                                                placeholder_text="Custom name...")
         self._custom_tool_name.pack(side="left", padx=(0, self.p))
@@ -1240,11 +1248,11 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self._custom_aspect_var = StringVar(value="Dexterity")
         ctk.CTkOptionMenu(add_footer, variable=self._custom_aspect_var,
                           values=aspect_names,
-                          font=("Roboto", 10), width=110, height=24,
+                          font=("Roboto", 12), width=110, height=24,
                           fg_color="gray25", button_color="gray30",
                           button_hover_color="gray35", dropdown_fg_color="gray20").pack(side="left", padx=(0, self.p))
         
-        ctk.CTkButton(add_footer, text="Add", font=("Roboto", 10), width=40, height=24,
+        ctk.CTkButton(add_footer, text="Add", font=("Roboto", 12), width=40, height=24,
                       fg_color="gray25", hover_color="gray35",
                       border_width=2, border_color=self.color,
                       command=self._add_custom_tool).pack(side="left")
@@ -1271,31 +1279,32 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Proficiency: segmented button (-, ½, F)
         prof_var = StringVar(value="-")
         prof_seg = ctk.CTkSegmentedButton(row_frame, values=["-", "½", "F"], variable=prof_var,
-                                           font=("Roboto", 11), width=70, height=20,
-                                           fg_color="gray25", bg_color="gray30", selected_color=self.color,
+                                           font=("Roboto", 12), width=70, height=20,
+                                           fg_color="gray25", bg_color="transparent", selected_color=self.color,
                                            selected_hover_color="gray35",
                                            command=lambda _: self.update_tool_fields())
         prof_seg.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
         
-        ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", fg_color="gray25", font=("Roboto", 11),
-                     text_color="gray50", width=105, anchor="w").grid(
+        ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", fg_color="gray30", font=("Roboto", 12),
+                     text_color="gray90", corner_radius=6, width=105, anchor="w").grid(
             row=0, column=2, padx=self.p, pady=self.p, sticky="w")
         
-        val_lbl = ctk.CTkLabel(row_frame, text="-6", fg_color="gray30", font=("Roboto", 12, "bold"), width=30)
+        val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=30,
+                               fg_color="gray30", corner_radius=6)
         val_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
         
         adv_var = StringVar(value="0")
         adv_menu = ctk.CTkOptionMenu(row_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
-                                      font=("Roboto", 11), width=60, height=24,
-                                      fg_color="gray25", button_color="gray30",
-                                      button_hover_color="gray35", dropdown_hover_color=self.color,
+                                      font=("Roboto", 12), width=60, height=24,
+                                      fg_color="gray30", button_color="gray35",
+                                      button_hover_color="gray40", dropdown_hover_color=self.color,
                                       dropdown_fg_color="gray25")
         adv_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
         
         del_btn = ctk.CTkButton(row_frame, text="×", width=24, height=24, 
                                 fg_color="gray30", hover_color="gray35",
                                 border_width=2, border_color=self.color,
-                                font=("Roboto", 11),
+                                font=("Roboto", 12),
                                 command=lambda n=name, f=row_frame: self._remove_tool_item(n, f))
         del_btn.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
         
@@ -1350,10 +1359,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         footer.pack()
         
         ctk.CTkButton(footer, text="Save", fg_color="gray25", hover_color="gray35",
-                      border_color=self.color, border_width=2, font=("Roboto", 11), width=100,
+                      border_color=self.color, border_width=2, font=("Roboto", 12), width=100,
                       command=self.save_character).pack(side="left", padx=self.p)
         ctk.CTkButton(footer, text="Load", fg_color="gray25", hover_color="gray35",
-                      border_color=self.color, border_width=2, font=("Roboto", 11), width=100,
+                      border_color=self.color, border_width=2, font=("Roboto", 12), width=100,
                       command=self.load_character).pack(side="left", padx=(0, self.p))
 
     def get_prof_bonus(self):
@@ -1426,7 +1435,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         armor_frame.pack(fill="x", pady=(0, self.p))
         
         # Header Label
-        ctk.CTkLabel(armor_frame, text="Armor & AA", font=("Roboto", 11, "bold")).pack(anchor="w", padx=self.p, pady=(self.p, 0))
+        ctk.CTkLabel(armor_frame, text="Armor & AA", font=("Roboto", 12)).pack(anchor="w", padx=self.p, pady=(self.p, 0))
         
         # Centralized Controls Frame
         controls_frame = ctk.CTkFrame(armor_frame, fg_color="transparent")
@@ -1434,19 +1443,19 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Armor Type
         armor_types = ["None", "Padded", "Leather", "Studded leather", "Hide", "Chain shirt", "Scale mail", "Breastplate", "Half plate", "Ring mail", "Chain mail", "Splint", "Plate"]
-        ctk.CTkLabel(controls_frame, text="Type:", font=("Roboto", 11)).pack(side="left", padx=(0, self.p))
+        ctk.CTkLabel(controls_frame, text="Type:", font=("Roboto", 12)).pack(side="left", padx=(0, self.p))
         armor_menu = ctk.CTkOptionMenu(controls_frame, values=armor_types, variable=self.armor_settings["type"],
-                                        width=120, height=24, font=("Roboto", 11),
+                                        width=120, height=24, font=("Roboto", 12),
                                         fg_color="gray30", button_color="gray35",
                                         button_hover_color=self.color, dropdown_hover_color=self.color,
                                         command=lambda _: self.update_aa())
         armor_menu.pack(side="left", padx=(0, self.p))
         
         # Aspect Selection
-        ctk.CTkLabel(controls_frame, text="Aspect:", font=("Roboto", 11)).pack(side="left", padx=(0, self.p))
+        ctk.CTkLabel(controls_frame, text="Aspect:", font=("Roboto", 12)).pack(side="left", padx=(0, self.p))
         # Ensure Mobility is in the list and spelled correctly
         aspect_menu = ctk.CTkOptionMenu(controls_frame, values=["Resilience", "Mobility", "Dexterity", "Acrobatics"], variable=self.armor_settings["aspect"],
-                                         width=100, height=24, font=("Roboto", 11),
+                                         width=100, height=24, font=("Roboto", 12),
                                          fg_color="gray30", button_color="gray35",
                                          button_hover_color=self.color, dropdown_hover_color=self.color,
                                          command=lambda _: self.update_aa())
@@ -1460,38 +1469,38 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self.armor_settings["shield_prof"] = BooleanVar(value=True)
             
         shield_cb = ctk.CTkCheckBox(controls_frame, text="Shield", variable=self.armor_settings["shield"],
-                                     font=("Roboto", 11), checkbox_width=20, checkbox_height=20, width=0,
+                                     font=("Roboto", 12), checkbox_width=20, checkbox_height=20, width=0,
                                      hover_color=self.color, fg_color=self.color, border_color=self.color,
                                      command=self.update_aa)
         shield_cb.pack(side="left", padx=(0, self.p))
 
         prof_cb = ctk.CTkCheckBox(controls_frame, text="Armor prof", variable=self.armor_settings["prof"],
-                                   font=("Roboto", 11), checkbox_width=20, checkbox_height=20, width=0,
+                                   font=("Roboto", 12), checkbox_width=20, checkbox_height=20, width=0,
                                    hover_color=self.color, fg_color=self.color, border_color=self.color,
                                    command=self.update_aa)
         prof_cb.pack(side="left", padx=(0, self.p))
         
         sp_cb = ctk.CTkCheckBox(controls_frame, text="Shield prof", variable=self.armor_settings["shield_prof"],
-                                   font=("Roboto", 11), checkbox_width=20, checkbox_height=20, width=0,
+                                   font=("Roboto", 12), checkbox_width=20, checkbox_height=20, width=0,
                                    hover_color=self.color, fg_color=self.color, border_color=self.color,
                                    command=self.update_aa)
         sp_cb.pack(side="left", padx=(0, self.p))
         
         # AA Extra Modifiers
-        ctk.CTkLabel(controls_frame, text="+", font=("Roboto", 11), text_color="gray60").pack(side="left", padx=(0, self.p))
-        self.aa_extra_const = ctk.CTkEntry(controls_frame, font=("Roboto", 11), width=35, height=22, placeholder_text="",
+        ctk.CTkLabel(controls_frame, text="+", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, self.p))
+        self.aa_extra_const = ctk.CTkEntry(controls_frame, font=("Roboto", 12), width=35, height=22, placeholder_text="",
                                            justify="center", fg_color="gray30", border_width=0)
         self.aa_extra_const.pack(side="left", padx=(0, self.p))
         self.aa_extra_const.bind("<FocusOut>", self.autosave_roll_configs)
         self.aa_extra_const.insert(0, "") # Default empty
         
         # AA Extra Adv (Dropdown)
-        ctk.CTkLabel(controls_frame, text="Adv", font=("Roboto", 11), text_color="gray60").pack(side="left", padx=(0, self.p))
+        ctk.CTkLabel(controls_frame, text="Adv", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, self.p))
         
         adv_values = ["-3", "-2", "-1", "", "1", "2", "3"]
         self.aa_extra_adv_var = StringVar(value="")
         self.aa_extra_adv = ctk.CTkOptionMenu(controls_frame, values=adv_values, variable=self.aa_extra_adv_var,
-                                              width=50, height=22, font=("Roboto", 11),
+                                              width=50, height=22, font=("Roboto", 12),
                                               fg_color="gray30", button_color="gray35",
                                               button_hover_color=self.color, dropdown_hover_color=self.color,
                                               command=lambda _: self.update_aa()) # Trigger update on change
@@ -1503,14 +1512,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hdr_frame.pack(fill="x", padx=self.p)
         hdr_frame.columnconfigure(0, weight=1) # Name
         
-        ctk.CTkLabel(hdr_frame, text="Name", font=("Roboto", 11, "bold"), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 11, "bold"), width=100).grid(row=0, column=1, padx=self.p)
-        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 11, "bold"), width=40).grid(row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Type", font=("Roboto", 11, "bold"), width=60).grid(row=0, column=3, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="+", font=("Roboto", 11, "bold"), width=35).grid(row=0, column=4, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 11, "bold"), width=50).grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 11, "bold"), width=40).grid(row=0, column=6, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Desc", font=("Roboto", 11, "bold"), width=30).grid(row=0, column=7, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), width=100).grid(row=0, column=1, padx=self.p)
+        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=40).grid(row=0, column=2, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Type", font=("Roboto", 12), width=60).grid(row=0, column=3, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="+", font=("Roboto", 12), width=35).grid(row=0, column=4, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=50).grid(row=0, column=5, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=40).grid(row=0, column=6, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Desc", font=("Roboto", 12), width=30).grid(row=0, column=7, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=8, padx=(0, self.p))
 
         # Items List
@@ -1518,7 +1527,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.items_container.pack(fill="x")
         self.items_container.columnconfigure(0, weight=1)
         
-        add_btn = ctk.CTkButton(content_frame, text="Add Weapon/Spell/Feature", font=("Roboto", 11),
+        add_btn = ctk.CTkButton(content_frame, text="Add Weapon/Spell/Feature", font=("Roboto", 12),
                                  fg_color="gray25", hover_color="gray35",
                                  border_width=2, border_color=self.color,
                                  command=self._add_weapon_row)
@@ -1537,7 +1546,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         row_frame.columnconfigure(0, weight=1) # Name
         
         # Name Entry
-        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), height=22, placeholder_text="Name",
+        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, placeholder_text="Name",
                                 fg_color="gray30", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
         name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
@@ -1547,7 +1556,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         aspects = sorted(list(self.aspect_widgets.keys()))
         asp_var = StringVar(value=linked_aspect)
         asp_menu = ctk.CTkOptionMenu(row_frame, values=aspects, variable=asp_var,
-                                      width=100, height=22, font=("Roboto", 10),
+                                      width=100, height=22, font=("Roboto", 12),
                                       fg_color="gray30", button_color="gray35",
                                       button_hover_color=self.color, dropdown_hover_color=self.color,
                                       command=lambda _: self.update_weapon_bonuses())
@@ -1555,7 +1564,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # prof toggle
         p_var = BooleanVar(value=prof)
-        p_cb = ctk.CTkCheckBox(row_frame, text="", variable=p_var, font=("Roboto", 10),
+        p_cb = ctk.CTkCheckBox(row_frame, text="", variable=p_var, font=("Roboto", 12),
                                 checkbox_width=16, checkbox_height=16, width=16,
                                 fg_color=self.color, hover_color="gray35",
                                 command=self.update_weapon_bonuses)
@@ -1564,15 +1573,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Type Menu (Atk / AS)
         type_var = StringVar(value=roll_type)
         type_menu = ctk.CTkOptionMenu(row_frame, values=["Atk", "AS"], variable=type_var,
-                                       width=60, height=22, font=("Roboto", 10),
+                                       width=60, height=22, font=("Roboto", 12),
                                        fg_color="gray30", button_color="gray35",
                                        button_hover_color=self.color, dropdown_hover_color=self.color,
                                        command=lambda _: self.update_weapon_bonuses())
         type_menu.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
 
         # Extra Const
-        extra_const_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=35, height=22, placeholder_text="+",
-                                       justify="center", fg_color="gray30", border_width=0)
+        extra_const_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=35, height=22, placeholder_text="+",
+                                       justify="center", fg_color="gray30", border_width=0, corner_radius=6)
         extra_const_ent.insert(0, extra_const)
         extra_const_ent.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
         extra_const_ent.bind("<KeyRelease>", self.update_weapon_bonuses)
@@ -1585,7 +1594,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Logic in standard Adv lists is usually "" for 0.
         
         extra_adv_menu = ctk.CTkOptionMenu(row_frame, values=adv_values, variable=extra_adv_var,
-                                           width=50, height=22, font=("Roboto", 11),
+                                           width=50, height=22, font=("Roboto", 12),
                                            fg_color="gray30", button_color="gray35",
                                            button_hover_color=self.color, dropdown_hover_color=self.color,
                                            command=lambda _: self.update_weapon_bonuses())
@@ -1593,7 +1602,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Note: we store the Var in the widget list to get() it later
         
         # Total Label
-        bonus_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 10, "bold"), width=40)
+        bonus_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=40,
+                                 fg_color="gray30", corner_radius=6)
         bonus_lbl.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
         
         # Description button
@@ -1662,12 +1672,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # ── Caster Level Dropdown ──
         cl_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         cl_frame.pack(fill="x", pady=(self.p, 0))
-        ctk.CTkLabel(cl_frame, text="Caster Level:", font=("Roboto", 11, "bold"), text_color="gray70").pack(side="left", padx=(0, self.p))
+        ctk.CTkLabel(cl_frame, text="Caster Level:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, self.p))
         self.caster_level_var = StringVar(value="1")
         self.caster_level_dropdown = ctk.CTkOptionMenu(
             cl_frame, variable=self.caster_level_var,
             values=[str(i) for i in range(1, 21)],
-            width=60, height=22, font=("Roboto", 11),
+            width=60, height=22, font=("Roboto", 12),
             fg_color="gray25", button_color="gray30",
             button_hover_color=self.color, dropdown_hover_color=self.color,
             command=self._update_shards_calculations
@@ -1675,12 +1685,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.caster_level_dropdown.pack(side="left", padx=(0, self.p))
 
         # Warlock Level Dropdown
-        ctk.CTkLabel(cl_frame, text="Warlock Level:", font=("Roboto", 11, "bold"), text_color="gray70").pack(side="left", padx=(0, self.p))
+        ctk.CTkLabel(cl_frame, text="Warlock Level:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, self.p))
         self.warlock_level_var = StringVar(value="0")
         self.warlock_level_dropdown = ctk.CTkOptionMenu(
             cl_frame, variable=self.warlock_level_var,
             values=[str(i) for i in range(0, 21)],
-            width=60, height=22, font=("Roboto", 11),
+            width=60, height=22, font=("Roboto", 12),
             fg_color="gray25", button_color="gray30",
             button_hover_color=self.color, dropdown_hover_color=self.color,
             command=self._update_shards_calculations
@@ -1692,7 +1702,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.shards_container.pack(fill="x", pady=(self.p, 0))
         self.shards_container.columnconfigure(0, weight=1)
         
-        add_btn = ctk.CTkButton(content_frame, text="Add Spellcasting Source", font=("Roboto", 11),
+        add_btn = ctk.CTkButton(content_frame, text="Add Spellcasting Source", font=("Roboto", 12),
                                  fg_color="gray25", hover_color="gray30",
                                  border_width=2, border_color=self.color,
                                  command=self._add_shard_row)
@@ -1700,7 +1710,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # ── Normal Arcane Resonance Grid ──
         res_header = ctk.CTkLabel(content_frame, text="Arcane resonance (normal)",
-                                   font=("Roboto", 12, "bold"), text_color="white")
+                                   font=("Roboto", 12), text_color="gray90")
         res_header.pack(anchor="w")
         
         self.normal_res_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
@@ -1716,7 +1726,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Pack this only when needed
         
         pact_header = ctk.CTkLabel(self.pact_res_container, text="Arcane Resonance (Pact)",
-                                   font=("Roboto", 12, "bold"), text_color="white") # Changed to white
+                                   font=("Roboto", 12), text_color="gray90") # Changed to white
         pact_header.pack(anchor="w", pady=(self.p, 0))
         
         self.pact_res_frame = ctk.CTkFrame(self.pact_res_container, fg_color="transparent")
@@ -1731,27 +1741,27 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         btn_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         btn_frame.pack(fill="x")
         
-        ctk.CTkButton(btn_frame, text="Long rest", font=("Roboto", 11, "bold"),
+        ctk.CTkButton(btn_frame, text="Long rest", font=("Roboto", 12),
                        fg_color="gray25", hover_color="gray30", 
                        border_color=self.color, border_width=2,
                        width=90, height=28,
                        command=self._long_rest).pack(side="left", padx=(0, self.p))
         
-        ctk.CTkButton(btn_frame, text="Short rest", font=("Roboto", 11, "bold"),
+        ctk.CTkButton(btn_frame, text="Short rest", font=("Roboto", 12),
                        fg_color="gray25", hover_color="gray30", 
                        border_color=self.color, border_width=2,
                        width=90, height=28,
                        command=self._short_rest).pack(side="left", padx=(0, self.p))
         
         # Arcane Recovery
-        ctk.CTkButton(btn_frame, text="Arcane recovery", font=("Roboto", 11, "bold"),
+        ctk.CTkButton(btn_frame, text="Arcane recovery", font=("Roboto", 12),
                        fg_color="gray25", hover_color="gray30", 
                        border_color=self.color, border_width=2,
                        width=120, height=28,
                        command=self._shard_arcane_recovery).pack(side="left", padx=(0, self.p))
         
-        ctk.CTkLabel(btn_frame, text="Amt:", font=("Roboto", 10), text_color="gray60").pack(side="left", padx=(0, self.p))
-        self.arcane_recovery_entry = ctk.CTkEntry(btn_frame, font=("Roboto", 11), width=35, height=22,
+        ctk.CTkLabel(btn_frame, text="Amt:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, self.p))
+        self.arcane_recovery_entry = ctk.CTkEntry(btn_frame, font=("Roboto", 12), width=35, height=22,
                                                    justify="center", fg_color="gray25", border_width=0)
         self.arcane_recovery_entry.pack(side="left", padx=(0, self.p))
         self.arcane_recovery_entry.insert(0, "0")
@@ -1762,9 +1772,9 @@ class CharacterSheetWindow(ctk.CTkToplevel):
 
         self.arcane_recovery_used_var = BooleanVar(value=False)
         self.arcane_recovery_used_cb = ctk.CTkCheckBox(btn_frame, text="Used (1/LR)", variable=self.arcane_recovery_used_var,
-                                                        font=("Roboto", 10), checkbox_width=18, checkbox_height=18,
+                                                        font=("Roboto", 12), checkbox_width=18, checkbox_height=18,
                                                         fg_color=self.color, hover_color=self.color,
-                                                        border_color=self.color, text_color="gray60",
+                                                        border_color=self.color, text_color="gray90",
                                                         command=toggle_ar)
         if self.arcane_recovery_used_var.get():
             self.arcane_recovery_used_cb.configure(state="disabled", text_color="gray50")
@@ -1810,7 +1820,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         popup.attributes("-topmost", True)
         popup.grab_set()
 
-        ctk.CTkLabel(popup, text="Spend Hit Dice", font=("Roboto", 14, "bold")).pack(pady=self.p)
+        ctk.CTkLabel(popup, text="Spend hit dice", font=("Roboto", 14, "bold")).pack(pady=self.p)
         
         try:
             vit_mod = int(self.combat_entries["Vit"].get() or 0)
@@ -1952,7 +1962,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 ("Dawn", self._dawn_reset), ("Dusk", self._dusk_reset)]
         for i, (txt, cmd) in enumerate(btns):
             c = "gray25"
-            ctk.CTkButton(content, text=txt, font=("Roboto", 11, "bold"),
+            ctk.CTkButton(content, text=txt, font=("Roboto", 12),
                           fg_color=c, hover_color="gray35", 
                           border_width=2, border_color=self.color,
                           width=90, height=28, command=cmd).grid(row=0, column=i, padx=(0, self.p), pady=(self.p, 0), sticky="ew")
@@ -1961,7 +1971,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hd_frame = ctk.CTkFrame(frame, fg_color="gray25", corner_radius=6)
         hd_frame.pack(fill="x", padx=self.p, pady=(0, self.p))
         
-        lbl = ctk.CTkLabel(hd_frame, text="Hit Dice (Current / Max)", font=("Roboto", 11, "bold"))
+        lbl = ctk.CTkLabel(hd_frame, text="Hit Dice (Current / Max)", font=("Roboto", 12))
         lbl.pack()
         
         hd_boxes = ctk.CTkFrame(hd_frame, fg_color="transparent")
@@ -1971,14 +1981,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         for i, die in enumerate(["d6", "d8", "d10", "d12"]):
             sub = ctk.CTkFrame(hd_boxes, fg_color="transparent")
             sub.grid(row=0, column=i, padx=self.p)
-            ctk.CTkLabel(sub, text=f"{die}: ", font=("Roboto", 11, "bold")).pack(side="left")
+            ctk.CTkLabel(sub, text=f"{die}: ", font=("Roboto", 12)).pack(side="left")
             
-            cur_entry = ctk.CTkEntry(sub, textvariable=self.hit_dice_vars[die][0], width=30, height=22, font=("Roboto", 11), justify="center", fg_color="gray30", border_width=0)
+            cur_entry = ctk.CTkEntry(sub, textvariable=self.hit_dice_vars[die][0], width=30, height=22, font=("Roboto", 12), justify="center", fg_color="gray30", border_width=0)
             cur_entry.pack(side="left", padx=self.p)
             
-            ctk.CTkLabel(sub, text="/", font=("Roboto", 10)).pack(side="left")
+            ctk.CTkLabel(sub, text="/", font=("Roboto", 12)).pack(side="left")
             
-            max_entry = ctk.CTkEntry(sub, textvariable=self.hit_dice_vars[die][1], width=30, height=22, font=("Roboto", 11), justify="center", fg_color="gray30", border_width=0)
+            max_entry = ctk.CTkEntry(sub, textvariable=self.hit_dice_vars[die][1], width=30, height=22, font=("Roboto", 12), justify="center", fg_color="gray30", border_width=0)
             max_entry.pack(side="left", padx=self.p)
 
     def create_features_section(self):
@@ -1993,14 +2003,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Don't pack immediately
         self.features_header_frame.columnconfigure(0, weight=1) # Name
         
-        ctk.CTkLabel(self.features_header_frame, text="Feature name", font=("Roboto", 11, "bold"), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
-        ctk.CTkLabel(self.features_header_frame, text="Uses", font=("Roboto", 11, "bold"), width=80).grid(row=0, column=1, padx=(self.p, 0))
-        ctk.CTkLabel(self.features_header_frame, text="/", font=("Roboto", 11, "bold"), width=10).grid(row=0, column=2)
-        ctk.CTkLabel(self.features_header_frame, text="Max", font=("Roboto", 11, "bold"), width=30).grid(row=0, column=3, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Reset", font=("Roboto", 11, "bold"), width=60).grid(row=0, column=4, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Use", font=("Roboto", 11, "bold"), width=28).grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Rst", font=("Roboto", 11, "bold"), width=28).grid(row=0, column=6, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Desc", font=("Roboto", 11, "bold"), width=30).grid(row=0, column=7, padx=(0, self.p))
+        ctk.CTkLabel(self.features_header_frame, text="Feature name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(self.features_header_frame, text="Uses", font=("Roboto", 12), width=80).grid(row=0, column=1, padx=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="/", font=("Roboto", 12), width=10).grid(row=0, column=2)
+        ctk.CTkLabel(self.features_header_frame, text="Max", font=("Roboto", 12), width=30).grid(row=0, column=3, padx=(0, self.p))
+        ctk.CTkLabel(self.features_header_frame, text="Reset", font=("Roboto", 12), width=60).grid(row=0, column=4, padx=(0, self.p))
+        ctk.CTkLabel(self.features_header_frame, text="Use", font=("Roboto", 12), width=28).grid(row=0, column=5, padx=(0, self.p))
+        ctk.CTkLabel(self.features_header_frame, text="Rst", font=("Roboto", 12), width=28).grid(row=0, column=6, padx=(0, self.p))
+        ctk.CTkLabel(self.features_header_frame, text="Desc", font=("Roboto", 12), width=30).grid(row=0, column=7, padx=(0, self.p))
         ctk.CTkLabel(self.features_header_frame, text="", width=28).grid(row=0, column=8, padx=(0, self.p))
         
         # Features Container
@@ -2008,7 +2018,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.features_container.pack(fill="x", padx=self.p, pady=(0, self.p))
         self.features_container.columnconfigure(0, weight=1)
         
-        add_btn = ctk.CTkButton(frame, text="Add Feature", font=("Roboto", 11),
+        add_btn = ctk.CTkButton(frame, text="Add Feature", font=("Roboto", 12),
                                  fg_color="gray25", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  command=self._add_feature_row)
@@ -2030,7 +2040,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         row_frame.columnconfigure(0, weight=1)
         
         # Name
-        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), height=22, placeholder_text="Name",
+        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, placeholder_text="Name",
                                 fg_color="gray30", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
         name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
@@ -2043,10 +2053,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                              color=self.color, from_=0, to_=999)
         cur_ent.grid(row=0, column=1, padx=(self.p, 0), pady=self.p)
         
-        ctk.CTkLabel(row_frame, text="/", font=("Roboto", 11), width=10).grid(row=0, column=2)
+        ctk.CTkLabel(row_frame, text="/", font=("Roboto", 12), width=10).grid(row=0, column=2)
         
         # Max Uses
-        max_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=30, height=22, justify="center",
+        max_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, height=22, justify="center",
                                fg_color="gray30", border_width=0)
         max_ent.insert(0, max_uses)
         max_ent.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
@@ -2055,7 +2065,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Reset Type
         reset_var = StringVar(value=reset)
         reset_menu = ctk.CTkOptionMenu(row_frame, values=["-", "SR", "LR", "Dawn", "Dusk"], variable=reset_var,
-                                       width=60, height=22, font=("Roboto", 10),
+                                       width=60, height=22, font=("Roboto", 12),
                                        fg_color="gray30", button_color="gray35",
                                        button_hover_color=self.color, dropdown_hover_color=self.color)
         reset_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
@@ -2161,7 +2171,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self.autosave_roll_configs()
             top.destroy()
             
-        btn = ctk.CTkButton(top, text="Save Description", font=("Roboto", 12, "bold"),
+        btn = ctk.CTkButton(top, text="Save Description", font=("Roboto", 12),
                             fg_color=self.color, hover_color="gray30",
                             border_width=2, border_color=self.color,
                             command=save_desc)
@@ -2184,9 +2194,9 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         labels = [("K", 0), ("P", 1), ("A", 2), ("R", 3)]
         for txt, col in labels:
-            ctk.CTkLabel(hdr, text=txt, font=("Roboto", 10, "bold"), width=20, text_color="gray60").grid(row=0, column=col, pady=(self.p, 0), padx=(self.p, 0))
+            ctk.CTkLabel(hdr, text=txt, font=("Roboto", 12), width=20, text_color="gray90").grid(row=0, column=col, pady=(self.p, 0), padx=(self.p, 0))
         
-        ctk.CTkLabel(hdr, text="Name", font=("Roboto", 10, "bold"), anchor="w").grid(row=0, column=4, pady=(self.p, 0), padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(hdr, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=4, pady=(self.p, 0), padx=(self.p, 0), sticky="ew")
         
         # Container for Spell Levels (height=0 to collapse when empty)
         self.spells_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
@@ -2202,7 +2212,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         footer.columnconfigure(1, weight=0) # Button (natural width)
         footer.columnconfigure(2, weight=1, uniform="b") # QP (same width as col 0, content sticky e)
         
-        add_btn = ctk.CTkButton(footer, text="Add Spell", font=("Roboto", 11),
+        add_btn = ctk.CTkButton(footer, text="Add Spell", font=("Roboto", 12),
                                  fg_color="gray25", hover_color="gray30",
                                  border_color=self.color, border_width=2,
                                  command=lambda: self._add_spell_row()) 
@@ -2214,7 +2224,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self.autosave_roll_configs()
 
         self.qp_chk = ctk.CTkCheckBox(footer, text="Quick Prep (1/LR)", variable=self.quick_prep_used,
-                                       font=("Roboto", 10), fg_color=self.color,
+                                       font=("Roboto", 12), fg_color=self.color,
                                        checkbox_width=18, checkbox_height=18, hover_color=self.color,
                                        border_color=self.color, command=toggle_qp)
         if self.quick_prep_used.get():
@@ -2260,8 +2270,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
             # Level Header
             lbl_text = "Cantrips (0)" if lvl == 0 else f"Level {lvl}"
-            ctk.CTkLabel(self.spells_container, text=lbl_text, font=("Roboto", 12, "bold"), 
-                         text_color="gray70", anchor="w").pack(fill="x")
+            ctk.CTkLabel(self.spells_container, text=lbl_text, font=("Roboto", 12), 
+                         text_color="gray90", anchor="w").pack(fill="x")
             
             # Spells
             for spell in spells:
@@ -2280,14 +2290,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.pets_header_frame.columnconfigure(0, weight=1)
         
         # Match the widths and padding from _add_pet_row
-        ctk.CTkLabel(self.pets_header_frame, text="Pet name", font=("Roboto", 11, "bold"), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
-        ctk.CTkLabel(self.pets_header_frame, text="Type", font=("Roboto", 11, "bold"), width=60, anchor="w").grid(row=0, column=1, padx=self.p)
-        ctk.CTkLabel(self.pets_header_frame, text="PCN", font=("Roboto", 11, "bold"), width=40, anchor="center").grid(row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="/", font=("Roboto", 11, "bold"), width=10, anchor="center").grid(row=0, column=3)
-        ctk.CTkLabel(self.pets_header_frame, text="Max", font=("Roboto", 11, "bold"), width=40, anchor="center").grid(row=0, column=4, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="AA", font=("Roboto", 11, "bold"), width=30, anchor="center").grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="Spd", font=("Roboto", 11, "bold"), width=30, anchor="center").grid(row=0, column=6, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="Desc", font=("Roboto", 11, "bold"), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="Pet name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(self.pets_header_frame, text="Type", font=("Roboto", 12), width=60, anchor="w").grid(row=0, column=1, padx=self.p)
+        ctk.CTkLabel(self.pets_header_frame, text="PCN", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=2, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="/", font=("Roboto", 12), width=10, anchor="center").grid(row=0, column=3)
+        ctk.CTkLabel(self.pets_header_frame, text="Max", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=4, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="AA", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=5, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="Spd", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=6, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
         ctk.CTkLabel(self.pets_header_frame, text="", width=28).grid(row=0, column=8, padx=(0, self.p))
         
         # Pets Container
@@ -2299,13 +2309,13 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
         btn_frame.pack(pady=(0, self.p))
         
-        add_btn = ctk.CTkButton(btn_frame, text="Add companion", font=("Roboto", 11),
+        add_btn = ctk.CTkButton(btn_frame, text="Add companion", font=("Roboto", 12),
                                  fg_color="gray25", hover_color="gray30",
                                  border_color=self.color, border_width=2,
                                  command=self._add_pet_row)
         add_btn.pack(side="left", padx=(0, self.p))
         
-        import_btn = ctk.CTkButton(btn_frame, text="Import monster", font=("Roboto", 11),
+        import_btn = ctk.CTkButton(btn_frame, text="Import monster", font=("Roboto", 12),
                                     fg_color="gray25", hover_color="gray30",
                                     border_color=self.color, border_width=2,
                                     command=self._import_monster_stat_block_popup)
@@ -2321,24 +2331,24 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         row_frame.pack(fill="x", pady=(self.p, 0))
         row_frame.columnconfigure(0, weight=1)
         
-        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), height=22, fg_color="gray30", border_width=1, border_color=self.color)
+        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, fg_color="gray30", border_width=1, border_color=self.color)
         name_ent.insert(0, name); name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
         
-        type_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=60, height=22, fg_color="gray30", border_width=0)
+        type_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=60, height=22, fg_color="gray30", border_width=0)
         type_ent.insert(0, type_); type_ent.grid(row=0, column=1, padx=self.p, pady=self.p)
         
-        pcn_cur = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=40, height=22, justify="center", fg_color="gray30", border_width=0)
+        pcn_cur = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=40, height=22, justify="center", fg_color="gray30", border_width=0)
         pcn_cur.insert(0, cur_pcn); pcn_cur.grid(row=0, column=2, padx=(0, self.p), pady=self.p)
         
         ctk.CTkLabel(row_frame, text="/", width=10).grid(row=0, column=3)
         
-        pcn_max = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=40, height=22, justify="center", fg_color="gray30", border_width=0)
+        pcn_max = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=40, height=22, justify="center", fg_color="gray30", border_width=0)
         pcn_max.insert(0, max_pcn); pcn_max.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
         
-        aa_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=30, height=22, justify="center", fg_color="gray30", border_width=0)
+        aa_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, height=22, justify="center", fg_color="gray30", border_width=0)
         aa_ent.insert(0, aa); aa_ent.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
         
-        spd_ent = ctk.CTkEntry(row_frame, font=("Roboto", 11), width=30, height=22, justify="center", fg_color="gray30", border_width=0)
+        spd_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, height=22, justify="center", fg_color="gray30", border_width=0)
         spd_ent.insert(0, spd); spd_ent.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
         
         # Bind all entries for autosave
@@ -2367,9 +2377,9 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         top.attributes("-topmost", True)
         
         ctk.CTkLabel(top, text="Paste D&D 5e Stat Block (e.g. from Wikidot/Roll20/PDF):",
-                     font=("Roboto", 12, "bold")).pack(pady=self.p)
+                     font=("Roboto", 12)).pack(pady=self.p)
         
-        txt = ctk.CTkTextbox(top, font=("Roboto", 11))
+        txt = ctk.CTkTextbox(top, font=("Roboto", 12))
         txt.pack(fill="both", expand=True, padx=self.p, pady=10)
         
         def do_import():
@@ -2489,7 +2499,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             cb = ctk.CTkCheckBox(row, text="", variable=var, command=toggle,
                                  checkbox_width=16, checkbox_height=16, width=20,
                                  fg_color=self.color, hover_color=self.color, border_color=self.color)
-            cb.grid(row=0, column=col, padx=(self.p, 0))
+            cb.grid(row=0, column=col, padx=(self.p, 0), pady=self.p)
             return var
             
         lvl = int(spell.get("level", 0))
@@ -2510,7 +2520,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Name Entry
         name_ent = ctk.CTkEntry(row, font=("Roboto", 12), height=24, border_width=1, fg_color="gray30", border_color="gray35")
         name_ent.insert(0, spell.get("name", ""))
-        name_ent.grid(row=0, column=4, sticky="ew", padx=self.p)
+        name_ent.grid(row=0, column=4, sticky="ew", padx=self.p, pady=self.p)
         def _update_name(e=None):
             spell["name"] = name_ent.get()
             self.autosave_roll_configs()
@@ -2524,20 +2534,20 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         name_ent.bind("<Return>", _update_name)
         
         # Source Label (Mini)
-        src_lbl = ctk.CTkLabel(row, text=spell.get("source", "")[:3], font=("Roboto", 10), text_color="gray60", width=30)
-        src_lbl.grid(row=0, column=5)
+        src_lbl = ctk.CTkLabel(row, text=spell.get("source", "")[:3], font=("Roboto", 12), text_color="gray90", width=30)
+        src_lbl.grid(row=0, column=5, pady=self.p)
         
         # Details Button
         edit_btn = ctk.CTkButton(row, text="⚙", width=24, height=24, fg_color="gray30", hover_color="gray35",
                                   border_color=self.color, border_width=2,
-                                  font=("Arial", 12), command=lambda s=spell: self._open_spell_details(s))
-        edit_btn.grid(row=0, column=6, padx=self.p)
+                                  font=("Roboto", 12), command=lambda s=spell: self._open_spell_details(s))
+        edit_btn.grid(row=0, column=6, padx=self.p, pady=self.p)
         
         # Delete Button
         del_btn = ctk.CTkButton(row, text="×", width=24, height=24, fg_color="gray30", hover_color="gray35",
                                  border_color=self.color, border_width=2,
-                                 text_color="gray60", command=lambda s=spell: self._delete_spell(s))
-        del_btn.grid(row=0, column=7, padx=(0, self.p))
+                                 text_color="gray90", command=lambda s=spell: self._delete_spell(s))
+        del_btn.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
         
         spell_id = spell.get("id", str(uuid.uuid4()))
         if "id" not in spell: spell["id"] = spell_id
@@ -2558,8 +2568,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Helpers
         def add_field(parent, label, key, row):
-            ctk.CTkLabel(parent, text=label, font=("Roboto", 11, "bold")).grid(row=row, column=0, padx=5, pady=2, sticky="e")
-            ent = ctk.CTkEntry(parent, font=("Roboto", 11))
+            ctk.CTkLabel(parent, text=label, font=("Roboto", 12)).grid(row=row, column=0, padx=5, pady=2, sticky="e")
+            ent = ctk.CTkEntry(parent, font=("Roboto", 12))
             ent.insert(0, str(spell.get(key, "")))
             ent.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
             return ent
@@ -2577,8 +2587,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         dur_ent = add_field(f, "Duration:", "dur", 5)
         
         # Description
-        ctk.CTkLabel(top, text="Description:", font=("Roboto", 11, "bold")).pack(anchor="w", padx=15)
-        desc_txt = ctk.CTkTextbox(top, font=("Roboto", 11), height=150)
+        ctk.CTkLabel(top, text="Description:", font=("Roboto", 12)).pack(anchor="w", padx=15)
+        desc_txt = ctk.CTkTextbox(top, font=("Roboto", 12), height=150)
         desc_txt.pack(fill="both", expand=True, padx=10, pady=5)
         desc_txt.insert("0.0", spell.get("desc", ""))
         
@@ -2682,20 +2692,20 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         for c in range(10):
             res_grid.columnconfigure(c, weight=1 if c > 0 else 0)
             
-        color = "white" # Fixed to white as requested
+        color = "gray90" # Standardized to gray90
             
         # Header (Outputs)
-        ctk.CTkLabel(res_grid, text="Output", font=("Roboto", 9, "bold"),
+        ctk.CTkLabel(res_grid, text="Output", font=("Roboto", 12),
                      text_color="gray50", width=55).grid(row=0, column=0, padx=2, pady=2)
         for i in range(1, 10):
-            ctk.CTkLabel(res_grid, text=str(i), font=("Roboto", 10, "bold"),
+            ctk.CTkLabel(res_grid, text=str(i), font=("Roboto", 12),
                          text_color=color).grid(row=0, column=i, padx=1, pady=2)
         
         # Saturation
-        ctk.CTkLabel(res_grid, text="Satur.", font=("Roboto", 9),
+        ctk.CTkLabel(res_grid, text="Satur.", font=("Roboto", 12),
                      text_color="gray50", width=55).grid(row=1, column=0, padx=2, pady=1)
         for i in range(9):
-            ent = ctk.CTkEntry(res_grid, font=("Roboto", 10), width=30, height=20, justify="center",
+            ent = ctk.CTkEntry(res_grid, font=("Roboto", 12), width=30, height=20, justify="center",
                                fg_color="gray25", border_width=0)
             ent.grid(row=1, column=i+1, padx=1, pady=1)
             ent.insert(0, "–")
@@ -2703,10 +2713,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             sat_list.append(ent)
             
         # Count
-        ctk.CTkLabel(res_grid, text="Count", font=("Roboto", 9),
+        ctk.CTkLabel(res_grid, text="Count", font=("Roboto", 12),
                      text_color="gray50", width=55).grid(row=2, column=0, padx=2, pady=1)
         for i in range(9):
-            ent = ctk.CTkEntry(res_grid, font=("Roboto", 10), width=30, height=20, justify="center",
+            ent = ctk.CTkEntry(res_grid, font=("Roboto", 12), width=30, height=20, justify="center",
                                fg_color="gray25", border_width=0)
             ent.grid(row=2, column=i+1, padx=1, pady=(1, 2))
             ent.insert(0, "0")
@@ -2715,11 +2725,11 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             count_list.append(ent)
             
         # Cost Multiplier
-        ctk.CTkLabel(res_grid, text="Cost Mult.", font=("Roboto", 9),
+        ctk.CTkLabel(res_grid, text="Cost Mult.", font=("Roboto", 12),
                      text_color="gray50", width=55).grid(row=3, column=0, padx=2, pady=(1, 4))
         for i in range(9):
-            lbl = ctk.CTkLabel(res_grid, text="1x", font=("Roboto", 10, "bold"),
-                               text_color="gray60")
+            lbl = ctk.CTkLabel(res_grid, text="1x", font=("Roboto", 12),
+                               text_color="gray90")
             lbl.grid(row=3, column=i+1, padx=1, pady=(1, 4))
             mult_list.append(lbl)
 
@@ -2727,30 +2737,30 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                        current="", total="", max_output="", arcane_rest=False, rest_type="Long"):
         """Add a dynamic shard source row"""
         row_id = str(len(self.shard_widgets))
-        row_frame = ctk.CTkFrame(self.shards_container, fg_color="gray21", corner_radius=6)
-        row_frame.pack(fill="x", pady=3)
+        row_frame = ctk.CTkFrame(self.shards_container, fg_color="gray25", corner_radius=6)
+        row_frame.pack(fill="x", pady=self.p, padx=self.p)
         
         # --- Top Row: Source, Type, Shard Type, Delete ---
-        top = ctk.CTkFrame(row_frame, fg_color="gray25")
-        top.pack(fill="x", padx=5, pady=(5, 2))
+        top = ctk.CTkFrame(row_frame, fg_color="gray25", corner_radius=6)
+        top.pack(fill="x", padx=self.p, pady=self.p)
         
         # Source Name (Expand)
-        ctk.CTkLabel(top, text="Source:", font=("Roboto", 11), text_color="gray60").pack(side="left", padx=(0, 5))
-        source_ent = ctk.CTkEntry(top, font=("Roboto", 11), height=24, fg_color="gray30", border_width=0)
+        ctk.CTkLabel(top, text="Source:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
+        source_ent = ctk.CTkEntry(top, font=("Roboto", 12), height=24, fg_color="gray30", border_width=0)
         source_ent.pack(side="left", fill="x", expand=True, padx=(0, 10))
         source_ent.insert(0, source)
         
         # Type
         type_var = StringVar(value=source_type)
         ctk.CTkOptionMenu(top, variable=type_var, values=["Class", "Feat", "Item", "Racial", "Other"],
-                          font=("Roboto", 11), width=75, height=24,
+                          font=("Roboto", 12), width=75, height=24,
                           fg_color="gray30", button_color="gray35",
                           button_hover_color=self.color, dropdown_hover_color=self.color).pack(side="left", padx=(0, 5))
                           
         # Shard Type
         shard_type_var = StringVar(value=shard_type)
         menu = ctk.CTkOptionMenu(top, variable=shard_type_var, values=["Normal", "Pact"],
-                                  font=("Roboto", 11), width=75, height=24,
+                                  font=("Roboto", 12), width=75, height=24,
                                   fg_color="gray30", button_color="gray35",
                                   button_hover_color=self.color, dropdown_hover_color=self.color,
                                   command=lambda _: self._update_pact_visibility())
@@ -2767,22 +2777,22 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         bot.pack(fill="x", padx=5, pady=(0, 5))
         
         # Current / Total
-        ctk.CTkLabel(bot, text="Curr:", font=("Roboto", 11), text_color="gray60").pack(side="left", padx=(0, 5))
-        current_ent = ctk.CTkEntry(bot, font=("Roboto", 11, "bold"), width=40, height=24, justify="center",
+        ctk.CTkLabel(bot, text="Curr:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
+        current_ent = ctk.CTkEntry(bot, font=("Roboto", 12), width=40, height=24, justify="center",
                                     fg_color="gray30", border_width=1, border_color=self.color)
         current_ent.pack(side="left")
         current_ent.insert(0, current if current else total)
         
-        ctk.CTkLabel(bot, text="/", font=("Roboto", 11), text_color="gray50").pack(side="left", padx=2)
+        ctk.CTkLabel(bot, text="/", font=("Roboto", 12), text_color="gray50").pack(side="left", padx=2)
         
-        total_ent = ctk.CTkEntry(bot, font=("Roboto", 11), width=40, height=24, justify="center",
+        total_ent = ctk.CTkEntry(bot, font=("Roboto", 12), width=40, height=24, justify="center",
                                   fg_color="gray30", border_width=0)
         total_ent.pack(side="left", padx=(0, 15))
         total_ent.insert(0, total)
         
         # Max Output
-        ctk.CTkLabel(bot, text="MaxOut:", font=("Roboto", 11), text_color="gray60").pack(side="left", padx=(0, 5))
-        max_out_ent = ctk.CTkEntry(bot, font=("Roboto", 11), width=35, height=24, justify="center",
+        ctk.CTkLabel(bot, text="MaxOut:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
+        max_out_ent = ctk.CTkEntry(bot, font=("Roboto", 12), width=35, height=24, justify="center",
                                     fg_color="gray30", border_width=0)
         max_out_ent.pack(side="left", padx=(0, 15))
         max_out_ent.insert(0, max_output)
@@ -2790,15 +2800,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Arcane rest
         arcane_var = BooleanVar(value=arcane_rest)
         ctk.CTkCheckBox(bot, text="Arc. rest", variable=arcane_var,
-                         font=("Roboto", 11), checkbox_width=18, checkbox_height=18,
+                         font=("Roboto", 12), checkbox_width=18, checkbox_height=18,
                          hover_color=self.color, fg_color=self.color,
                          border_color=self.color).pack(side="left", padx=(0, 15))
         
         # rest Type
-        ctk.CTkLabel(bot, text="Rest:", font=("Roboto", 11), text_color="gray60").pack(side="left", padx=(0, 5))
+        ctk.CTkLabel(bot, text="Rest:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
         rest_var = StringVar(value=rest_type)
         ctk.CTkOptionMenu(bot, variable=rest_var, values=["Long", "Short"],
-                           font=("Roboto", 11), width=70, height=24,
+                           font=("Roboto", 12), width=70, height=24,
                            fg_color="gray30", button_color="gray35",
                            button_hover_color=self.color, dropdown_hover_color=self.color).pack(side="left")
         
@@ -2843,7 +2853,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
         # Highlight count entry if active
         if count > 0:
-            c_ent.configure(fg_color=self.color, text_color="white")
+            c_ent.configure(fg_color=self.color, text_color="gray90")
         else:
             c_ent.configure(fg_color="gray25", text_color="gray90")
             
@@ -2860,13 +2870,13 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Color code multiplier
         if multiplier == 1:
-            m_lbl.configure(text_color="gray60")
+            m_lbl.configure(text_color="gray90")
         elif multiplier == 2:
-            m_lbl.configure(text_color="#e0e0e0") # White-ish
+            m_lbl.configure(text_color="gray90") # White-ish
         elif multiplier == 4:
-            m_lbl.configure(text_color=self.color) # User Accent Color
+            m_lbl.configure(text_color="gray90") # User Accent Color
         else:
-            m_lbl.configure(text_color="#ff5555") # Danger Red
+            m_lbl.configure(text_color="gray90") # Danger Red
 
     def _update_resonance_highlight(self, idx):
         # Legacy/Wrapper for manual calls (Normal Grid)
@@ -2896,7 +2906,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self._update_res_h(i, self.pact_count_entries, self.pact_saturation_entries, self.pact_mult_labels)
             
         self.arcane_recovery_used_var.set(False)
-        self.arcane_recovery_used_cb.configure(state="normal", text_color="gray60")
+        self.arcane_recovery_used_cb.configure(state="normal", text_color="gray90")
         self.quick_prep_used.set(False)
         if hasattr(self, "qp_chk"):
             self.qp_chk.configure(state="normal")
@@ -3065,7 +3075,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             if entry.get() != "0":
                  entry.delete(0, "end")
                  entry.insert(0, "0")
-            entry.configure(text_color="#ff4d4d") # Soft red
+            entry.configure(text_color="gray90") # Soft red
         else:
             # restore base speed if we have one stored
             if hasattr(self, '_base_speed_val') and self._base_speed_val is not None:
@@ -3073,7 +3083,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                     entry.delete(0, "end")
                     entry.insert(0, self._base_speed_val)
                 self._base_speed_val = None
-            entry.configure(text_color="white")
+            entry.configure(text_color="gray90")
         self.autosave_roll_configs()
 
     def get_condition_modifiers(self, roll_type, name=None):
@@ -3862,7 +3872,7 @@ class GUI(ctk.CTk):
                 self.plsFrame.grid_columnconfigure(0, weight=1)
                 self.plsFrame.grid(row=0, column=0, padx=self.rescale, pady=(self.rescale, 0), sticky="ew")
                 
-                self.pls = ctk.CTkLabel(self.plsFrame, text = "Please login to continue", font=("Roboto", 13)) 
+                self.pls = ctk.CTkLabel(self.plsFrame, text = "Please login to continue", font=("Roboto", 14, "bold")) 
                 self.pls.grid(row=0, column=0, pady=(0,1))
                 
                 # create a Label 
@@ -3871,7 +3881,7 @@ class GUI(ctk.CTk):
                 
                 # create a entry box for 
                 # typing the message 
-                self.entryName = ctk.CTkEntry(self.labelName, fg_color="gray20", border_width=0, placeholder_text_color="gray30", placeholder_text="Username", font=("Roboto", 12), justify="center") 
+                self.entryName = ctk.CTkEntry(self.labelName, fg_color="gray20", border_width=0, placeholder_text_color="gray50", placeholder_text="Username", font=("Roboto", 12), justify="center") 
                 self.entryName.grid(row=0, column=0)
                 self.entryName.bind('<Return>',(lambda event: self.goAhead(self.entryName.get())))
                 
@@ -4073,7 +4083,7 @@ class GUI(ctk.CTk):
                     btn = ctk.CTkButton(self.sidebaroll, 
                                         text=name, 
                                         fg_color="gray25", hover_color="gray30",
-                                        border_color=self.color, border_width=2,
+                                        border_color=self.players[i]['color'], border_width=2,
                                         font=("Roboto", 12),
                                         anchor="w",
                                         command=lambda f=filepath: self.openfile(f))
@@ -4094,12 +4104,12 @@ class GUI(ctk.CTk):
             if self.allButton.cget('text')=='Select all':
                 self.allButton.configure(text='Exclude all')
                 for c in range(len(self.playerBtts)):
-                    self.playerBtts[c].configure(fg_color='gray95')
+                    self.playerBtts[c].configure(fg_color='gray90')
                     self.players[c]['selected'] = True
             else:
                 self.allButton.configure(text='Select all')
                 for c in range(len(self.playerBtts)):
-                    self.playerBtts[c].configure(fg_color='gray85')
+                    self.playerBtts[c].configure(fg_color='gray90')
                     self.players[c]['selected'] = False
 
         def _get_player_portrait_icon(self, player_dict, size):
@@ -4182,7 +4192,6 @@ class GUI(ctk.CTk):
                 p_icon = self._get_player_portrait_icon(self.players[i], 32)
                 
                 btn_kwargs = dict(
-                    fg_color="gray25", hover_color="gray30",
                     border_color=self.players[i]['color'],
                     border_width=2,
                     text=self.players[i]['name'],
@@ -4195,14 +4204,14 @@ class GUI(ctk.CTk):
                 
                 # Main Chat Sidebar - Include Everyone
                 tempButton = ctk.CTkButton(self.sidebar, **btn_kwargs,
-                                                command=lambda c=i: self.onPlayerClick(c))
+                                                command=lambda c=i: self.onPlayerClick(c), fg_color="gray25", hover_color="gray30")
                 self.playerBtts.append(tempButton)
                 self.playerBtts[-1].grid(row=i, column=0, pady=(self.rescale, 0), sticky="ew")
 
                 # Roll Window Sidebar - Exclude Self
                 if self.players[i]['name'] != self.my_name:
                     tempButton = ctk.CTkButton(self.sidebaroll, **btn_kwargs,
-                                                        command=lambda c=i: self.onPlayerSelec(c))
+                                                        command=lambda c=i: self.onPlayerSelec(c), fg_color="gray25", hover_color="gray30")
                     self.playerBtts2.append(tempButton)
                     self.playerBtts2[-1].grid(row=len(self.playerBtts2)-1, column=0, pady=(self.rescale, 0), sticky="ew")
 
@@ -4341,7 +4350,7 @@ class GUI(ctk.CTk):
                             self.dicewindow.deiconify()
                         self.dicewindow.focus()
                         
-                        self.panel.configure(fg_color="gray70")
+                        self.panel.configure(fg_color="gray90")
                         self.ResultFrame.configure(fg_color="gray20")
                         self.ResultLabel.configure(fg_color="gray20")
                     self.after(0, setup_dice_gui)
@@ -4516,7 +4525,7 @@ class GUI(ctk.CTk):
                 pass
 
         def show_mode_menu(self):
-            menu = Menu(self, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 10))
+            menu = Menu(self, tearoff=0, bg="gray15", fg="gray90", activebackground=self.color, activeforeground="gray90", font=("Roboto", 12))
             
             # Display Mode section
             menu.add_command(label="-- Result display mode --", state=DISABLED)
@@ -4525,7 +4534,7 @@ class GUI(ctk.CTk):
                 menu.add_command(label=label, command=lambda m_val=m.lower(): self.set_mode_style(m_val))
             
             # Dice Style as a cascading menu under "Dice"
-            dice_menu = Menu(menu, tearoff=0, bg="#2b2b2b", fg="white", activebackground=self.color, activeforeground="white", font=("Roboto", 10))
+            dice_menu = Menu(menu, tearoff=0, bg="gray15", fg="gray90", activebackground=self.color, activeforeground="gray90", font=("Roboto", 12))
             for style in self.options:
                 label = f"{'✓ ' if (self.displaymode.get().lower() == 'dice' and self.dice_style.get() == style) else '  '}{style}"
                 dice_menu.add_command(label=label, command=lambda s=style: self.set_mode_style("dice", s))
@@ -4874,10 +4883,10 @@ class GUI(ctk.CTk):
             back_btn = ctk.CTkButton(title_frame, text="◄", width=28, height=24,
                                       fg_color="gray25", hover_color="gray35",
                                       border_color=self.color, border_width=2,
-                                      font=("Roboto", 12, "bold"),
+                                      font=("Roboto", 12),
                                       command=lambda: [self.dismiss_pie_menu(), self.show_pie_menu()])
             back_btn.pack(side=LEFT, padx=self.rescale, pady=self.rescale)
-            ctk.CTkLabel(title_frame, text=cat_name, font=("Roboto", 12, "bold")).pack(side=LEFT, padx=self.rescale, pady=self.rescale)
+            ctk.CTkLabel(title_frame, text=cat_name, font=("Roboto", 12)).pack(side=LEFT, padx=self.rescale, pady=self.rescale)
 
             def add_item_button(parent, display_name, filepath):
                 btn = ctk.CTkButton(parent, text=display_name, height=26,
@@ -4893,7 +4902,7 @@ class GUI(ctk.CTk):
                         continue
                     header = ctk.CTkLabel(frame, text=sub_name,
                                           fg_color="gray30", corner_radius=4,
-                                          font=("Roboto", 12, "bold"))
+                                          font=("Roboto", 12))
                     header.pack(fill=X, padx=self.rescale, pady=(self.rescale, self.rescale))
                     for display_name, filepath in items:
                         add_item_button(frame, display_name, filepath)
@@ -4936,7 +4945,7 @@ class GUI(ctk.CTk):
                 self.aFrame.columnconfigure((0,1), weight=1, uniform="anterior")
                 self.aFrame.grid(row=0, column=0, sticky="ew", pady=(0,self.rescale))
 
-                self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14))
+                self.anteriorLabel=ctk.CTkLabel(self.aFrame, text="Anterior", fg_color="gray30", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.anteriorLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale, columnspan=2)
 
                 # List Anterior Items
@@ -4958,7 +4967,7 @@ class GUI(ctk.CTk):
                                         border_color=self.color,
                                         border_width=2,
                                         fg_color="gray30", hover_color="gray40", 
-                                        font=("Roboto", 11), 
+                                        font=("Roboto", 12), 
                                         command=lambda idx=i: self.destroy_ante(idx))
                     btn.grid(row=1+i, column=0, columnspan=2, sticky="ew", padx=self.rescale, pady=(0, self.rescale))
                     btn.bind("<Button-3>", lambda event, idx=i: self.toggle_hidden_ante(idx))
@@ -5005,7 +5014,7 @@ class GUI(ctk.CTk):
 
                 self.resor[i].delButton=ctk.CTkButton(self.resor[i].mainFrame,
                                                                     text = "Delete resource",
-                                                                    fg_color="gray30", hover_color="gray35", font=("Roboto", 14), command = lambda idx=i: self.destroy_res(idx), border_color=self.color, border_width=2)
+                                                                    fg_color="gray30", hover_color="gray35", font=("Roboto", 12), command = lambda idx=i: self.destroy_res(idx), border_color=self.color, border_width=2)
                 self.resor[i].delButton.grid(row=len(self.resor[i].listSubres)+1, column=0, padx=self.rescale, pady=self.rescale, columnspan=2, sticky="ew")
 
         def destroy_all(self):
@@ -5413,7 +5422,7 @@ class GUI(ctk.CTk):
                 self.columnconfigure(2 , weight=1)
                 self.rowconfigure(1, weight=1)
 
-                self.sidebarLabel=ctk.CTkLabel(self, text="Players online", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+                self.sidebarLabel=ctk.CTkLabel(self, text="Players online", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.sidebarLabel.grid(row=0, column=1, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.sidebar=ctk.CTkScrollableFrame(self,
@@ -5446,7 +5455,7 @@ class GUI(ctk.CTk):
                                                     fg_color="gray20", hover_color="gray25", font=("Roboto", 12), command = lambda: self.sheetswitch())
                 self.sheetbtt.grid(row=0, column=0, padx=(self.rescale, 0), pady=self.rescale, sticky="ns", rowspan=3)
 
-                self.entryMsg = ctk.CTkEntry(self, fg_color="gray20", border_width=0, placeholder_text_color="gray30", placeholder_text="Write a message", font=("Roboto", 12))
+                self.entryMsg = ctk.CTkEntry(self, fg_color="gray20", border_width=0, placeholder_text_color="gray50", placeholder_text="Write a message", font=("Roboto", 12))
                 self.entryMsg.grid(row=2, column=2, padx=(0,self.rescale), pady=self.rescale, sticky="ew")
                 #self.entryMsg.after(20, self.entryMsg.focus)
 
@@ -5482,7 +5491,7 @@ class GUI(ctk.CTk):
                 self.openmenu=Menu(self.menubar, tearoff=0)
                 self.build_menu()
 
-                self.selecLabel=ctk.CTkLabel(self.Window2, text="Select to roll", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+                self.selecLabel=ctk.CTkLabel(self.Window2, text="Select to roll", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.selecLabel.grid(row=0, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.sidebaroll=ctk.CTkScrollableFrame(self.Window2,
@@ -5492,7 +5501,7 @@ class GUI(ctk.CTk):
                 self.sidebaroll.columnconfigure(0 , weight=1)
                 self.sidebaroll.grid(row=1, column=0, padx=self.rescale, sticky="ns")
 
-                self.selectedLabel=ctk.CTkLabel(self.Window2, text="Selected", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+                self.selectedLabel=ctk.CTkLabel(self.Window2, text="Selected", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.selectedLabel.grid(row=2, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.label=ctk.CTkScrollableFrame(self.Window2,
@@ -5509,7 +5518,7 @@ class GUI(ctk.CTk):
                                     fg_color="gray20", hover_color="gray25", font=("Roboto", 12), command = lambda: self.rollerrola())
                 self.rollBtt.grid(row=4, column=0, padx=self.rescale, pady=self.rescale, sticky="ew")
 
-                self.resourcesLabel=ctk.CTkLabel(self.Window2, text="Resources", fg_color="gray20", corner_radius=6, font=("Roboto", 14))
+                self.resourcesLabel=ctk.CTkLabel(self.Window2, text="Resources", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.resourcesLabel.grid(row=0, column=2, padx=self.rescale, pady=self.rescale, sticky="ew")
 
                 self.terFrame=ctk.CTkScrollableFrame(self.Window2,
@@ -5537,7 +5546,7 @@ class GUI(ctk.CTk):
                                                    border_width=2,
                                                    fg_color="gray20",
                                                    hover_color="gray25",
-                                                   font=("Roboto", 14, "bold"),
+                                                   font=("Roboto", 12),
                                                    command=self.show_pie_menu)
                 self.pie_menu_btn.grid(row=0, column=1, padx=(self.rescale, 0), sticky="ns")
 
@@ -5613,7 +5622,7 @@ class GUI(ctk.CTk):
                                                  width=260, height=24,
                                                  fg_color="gray25", border_color="gray30",
                                                  border_width=1, hover_color="gray30",
-                                                 font=("Roboto", 11),
+                                                 font=("Roboto", 12),
                                                  command=self.show_mode_menu)
                 self.mode_button.grid(row=0, column=11, padx=self.rescale)
 
@@ -5637,7 +5646,7 @@ class GUI(ctk.CTk):
                 self.resourcebar3.columnconfigure(0, weight=1)
                 self.resourcebar3.grid(row=0, column=2, sticky="ew")
 
-                self.reslabel = ctk.CTkEntry(self.resourcebar2, fg_color="gray25", border_width=0, placeholder_text_color="gray35", placeholder_text="Resource name", font=("Roboto", 12), justify="center")
+                self.reslabel = ctk.CTkEntry(self.resourcebar2, fg_color="gray25", border_width=0, placeholder_text_color="gray50", placeholder_text="Resource name", font=("Roboto", 12), justify="center")
                 self.reslabel.grid(row=0, column=1, columnspan=3, padx=self.rescale, pady=(self.rescale, 0), sticky="ew")
 
                 self.resbtt2 = ctk.CTkButton(self.resourcebar2, 
@@ -5657,7 +5666,7 @@ class GUI(ctk.CTk):
                                                             text = "+", 
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 14, "bold"), command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.resourcepaste(self.res.get(), self.reslabel.get())) 
                 self.resbtt.grid(row=1, column=3, padx=(0, self.rescale), pady=(self.rescale, self.rescale), sticky="w")
                 
 
@@ -5688,7 +5697,7 @@ class GUI(ctk.CTk):
                 self.antebar.columnconfigure(10, weight=0) # Space for hidden check
                 self.antebar.grid(row=1, column=0, sticky="ew", pady=(0, self.rescale))
 
-                self.antelabel= ctk.CTkLabel(self.antebar, text='Anterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))           
+                self.antelabel= ctk.CTkLabel(self.antebar, text='Anterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14, "bold"))           
                 self.antelabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=(self.rescale, 0), columnspan=10)
 
                 self.aconlabel= ctk.CTkLabel(self.antebar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
@@ -5703,7 +5712,7 @@ class GUI(ctk.CTk):
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda : self.antepaste(int(self.ac.get()), 1))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda : self.antepaste(int(self.ac.get()), 1))
                 self.aconbtt.grid(row=2, column=1, padx=(self.rescale, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.separator1= ctk.CTkLabel(self.antebar, text="")
@@ -5720,7 +5729,7 @@ class GUI(ctk.CTk):
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda : self.anteadvpaste(int(self.aa.get())))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda : self.anteadvpaste(int(self.aa.get())))
 
                 self.aadvbtt.grid(row=2, column=9, padx=self.rescale, pady=(self.rescale, self.rescale))
 
@@ -5746,14 +5755,14 @@ class GUI(ctk.CTk):
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get())))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda : self.antepaste(int(self.ad[0].get()), int(self.ad[1].get())))
                 self.adicbtt.grid(row=2, column=6, padx=(self.rescale, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.interbar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.interbar.columnconfigure((2, 7), weight=1)
                 self.interbar.grid(row=3, column=0, sticky="ew", pady=(0, self.rescale))
 
-                self.interLabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
+                self.interLabel= ctk.CTkLabel(self.interbar, text='Intermediate', fg_color="gray25", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.interLabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=(self.rescale, 0), columnspan=10)
 
                 self.iconlabel= ctk.CTkLabel(self.interbar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
@@ -5767,7 +5776,7 @@ class GUI(ctk.CTk):
                                                             text = "+",
                                                             width=26,
                                                             border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter"))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.postpaste(int(self.ic.get()), 1, "c", "Inter"))
 
                 self.iconbtt.grid(row=2, column=1, padx=(self.rescale, self.rescale), pady=(self.rescale, self.rescale))
 
@@ -5785,7 +5794,7 @@ class GUI(ctk.CTk):
                 self.iadvbtt = ctk.CTkButton(self.interbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter"))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.postpaste(int(self.ia.get()), 0, "adv", "Inter"))
 
                 self.iadvbtt.grid(row=2, column=9, padx=self.rescale, pady=(self.rescale, self.rescale))
 
@@ -5810,14 +5819,14 @@ class GUI(ctk.CTk):
                 self.idicbtt = ctk.CTkButton(self.interbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter"))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.postpaste(int(self.id[0].get()), int(self.id[1].get()), "dice", "Inter"))
                 self.idicbtt.grid(row=2, column=6, padx=(self.rescale, self.rescale), pady=(self.rescale, self.rescale))
 
                 self.postbar=ctk.CTkFrame(self.secFrame, fg_color="gray20")
                 self.postbar.columnconfigure((2, 7), weight=1)
                 self.postbar.grid(row=4, column=0, sticky="ew", pady=(0, self.rescale))
 
-                self.postLabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14))
+                self.postLabel= ctk.CTkLabel(self.postbar, text='Posterior', fg_color="gray25", corner_radius=6, font=("Roboto", 14, "bold"))
                 self.postLabel.grid(row=0, column=0, padx=self.rescale, sticky="ew", pady=(self.rescale, 0), columnspan=10)
 
                 self.pconlabel= ctk.CTkLabel(self.postbar,text='Constant', fg_color="gray25", corner_radius=6, font=("Roboto", 12))
@@ -5830,7 +5839,7 @@ class GUI(ctk.CTk):
                 self.pconbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post"))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pc.get()), 1, "c", "Post"))
 
                 self.pconbtt.grid(row=2, column=1, padx=(self.rescale, self.rescale), pady=(self.rescale, self.rescale))
 
@@ -5848,7 +5857,7 @@ class GUI(ctk.CTk):
                 self.padvbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post"))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pa.get()), 0, "adv", "Post"))
 
                 self.padvbtt.grid(row=2, column=9, padx=self.rescale, pady=(self.rescale, self.rescale))
 
@@ -5873,7 +5882,7 @@ class GUI(ctk.CTk):
                 self.pdicbtt = ctk.CTkButton(self.postbar,
                                                             text = "+",
                                                             width=26, border_color=self.color, border_width=2,
-                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12, "bold"), command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post"))
+                                                            fg_color="gray25", hover_color="gray30", font=("Roboto", 12), command = lambda: self.postpaste(int(self.pd[0].get()), int(self.pd[1].get()), "dice", "Post"))
                 self.pdicbtt.grid(row=2, column=6, padx=(10/3, self.rescale), pady=(self.rescale, self.rescale))
 
 
@@ -5887,7 +5896,7 @@ class GUI(ctk.CTk):
                 self.hiddenres.protocol("WM_DELETE_WINDOW", self.hiddenres.withdraw)
                 self.hiddenres.columnconfigure(0, weight=1)
                 
-                self.hidden_label=ctk.CTkLabel(self.hiddenres, text="", text_color=self.color, font=("Roboto", 25), fg_color="gray20", corner_radius=6)
+                self.hidden_label=ctk.CTkLabel(self.hiddenres, text="", text_color="gray90", font=("Roboto", 25, "bold"), fg_color="gray20", corner_radius=6)
                 self.hidden_label.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=self.rescale)
 
                 self.dicewindow = ctk.CTkToplevel(fg_color="gray15")
@@ -5910,14 +5919,14 @@ class GUI(ctk.CTk):
                 self.progresswindow.rowconfigure(1, weight=1) # Let result frame expand
                 self.progresswindow.protocol("WM_DELETE_WINDOW", self.progresswindow.withdraw)
 
-                self.InfoLabel = ctk.CTkLabel(self.dicewindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14), pady=self.rescale)
+                self.InfoLabel = ctk.CTkLabel(self.dicewindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"), pady=self.rescale)
                 self.InfoLabel.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=(self.rescale, 0))
                 self.ResultFrame=ctk.CTkFrame(self.dicewindow, fg_color="gray20")
                 self.ResultFrame.columnconfigure(0, weight=1)
                 self.ResultFrame.rowconfigure(0, weight=1)
                 self.ResultFrame.grid(row=1, column=0, sticky="nsew", padx=self.rescale, pady=(self.rescale, self.rescale))
                 
-                self.ResultLabel=ctk.CTkLabel(self.ResultFrame, text="", text_color=self.color, font=("Roboto", 25), fg_color="gray20")
+                self.ResultLabel=ctk.CTkLabel(self.ResultFrame, text="", text_color="gray90", font=("Roboto", 25, "bold"), fg_color="gray20")
                 self.ResultLabel.grid(row=0, column=0, pady=self.rescale)
                 self.panel = ctk.CTkLabel(self.ResultFrame, text="", fg_color=self.color)
                 self.panel.grid(row=1, column=0)
@@ -5930,14 +5939,14 @@ class GUI(ctk.CTk):
                         img = Image.open(img_path).convert("RGBA")
                         self.dice_images_cache[filename] = ctk.CTkImage(img, size=(250,250))
 
-                self.InfoLabel2 = ctk.CTkLabel(self.progresswindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14), pady=self.rescale)
+                self.InfoLabel2 = ctk.CTkLabel(self.progresswindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"), pady=self.rescale)
                 self.InfoLabel2.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=(self.rescale, 0))
                 self.ResultFrame2 = ctk.CTkFrame(self.progresswindow, fg_color="gray20")
                 self.ResultFrame2.columnconfigure(0, weight=1)
                 self.ResultFrame2.rowconfigure((0, 1, 2), weight=1)
                 self.ResultFrame2.grid(row=1, column=0, sticky="nsew", padx=self.rescale, pady=(self.rescale, self.rescale))
 
-                self.ResultLabel2=ctk.CTkLabel(self.ResultFrame2, text="", text_color=self.color, font=("Roboto", 25, "bold"), fg_color="gray20")
+                self.ResultLabel2=ctk.CTkLabel(self.ResultFrame2, text="", text_color="gray90", font=("Roboto", 25, "bold"), fg_color="gray20")
                 self.ResultLabel2.grid(row=0, column=0, pady=self.rescale)
                 
                 # Container for progress bar and zones
@@ -5967,9 +5976,9 @@ class GUI(ctk.CTk):
                 self.ThreshLabelsFrame.grid(row=1, column=0, sticky="ew", pady=(5, 0))
                 self.ThreshLabelsFrame.grid_propagate(False)
                 
-                self.CFThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="CF", font=("Roboto", 10, "bold"), text_color="gray60")
-                self.SuccessThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="S", font=("Roboto", 10, "bold"), text_color="gray60")
-                self.CritThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="CS", font=("Roboto", 10, "bold"), text_color="gray60")
+                self.CFThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="CF", font=("Roboto", 12), text_color="gray90")
+                self.SuccessThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="S", font=("Roboto", 12), text_color="gray90")
+                self.CritThreshLabel = ctk.CTkLabel(self.ThreshLabelsFrame, text="CS", font=("Roboto", 12), text_color="gray90")
 
                 # Wheel window setup
                 self.wheelwindow=ctk.CTkToplevel(fg_color="gray15")
@@ -5982,14 +5991,14 @@ class GUI(ctk.CTk):
                 self.wheelwindow.rowconfigure(1, weight=1)
                 self.wheelwindow.protocol("WM_DELETE_WINDOW", self.wheelwindow.withdraw)
 
-                self.InfoLabel3 = ctk.CTkLabel(self.wheelwindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14), pady=self.rescale)
+                self.InfoLabel3 = ctk.CTkLabel(self.wheelwindow, text="", fg_color="gray20", corner_radius=6, font=("Roboto", 14, "bold"), pady=self.rescale)
                 self.InfoLabel3.grid(row=0, column=0, sticky="ew", padx=self.rescale, pady=(self.rescale, 0))
                 self.ResultFrame3 = ctk.CTkFrame(self.wheelwindow, fg_color="gray20")
                 self.ResultFrame3.columnconfigure(0, weight=1)
                 self.ResultFrame3.rowconfigure(0, weight=1)
                 self.ResultFrame3.grid(row=1, column=0, sticky="nsew", padx=self.rescale, pady=(self.rescale, self.rescale))
 
-                self.ResultLabel3=ctk.CTkLabel(self.ResultFrame3, text="", text_color=self.color, font=("Roboto", 25), fg_color="gray20")
+                self.ResultLabel3=ctk.CTkLabel(self.ResultFrame3, text="", text_color="gray90", font=("Roboto", 25, "bold"), fg_color="gray20")
                 self.ResultLabel3.grid(row=0, column=0, pady=self.rescale)
                 
                 # Create matplotlib figure for wheel
@@ -6015,7 +6024,7 @@ class GUI(ctk.CTk):
                 self.possi_frame = ctk.CTkFrame(self.possi, fg_color="gray20")
                 self.possi_frame.pack(fill=BOTH, expand=True, padx=self.rescale, pady=self.rescale)
                 
-                self.rolldic_res_label = ctk.CTkLabel(self.possi_frame, text="", font=("Roboto", 18, "bold"), text_color="white")
+                self.rolldic_res_label = ctk.CTkLabel(self.possi_frame, text="", font=("Roboto", 25, "bold"), text_color="gray90")
                 self.rolldic_res_label.pack(side=TOP, pady=(15, 0))
                 
                 # Create the figure and canvas once
@@ -6428,7 +6437,7 @@ class GUI(ctk.CTk):
                                     resButton = ctk.CTkButton(main_frame,
                                                         text = 'Show results',
                                                         fg_color="gray25", hover_color="gray30", border_color=self.color, border_width=2,
-                                                        font=("Roboto", 14),
+                                                        font=("Roboto", 12),
                                                         command=partial(self.show_res, msg_list, send_type))
                                     resButton.grid(row=2, column=0, columnspan=5, padx=self.rescale, pady=self.rescale, sticky="ew")
 
