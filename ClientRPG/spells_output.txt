@@ -1,0 +1,15 @@
+Spell format sample:
+{'id': '861e330f-34fc-41ad-86d0-fa6eb3cb944b', 'name': 'Guidance', 'level': 0, 'prepared': True, 'source': 'Sorcerer', 'time': '1 reaction, which you take when this 2d4 (posterior type) is used on the roll', 'range': '10 feet', 'comp': 's', 'dur': 'Instantaneous', 'desc': ''}
+Length: 10
+
+Docx format sample (first 10 paragraphs of Cantrips):
+0: Beckon Air/Gust
+1: Transmutation Cantrip
+2: 
+3: Casting Time: 1 action
+4: Range: 60 feet
+5: Components: V, S
+6: Duration: Instantaneous
+7: 
+8: You can manipulate the winds and use them to assault foes. When you cast this spell choose one of the following effects:
+9: 

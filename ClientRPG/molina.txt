@@ -1,0 +1,622 @@
+Plan: w w (Indirect mischief) s s s s (Expanded ritual casting and seamless ritual) w w w w (Illusory reality) s s s s (Master simulator)
+Lvl. 4 (5 effective) wiz, lvl. 2 (4 effective) sorcerer, lvl. 6 effective caster level
+PCN: 60
+AA: -10 (studded leather mobility armor)
+Vitality: +5
+Proficiency: +6
+Mind: 20 (+10+6=+16)
+Concentration: +12
+Investigation: +12 (+12+12=+24) (advantage, use when entering new areas to benefit from sight)
+Convincing: +12 (+12+12=+24)
+Simulation: +12 (+12+12=+24)
+-------------------------------------------------------------------------------
+Soul: 17 (+10+6=+16)
+Meditation: -8
+Awareness: +12 (+12+12=+24) (advantage, hearing and smell)
+Performance: -3
+Trustworthiness: +12 (+12+12=+24)
+-------------------------------------------------------------------------------
+Senses: 18 (+8+3=+11)
+Precision: +6
+Mobility (stealth): +12 (+12+12=+24)
+Acrobatics: +12 (+12+6=+18)
+Dexterity: +12 (+12+12=+24)
+-------------------------------------------------------------------------------
+Body: 15 (+6)
+Potency: -8
+Resilience: -4
+Athletics: -4
+Constituition: -4
+Knowledge fields: +12+12/2-6=+12
+Tools: +12+12/2-6=+12
+Forgery kit: +12+12=+24
+Shards: 19 (+3 arcane recovery)
+Sorcery points: 4 (+2 sorcerous restoration)
+AS: -(+12+6-4)=-14
+Spell attack: +12+6=+18
+Switchblade: +6+6=+12 to hit, reach 5 ft.. Hit: 1d4+3 piercing. (advantage to conceal)
+Dagger: +6+6=+12 to hit, reach 5 ft., thrown (20/60). Hit: 1d4+3 piercing. (has 2)
+Cantrips
+Guidance - Casting time: 1 reaction, which you take when this 2d4 (posterior type) is used on the roll - Range: 10 feet - Components: s - Duration: instantaneous 
+Mage hand - Casting time: 1 action - Range: 30 feet - Components: s - Duration: 1 minute
+Prestidigitation – 0 effects on - Casting time: 1 action - Range: 10 feet - Components: s - Duration: up to 1 hour
+Glimmer - Casting time: 1 action - Range: self (30 feet) - Components: v, s, m (a coin) - Duration: 1 round
+Magical tinkering – 0 effects on - Casting time: 1 action - Range: touch - Components: m, s (varies) - Duration: varies
+Magical fidling – 0 effects on - Casting time: 1 action - Range: touch - Components: m, s (varies) - Duration: varies
+Minor illusion - Casting time: 1 action - Range: 30 feet - Components: s, m (a bit of fleece) - Duration: 1 minute  (invisible sphere)
+Friends - Casting time: 1 action - Range: self - Components: s, m (a small amount of makeup applied to the face as this spell is cast) - Duration: focusing, up to 5 minutes
+1 BSO
+Command - Casting time: 1 action - Range: 60 feet - Components: - Duration: 1 round
+Detect magic - Casting time: 1 action - Range: self - Components: s - Duration: focusing, up to 10 minutes
+Silent image - Casting time: 1 action - Range: 60 feet - Components: s, m (a bit of fleece) - Duration: focusing, up to 10 minutes (invisible sphere - fog cloud that dodge creatures)
+Disguise self - Casting time: 1 action - Range: self - Components: s - Duration: 1 hour
+Interference - Casting Time: 1 reaction, which you take when this disadvantage (posterior type) is used on the roll - Range: 60 feet - Components: - Duration: Instantaneous
+Find familiar - Casting time: 1 hour - Range: 10 feet - Components: v, s, m (10 gp worth of charcoal, incense, and herbs that must be consumed by fire in a brass brazier) - Duration: instantaneous - R
+Clue - Casting time: 1 action - Range: 30 feet - Components: v, s, m (a magnifying glass and pipe) - Duration: 10 minutes - R
+Unseen servant - Casting time: 1 action - Range: 60 feet - Components: v, s, m (a piece of string and a bit of wood) - Duration: 1 hour - R
+Tenser's floating disk - Casting time: 1 action - Range: 30 feet - Components: v, s, m (a drop of mercury) - Duration: 1 hour - R
+Alarm - Casting time: 1 action - Range: 30 feet - Components: v, s, m (a tiny bell and a piece of fine silver wire) - Duration: 8 hours - R
+2 BSO
+Detect thoughts - Casting time: 1 action - Range: self - Components: s, m (a copper piece) - Duration: focusing, up to 1 minute
+Calling - Casting time: 1 action - Range: self - Components: s, m (a compass) - Duration: focusing, up to 1 hour - R
+Befuddling curse - Casting time: 1 action - Range: 60 feet - Components: s, m (magician props, such as a deck of cards, a wand, a top hat or a set for the shell game or something from the target creature (such as blood, hair, or scales) which the spell consumes) - Duration: focusing, up to 1 minute 
+Augury - Casting time: 1 minute - Range: self - Components: s, m (specially marked sticks, bones, or similar tokens worth at least 25 gp) - Duration: instantaneous - R
+Suggestion - Casting time: 1 action - Range: 30 feet - Components: m (a snake’s tongue and either a bit of honeycomb or a drop of sweet oil) - Duration: focusing, up to 8 hours
+Enhance ability - Casting time: 1 action - Range: touch - Components: v, s, m (fur or a feather from a beast) - Duration: focusing, up to 1 hour
+Enlarge/reduce - Casting time: 1 action - Range: 30 feet - Components: s, m (a pinch of powdered iron) - Duration: focusing, up to 1 minute
+Locate creature - Casting time: 1 action- Range: Self - Components: s, m (A bit of fur from a bloodhound) - Duration: focusing, up to 1 hour
+Locate object - Casting time: 1 action - Range: self - Components: s, m (a forked twig) - Duration: focusing, up to 10 minutes
+Spider climb - Casting time: 1 action - Range: touch - Components: v, s, m (a drop of bitumen and a spider) - Duration: focusing, up to 1 hour
+Silence - Casting time: 1 action - Range: 120 feet - Components: v, s - Duration: focusing, up to 10 minutes - R
+Rope trick - Casting time: 1 action - Range: touch - Components: v, s, m (powdered corn extract and a twisted loop of parchment) - Duration: 1 hour
+Skywrite - Casting time: 1 action - Range: sight - Components: v, s - Duration: focusing, up to 1 day - R
+Gentle repose - Casting time: 1 action - Range: touch - Components: v, s, m (a pinch of salt and one copper piece placed on each of the corpse’s eyes, which must remain there for the duration) - Duration: 10 days - R
+Fatal distraction - Casting time: 1 action - Range: 120 feet - Components: V, S, M (a butterfly) - Duration: Instantaneous - R
+Magic mouth - Casting time: 1 minute - Range: 30 feet - Components: v, s, m (a small bit of honeycomb and jade dust worth at least 10 gp, which the spell consumes) - Duration: until dispelled - R
+3 BSO
+Dispel magic - Casting time: 1 action - Range: 120 feet - Components: s - Duration: instantaneous
+Plia's translocation - Casting Time: 1 action - Range: Touch - Components: s - Duration: Instantaneous (ready action before acrobatics check over a fall, while using mage hand as balancing for advantage)
+Clairvoyance - Casting time: 10 minutes - Range: 1 mile - Components: s, m (a focus worth at least 100 gp, either a jeweled horn for hearing or a glass eye for seeing) - Duration: focusing, up to 10 minutes
+Spectral passage - Casting Time: 1 action - Range: Touch - Components: s, m (an object a spirit has passed through) - Duration: focusing, up to 1 minute
+Fast friends - Casting time: 1 action - Range: 30 feet - Components: - Duration: focusing, up to 1 hour
+Sending - Casting time: 1 action - Range: unlimited - Components: s, m (a short piece of fine copper wire) - Duration: 1 round - R
+Glyph of warding - Casting time: 1 hour - Range: touch - Components: v, s, m (incense and powdered diamond worth at least 200 gp, which the spell consumes) - Duration: until dispelled or triggered
+Leomund's tiny hut - Casting time: 1 minute - Range: self (10-foot-radius hemisphere) - Components: v, s, m (a small crystal bead) - Duration: 8 hours - R
+Dreamscape - Casting time: 1 action - Range: self (30-foot radius) - Components: v, s - Duration: 8 hours - R
+Meld into stone - Casting time: 1 action - Range: touch - Components: v, s - Duration: 8 hours - R
+Feign death - Casting time: 1 action - Range: touch - Components: v, s, m (a pinch of graveyard dirt) - Duration: 1 hour - R
+4 BSO
+Faded Imprint - Casting time: 1 minute - Range: Touch - Components: V, S, M (a fried pastry) - Duration: focusing, up to 10 minutes
+Divination - Casting Time: 1 action - Range: Self - Components: s, m (incense and a sacrificial offering appropriate to your religion, together worth at least 25 gp, which the spell consumes) - Duration: Instantaneous - R
+Dimension Door - Casting Time: 1 action - Range: 500 feet - Components: V - Duration: Instantaneous
+Fabricate - Casting Time: 10 minutes - Range: 120 feet - Components: V, S - Duration: Instantaneous 
+Hallucinatory terrain - Casting Time: 10 minutes - Range: 300 feet - Components: V, S, M (a stone, a twig, and a bit of green plant) - Duration: 24 hours
+Dominate beast - Casting Time: 1 action - Range: 60 feet - Components: - Duration: Focusing, up to 1 minute
+5 BSO
+Legend lore - Casting time 10 minutes - Range Self -Components V, S, M (incense worth at least 250 gp, which the spell consumes, and four ivory strips worth at least 50 gp each) - Duration Instantaneous
+Commune - Casting Time: 1 minute - Range: Self - Components: s, m (incense and a vial of holy or unholy water) - Duration: 1 minute - R
+Modify memory - Casting time: 1 action - Range: 30 feet - Components: S - Duration: focusing, up to 1 minute
+Dominate person - Casting Time: 1 action - Range: 60 feet - Components: - Duration: Focusing, up to 1 minute
+Scryng - Casting Time: 10 minutes - Range Self - Components: V, S, M (a focus worth at least 1,000 gp, such as a crystal ball, a silver mirror, or a font filled with holy water) - Duration: focusing, up to 10 minutes
+Teleportation Circle - Casting Time: 1 minute - Range: 10 feet - Components: V, M (rare chalks and inks infused with precious gems worth 50 gp, which the spell consumes) - Duration: 1 round
+6 BSO
+Demand - Casting time: 1 action - Range: Unlimited - Components: V, S, M (a snake’s tongue and a piece of copper wire) - Duration: Focusing, up to 8 hours (don’t pick if you get indirect mischief)
+Transport via plants - Casting Time: 1 action - Range: 10 feet - Components: V, S - Duration: 1 round
+Walk with spirits - Casting time: 1 hour - Range: Self - Components: V, S, M (a bit of a gravestone, and 75gp of incense which is consumed by the spell) - Duration: Focusing, up to 1 hour
+True seeing - Casting Time: 1 action - Range: Touch - Components: s, m (an ointment for the eyes that costs 25 gp; is made from mushroom powder, saffron, and fat; and is consumed by the spell) - Duration: 1 hour
+Mass suggestion - Casting Time: 1 action - Range: 60 feet - Components: V, M (a snake's tongue and either a bit of honeycomb or a drop of sweet oil) - Duration: 24 hours
+Programmed illusion - Casting Time: 1 action - Range: 120 feet - Components: s, m (a bit of fleece and jade dust worth at least 25 gp) - Duration: Until dispelled
+Contingency - Casting Time: 10 minutes - Range: Self - Components: V, S, M (a statuette of yourself carved from ivory and decorated with gems worth at least 1,500 gp) - Duration: 10 days
+7 BSO
+Teleport - Casting time: 1 action - Range: 10 feet - Components: V - Duration: Instantaneous
+8 BSO
+Dominate monster - Casting Time: 1 action - Range: 60 feet - Components: - Duration: Focusing, up to 1 minute
+You can also choose to leave one of your prepared spells blank, in which case, at any time, you can spend the normal time required to prepare a spell plus 10 additional minutes preparing any spell in your spellbook, following the normal rules for preparation.
+Leave unprepared and never prepare with the above.
+Invisibility rulings: 
+You are considered heavily obscured. The creature's location can be detected by any noise it makes or any tracks it leaves. This has 2 effects:
+A creature effectively suffers from the blinded condition against you.
+A blinded creature can’t see and automatically fails any check that requires sight.
+You can attempt to hide anywhere from creatures that can’t see you with special senses (although you can hide from a creature with special senses if it can’t perceive you clearly). You have to be quiet and, if successful, your general location is unknown.
+Attack rolls against the creature have disadvantage, and the creature’s attack rolls have advantage, if it can’t see you with special senses or you are hiding from it (although you can’t hide from a creature with special senses unless it can’t perceive you clearly).
+While moving, you still have to perform stealth checks for your location to remain unknown (although you can’t hide from a creature with special senses unless it can’t perceive you clearly). 
+Innate expertise
+Your natural magic blooms through your actions. Choose two of your aspect proficiencies. You gain expertise with them, which means your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies.
+Metamagic
+You tap into a deep wellspring of magic within yourself. This wellspring is represented by sorcery points, which allow you to create a variety of magical effects.
+Sorcery points
+You have sorcery points equal to your effective sorcerer level. You regain all spent sorcery points when you finish a long rest.
+Converting shards to sorcery points. On your turn, you can expend shards and regain double the amount of sorcery points (no action required).
+Converting sorcery points to shards. On your turn, you can expend 3 sorcery points and regain one shard (no action required).
+Flexible casting
+You can sacrifice shards to gain additional sorcery points.
+Converting shards to sorcery points. As a bonus action on your turn, you can expend shards and regain double the amount in sorcery points.
+You gain the ability to twist your spells to suit your needs. You gain three of the following metamagic options of your choice. You gain another 3 one at 13th effective sorcerer level. 
+You can use only one metamagic option on a spell when you cast it, unless otherwise noted.
+• Quickened spell
+When you cast a spell that has a casting time of 1 action, you can spend 2 sorcery points to change the casting time to 1 bonus action for this casting.
+• Subtle spell
+When you cast a spell, you can spend 1 sorcery point to cast it without any somatic, verbal or Material components, except Material components that are consumed by the spell or that have a cost specified in the spell. You can use subtle spell even if you have already used a different metamagic option during the casting of the spell. 
+• Heightened spell
+When you cast a spell that forces a creature to make a saving throw to resist its effects, you can spend 2 sorcery points to give one target of the spell disadvantage (anterior type) on its saving throws made against the spell.
+Future:
+• Misdirecting Spell
+When you cast a spell that originates from you, you can spend 3 Sorcery Points to cause the spell to appear as if it had originated from a point you can see within 30 feet.
+• Imbued Spell
+When you cast a spell that has a range of self, you can spend Sorcery Points equal to 1 + the spell’s tso to instead cast it with a range of touch, targeting a willing creature.
+If the spell requires focusing, the creature you cast the spell on must focus on the spell.
+Arcane recovery
+You have learned to regain some of your magical energy by studying your spellbook. When you finish a short rest, you can regain shards. The maximum amount is equal to roundup(effective wizard level/2). Your count for keeping track of saturation for total shard outputs of 5 or less whose combined values (of shards) are less or equal to the amount of shards you regained decreases by 1 (you can choose a total shard output more than once).
+For example, if you're a 4th-effective level wizard, you can recover up to 2 shards, and decrease the count for keeping track of saturation for total shard output 1 by 2 or saturation for total shard output 2 by 1.
+Once you use this feature, you can't do so again until you finish a long rest.
+Telepathic channel and psionic
+Your alien influence gives you the ability to touch the minds of other creatures. You can create a channel to communicate telepathically with one creature you can see within 30 feet of you (no action required). If connected in this way, you lose the channel as soon as the creature leaves your sight. If you have expanded at least 1 minute familiarizing yourself with the creature and expend one action to mentally concentrate, the range becomes 120 ft., and you just need to know their general direction instead of having direct sight. If, in this case, the creature moves considerably from the spot you originally guessed, you lose the channel, unless you know where it moved. Either way, the creature doesn’t know the origin of the voice in its head.
+1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood block the communication but not the channel itself, and contact can be made as soon as the creature leaves the blocked area, as long as you keep track of its location.  
+As an action, you grant the creature the ability to respond until the start of your next turn. Neither of you gain the ability to understand the other’s language, and you can’t link with a creature that doesn’t know any language.
+Mentalist origin spells
+Shards spells 
+1 command
+2 detect thoughts
+3 dispel magic
+4 dominate beast
+5 dominate person
+6 mass suggestion
+Your particular magics are intertwined with the psionic powers of alien creatures. When your spellcasting feature lets you learn a sorcerer cantrip or a noncantrip sorcerer spell (including at 1st sorcerer level), you can choose the new spell from the sorcerer spell list or the psionic spell list. You must otherwise obey all the restrictions for selecting the spell, and it becomes a sorcerer spell for you. When you cast a spell that appears on the psionic spell list, you can cast it without any verbal or non-costly material components. This effect also applies to the mentalist origin spells.
+Cantrip (0 shard)
+Enhance pain
+Forget
+Friends
+Glimmer
+Guidance
+Mage hand
+Mending
+Minor illusion
+Moment to think
+Prestidigitation
+Thaumaturgy
+1 shard
+Bane
+Catapult
+Cause fear
+Charm person
+Compelled duel
+Comprehend languages
+Detect magic
+Disguise self
+Dissonant whispers
+Heroism
+Hex
+Interference
+Magic missile
+Tasha's hideous laughter
+Silent image
+Sleep
+Speak with animals
+Wrathful smite
+2 shards
+Augury
+Befuddling Curse
+Crown of madness
+Enhance ability
+Enlarge/reduce
+Enthrall
+Hold person
+Immovable object
+Knock
+Levitate
+Locate creature
+Locate object 
+Mind spike
+See invisibility
+Suggestion
+Zone of truth
+3 shards
+Beacon of hope
+Bestow curse
+Catnap
+Clairvoyance
+Enemies abound
+Fast friends
+Fear
+Haste
+Hypnotic pattern
+Major image
+Nondetection
+Plia's translocation
+Sending
+Speak with dead
+Spectral passage
+Tongues
+4 shards
+Charm monster
+Compulsion
+Confusion
+Divination
+5 shards
+Commune
+Dream
+Geas
+Hold monster
+Modify memory
+Rary's telepathic bond
+Scrying
+Synaptic static
+Telekinesis
+Wall of force
+6 shards
+Find the path 
+Globe of invulnerability 
+Mental prison
+Move earth
+Otto’s irresistible dance
+Programmed illusion
+True seeing
+7 shards
+Mirage arcane
+Power word pain
+Project image
+Reverse gravity
+8 shards
+Antipathy/sympathy
+Dominate monster
+Feeblemind
+Glibness
+Mind blank
+Power word stun
+Telepathy
+9 shards
+Astral projection
+Foresight
+Psychic scream
+Weird
+Obscurus arcana beginning and suppress memory
+Your mental and physical conditioning allow you to conceal your spellcasting and spells from others. You learn the mage hand cantrip. When you cast mage hand, you can make the spectral hand invisible. Controlling its movement still takes an action, but special timings (free actions, reactions and bonus actions, such as for drawing a weapon, turning a key, hand an item, grab an item from your pouch, closing a door) carry to your mage hand, as if it was one of your normal hands. The limitations on contested athletics checks and its base athletics aspect don't change. You also gain the following benefits with it:
+• You can add your dexterity bonuses to stow one object the hand is holding in a container worn or carried by another creature.
+• You can add your dexterity bonuses to retrieve an object in a container worn or carried by another creature.
+• You can use any tools you are proficient with at the reach of your mage hand, with your normal bonuses, as if you were doing it yourself, but the dm might apply time penalties for doing it with one free hand, depending on the activity.
+• When you cast a spell with a range of touch, your spectral hand can deliver the spell as if it had cast the spell. 
+Additionally, the current contents of your spellbook, as well as any spells you learn by gaining wizard levels, are committed to memory. Your memory is considered a spellbook. You can add spells to your memory as you would to a spellbook by spending time and gold as normal, to utilize mnemonic tools and purchase research materials. 
+You can befuddle a creature's mind with nothing but a gesture. As an action, you can force up to your effective wizard level (5) creatures you can see within 30 feet of you to make a mind saving throw against your wizard spell as. The creatures don’t register this attempt. On a failed save, you can force the creature to forget a single aspect of a conversation, observation or encounter it had, that you know of, in the past 10 minutes, such as your physical appearance, a question it was asked or an insult that was made, or a short action an ally performed. It can’t forget it was affected by a magical effect if it knows it already, neither can it forget it was attacked by someone. Even without the core memory forgotten, it remains with the feelings that that event caused on it but not knowing precisely why and generally shrugging it off except if it is hypersensitive to it or predisposed to act accordingly  to its unexplainable instincts somehow (such as a guard whose duty is to spot strange events being persistently pushed to investigate his surroundings by a ‘hint’, or an avenger having the feeling it saw something that would lead him to its revenge and searching for it against all logic, or even a compulsive brawler thinking it maybe has been insulted but not remembering the insult or who made it, instead attacking a random innocent bypasser).
+A remove curse or greater restoration spell cast on the creature can restore its memory to normal. Whether the creature succeeds or fails their saving throw, you can't use this feature on them again until you finish a long rest. You can use this feature a number of times equal to rounddown(concentration aspect/2) (minimum of 1). You regain any expended uses when you finish a long rest.
+Background:
+Dissident
+Have enemies? Good, that means you stood for something, sometime in your life. For you, that was taking a stand against the status quo back home. Whether it was against scheming merchant lords or an oppressive aristocracy, you made your voice heard to push for change… and perhaps its the reason why you're now adventuring, having left your home to gather allies or flee retribution. 
+Proficiencies. Convincing, Stealth 
+Tool Proficiencies. Choose one from among: thieve’s tools, a disguise kit, or a forgery kit. 
+Languages. One of your choice. 
+Equipment. One artisan tool of your choice, or a disguise kit, or thieve’s tools or a forgery kit, a set of traveler's clothes, and a pouch of 15 gold. 
+Feature: rebel kinship
+You are part of a network of fellow dissidents. Although you may not always agree on the methods of dissent with your fellow members, they are willing to create distractions in public, provide safe passage, and inform you of the patrol routes of guards, the military and other law enforcement in the cities and territories in which they are active. Dissidents also have a foot in a varied assortment of spheres of society, as they need the assistant of everyone they can get their hands on for their cause and have to keep an eye on everyone else; some might have connections with the criminal underworld and know the shakers and movers, whose officials to bribe and where to go to get a shady job done, but most criminals don’t believe in the cause and just associate with the rebellion in an transactional fashion, if at all, given that involving oneself with the rebellion put a mandatory target on their back from agents of law that might otherwise turn a blind eye to normal criminal activity (if properly motivated), thus requiring heavy payment for their services or outright refusing the offer. Other dissidents might have built a net of informants and spies that gather all the court secrets and intrigues, and have knowledge of the key figures of government and their personal lives and routines, as well as the political movements running behind the stage. Os rebeldes me reconhecem, mas eu não os reconheço de volta.
+Race:
+Variant Human
+It’s hard to make generalizations about humans, but your human character has these traits.
+Stat increase. Two different stats of your choice increase by 1 or one stat increases by 2.
+
+Feat. You gain one feat of your choice.
+Age. Humans reach adulthood in their late teens and live less than a century.
+Alignment. Humans tend toward no particular alignment. The best and the worst are found among them.
+Size. Humans vary widely in height and build, from barely 5 feet to well over 6 feet tall. Regardless of your position in that range, your size is medium.
+Speed. Your base walking speed is 30 feet.
+Languages. You can speak, read, and write common and one extra language of your choice. Humans typically learn the languages of other peoples they deal with, including obscure dialects. They are fond of sprinkling their speech with words borrowed from other tongues: orc curses, elvish musical expressions, dwarvish military phrases, and so on.
+Skills. You gain proficiency in one non-offensive aspect of your choice.
+Future:
+Modify spell
+In your magical research, you have unlocked the secrets of Modify Spell and add that spell to your spellbook.
+Modify spell
+4 bso transmutation (ritual) 
+Casting Time: 1 minute
+Range: Self
+Component: V, S, M (your spellbook)
+Duration: Instantaneous
+Using arcane formulas in your spellbook, you magically alter one spell you have prepared. You can change the spell’s color, sound, and smell, and you make one of the following modifications to the spell:
+Components. Remove one of the spell’s components: Verbal, Somatic, or Material. You can’t remove the Material component of a spell that consumes that component or specifies its cost.
+Focusing. If the spell requires focusing, damage can’t break your focusing on the spell.
+Range. If the spell has a range of at least 5 feet and doesn’t have a range of Self, increase its range by a number of feet equal to 30 times your effective wizard Wizard level.
+Ritual. If the spell lacks the Ritual tag and has a casting time of at least 10 minutes, give it the Ritual tag.
+Targets. If the spell affects one or more creatures and doesn’t have a range of Self, it now affects only your allies or enemies (choose which when you cast Modify Spell).
+The chosen alteration lasts until you cast Modify Spell again or you finish a Long Rest. 
+Kicker. When you cast this spell using 5 or more shards, you can choose an additional spell modification for each shard above 4.
+Spell mastery
+You have achieved such mastery over certain spells that you can cast them at will. Choose a 1 base shard output wizard spell and a 1 or 2 base shard output wizard spell that are in your spellbook (quando river old ways, escolher interference (1) e detect thoughts (2)). You can cast those spells at their base shard output without expending shards when you have them prepared. If you want to cast either spell at a higher total shard output (with a kicker cost), you must expend shards as normal but regain 1 shard back for the 1 base shard output spell and 2 for the 2 base shard output spell.
+By spending 8 hours in study, you can exchange one or both of the spells you chose for different spells with the same base shard outputs.
+Familiar:
+Spider (João-com-braço)
+Tiny beast, unaligned
+Aa. -4
+Pcn. 1 (1d4 - 1)
+Speed. 20ft., climb 20ft.
+Body 5 (-5) senses 16 (+6) mind 1 (−9) soul 6 (-4) vitality -1 
+Skills. Stealth +10
+Senses. Darkvision 30ft, passive perception +0
+Challenge 0 (10 xp)
+Spider climb. The spider can climb difficult surfaces, including upside down on ceilings, without needing to make a check.
+Web sense. While in contact with a web, the spider knows the exact location of any other creature in contact with the same web.
+Web walker. The spider ignores movement restrictions caused by webbing.
+Undesired hitchhiker. The spider can occupy another creature's space and vice versa. The spider has advantage (anterior type) on stealth checks as long as it remains stationary on a creature's body.
+Mount:
+Giant salamander (Come-bosta jr.)
+Small-medium beast, unaligned
+Aa -2
+Pcn 7 (2d6) 
+Speed 40 ft., Climb 15 ft., Burrow 5 ft.
+Body senses mind soul vitality
+13 (3) 10 (0) 3 (-7) 6 (-4) 0
+Damage vulnerability. The giant salamander has vulnerability to fire damage. 
+Senses passive perception 9
+Languages
+Challenge 0 (10 xp)
+Amphibious. The giant salamander can breathe air and water.
+Amphibious climb. The giant salamander can climb difficult surfaces, including upside down on ceilings, without needing to make a check.
+Dry skin. The giant salamander has to keep its skin moist or it will take one level of exhaustion for each half hour it remains in a dry climate unattended. It takes about twice the amount of water that a medium creature needs to keep the salamander hydrated, and another creature have to spend an action roughly every half hour to moisten the salamander's skin if no body of waters where the salamander can douse itself are nearby. In extremely hot and dry climates (such as the elemental plane of fire), the DM might rule that the salamander needs even more water and attention. 
+Items: 
+Stonespeaker crystal (10 charges) (attunement)
+Created by the stone giant librarians of Gravenhollow, this nineteen-inch-long shard of quartz grants you advantage (anterior type) on Investigation checks while it is on your person.The crystal has 10 charges. While holding it, you can use an action to expend some of its charges to cast one of the following spells from it: comprehend languages (1 charge), speak with animals (2 charges), speak with dead (4 charges), speak with plants (3 charges), or stone tell (3 charges).When you cast a divination spell, you can use the crystal in place of one material component that would normally be consumed by the spell, at a cost of 1 charge times the base shard output of the spell. The crystal is not consumed when used in this way.The crystal regains 1d6 + 4 expended charges daily at dawn. If you expend the crystal's last charge, roll a d20. On a 1, the crystal vanishes, lost forever.
+Lupine mask
+While wearing this dark ceramic mask, you have advantage (anterior type) on awareness checks relying on hearing and smell, as well as on Animal Handling checks made to interact with wolves and other canines.
+Bag of holding (disguised as a small coco hat)
+
+This bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 15 pounds, regardless of its contents. Retrieving an item from the bag requires an action. If the bag is overloaded, pierced, or torn, it ruptures and is destroyed, and its contents are scattered in the Astral Plane. If the bag is turned inside out, its contents spill forth, unharmed, but the bag must be put right before it can be used again. Breathing creatures inside the bag can survive up to a number of minutes equal to 10 divided by the number of creatures (minimum 1 minute), after which time they begin to suffocate. Placing a bag of holding inside an extradimensional space created by a Heward's handy haversack, portable hole, or similar item instantly destroys both items and opens a gate to the Astral Plane. The gate originates where the one item was placed inside the other. Any creature within 10 feet of the gate is sucked through it to a random location on the Astral Plane. The gate then closes. The gate is one-way only and can't be reopened.
+Feats:
+Skilled
+You gain proficiency in any combination of three aspects or tools of your choice. You may instead gain expertise in aspects or tools you already are proficient in, which means you add double your proficiency bonus to checks you make with them.
+Quick Fingered
+Your nimble fingers and agility let you perform dexterity. You gain the following benefits:
+Increase your Senses stat by 1, to a maximum of 20.
+You gain proficiency in the dexterity aspect. 
+As a bonus action, you can make a dexterity check to plant something on someone else, conceal an object on a creature, lift a purse, or take something from a pocket.
+Practiced Expert (extra 1 lvl feat)
+You have honed your proficiency with particular skills or tools, gaining the following benefits:
+Increase one stat of your choice by 1, to a maximum of 20.
+You gain proficiency with one aspect, knowledge field or tool of your choice. You may instead gain expertise in one aspect you are proficient in, which means you add double your proficiency bonus to checks you make with them. 
+Choose one of your aspect proficiencies. You gain expertise with it.
+
+Want:
+¿¿¿
+
+A pair of worn leather boots. The wearer gains the benefit of pass without trace.
+Pink bead
+When smashed on the ground as a reaction or bonus action, immediately turns into a huge mountain of fluffy bubbles, similar in consistency to a mass of fused marshmallows. Can cushion a fall or block a hallway or something. 10' in diameter, can be cut through with 6 slashing attacks, lasts 1d6 minutes.
+
+Donkey legs
+These wooden donkey legs can be attached to anything (but are not strong enough to carry literally anything). Once attached, the thing will follow you around like a loyal donkey. For example, you can attach them to a heavy statue and then have it walk itself out of the dungeon. Donkey legs are as strong as two donkeys!. A comand word deataches them.
+Conch pin
+This pin about the size of a fingernail comes in pair with a silver water mirror. When filled with water, its surface displays the current surroundings of the pin in the form of shadowy outlines of corridors and walls, like a tridimensional plant, which can be turned to show other angles by sliding a finger through the mirror's edge, out of a range of 40 ft. It also shows creatures within range as little dots of blue flame, with varied size based on the creature’s CR. Water that stays in the mirror slowly turns salty overtime.
+Miser's flute
+When played, all unsecured coins in 20' will leap up and roll after you. They will follow you as long as you play, and as fast as normal running speed. Uphill is fine, stairs are not.
+Cursed matches
+When lit, the match does not ignite. Instead, whatever the striker is looking at catches fire. (Tiny match-sized fire. Does no damage unless allowed to progress).
+Ring that makes the wearer appear to be dead and rotten, without pulse, breath and body heat
+Penny of thoughts
+When a creature touches this coin, which looks like an ordinary copper piece, it immediately blurts out what it was thinking. After a creature is affected by this item, it is immune to its effects for 24 hours.
+Coin of palpable value
+A very shiny and attractive fake coin. As an action you can throw or place the coin on the ground and speak a command word making it entrance any person that sees it. Any humanoid within a 30 foot radius of the coin that can see it must make a soul saving throw. On a success they recognise the coin as fake, on a failure they become consumed with the urge to own the coin for 1 minute. Any attempts to pick it up by a charmed humanoid requires an AC -20 athletics check.
+Coin Saving throw AS Rarity
+Copper +0 Uncommon
+Silver -4 Uncommon
+Electrum -8 Rare
+Gold -12 Rare
+Platinum -16 Very Rare
+Coin of decisionry
+Varies, wondrous item
+
+Starting at rank 2, your coin of decisionry becomes a common magic item. When you flip the coin, it always lands with the acquisitions incorporated sigil face down, and a message appears on the "tails" face. 
+Roll a d4 on the following table to determine the message.
+D4	decision
+1	lucrative
+2	brand appeal
+3	indeterminate
+4	ruinous	
+the coin has absolutely no divination abilities, and its results when you use it are random. But nobody else knows that. When a creature within 10 feet of you flips the coin (after having had its powerful prognostication powers dutifully explained), you can exert your will to control its operation as a bonus action, choosing the result that appears after it lands as a means of gently coercing the user toward a specific course of action. The creature flipping the coin can detect your manipulation with a successful ac -6 awareness or investigation check. 
+Better odds. When you reach rank 3, your coin of decisionry gains a measure of actual divination power and becomes an uncommon magic item. In addition to its normal function, you can use an action to flip the coin of decisionry twice while pondering a specific plan or objective, noting both random results. If you succeed on an ac +0 arcana check, you learn which of the two results is more applicable to the course of action. This property of the coin can't be used again until the next dawn.
+Colorthief's brush
+This paintbrush has a needle on the back. If you prick something, you steal all the color from it, but can later paint with those same brilliant colors (stored in the brush, controlled by imagination). If a book is pricked, it will steal the words. The book can then be reconstructed, but it takes a few days of writing for it to be recovered.
+A small bag of red powder
+When poured into the mouth of a dead body, the body dissolves into soil in an hour.
+Boots of the aristocrat
+When you click them together, your clothes become clean, your skin becomes perfumed, and your hair is styled.
+A rock that, when thrown, always hits its target
+
+Always. Cannot do anything that you couldn't conceivably do with a really lucky throw.
+Palette of all colors
+Contains 7 mundane palettes (ROYGBIV) and 1 color that is invisible to humans. If the invisible color is painted on a wall, it allows people to see through it. Can paint up to a 3' diameter spot, or 10 3" peepholes. Penetrates no more than 6". Getting it on someone's face blinds them.
+Silver silk handkerchief
+3' on a side. On the command word, it becomes as hard as thick steel. A second command word reverts.
+Silver silk rope
+As above, except a rope. 25'.
+Dust of de-appearance
+Can make things invisible, but wears off if the object moves, is moved, or even wiggles a bit. Best used on inanimate objects or people who can hold really, really, still.
+Uncommon
+Piwafwi (cloak of elvenkind)
+This dark spider-silk cloak is made by drow. It is a cloak of elvenkind. It loses its magic if exposed to sunlight for 1 hour without interruption.While you wear this cloak with its hood up, awareness checks made to see you have disadvantage (anterior type) and you have advantage (anterior type) on stealth checks made to hide, as the cloak's color shifts to camouflage you. Pulling the hood up or down requires an action.
+Decanter of endless water
+This stoppered flask sloshes when shaken, as if it contains water. The decanter weighs 2 pounds.you can use an action to remove the stopper and speak one of three command words, whereupon an amount of fresh water or salt water (your choice) pours out of the flask. The water stops pouring out at the start of your next turn. Choose from the following options:"stream" produces 1 gallon of water."fountain" produces 5 gallons of water."geyser" produces 30 gallons of water that gushes forth in a geyser 30 feet long and 1 foot wide. As a bonus action while holding the decanter, you can aim the geyser at a creature you can see within 30 feet of you. The target must succeed on a as -6 body saving throw or take 1d4 bludgeoning damage and fall prone. Instead of a creature, you can target an object that isn't being worn or carried and that weighs no more than 200 pounds. The object is either knocked over or pushed up to 15 feet away from you.
+
+Boots of elvenkind
+While you wear these boots, your steps make no sound, regardless of the surface you are moving across. You also have advantage (anterior type) on stealth checks that rely on moving silently.
+Wand of secrets
+The wand has 3 charges. While holding it, you can use an action to expend 1 of its charges, and if a secret door or container or trap is within 30 feet of you, the wand pulses and points at the one nearest to you. The wand regains 1d3 expended charges daily at dawn.
+Bags of transference
+These two bags are always found as a pair. They each have a capacity equal to a pouch. Items inside the pouches cannot be located by magic or other supernatural means, though the bags themselves can be located by those methods.
+
+As a bonus action, a creature that knows the bag's command words can speak them, causing each bag's contents to switch to the other. There is no range limit to this feature, though both bag's must be on the same plane of existance, or the words have no effect.
+
+Very rarely, a set of more than two bags might be linked together. In this case, the command words cause the contents of the bags to cycle between the bags in a predetermined and unchanging order.
+Cumulus horn
+This hunting horn is made of pearly white metal and streaked through with veins of cyan crystal. It can be used as a normal musical instrument by anyone with proficiency in wind or brass instruments.
+Once per day, as an action, you can blow a specific tune on the horn and cause its bell to emit a thick pillar of cloud. This cloud is in the shape of a ten-by-ten-foot line that can extend up to 60 feet in a direction you designate.
+Vision through the cloud's area is heavily obscured, and it lasts for an hour or until a wind of 10 mph or stronger disperses it.
+Dust of dryness
+This small packet contains 1d6 + 4 pinches of dust. You can use an action to sprinkle a pinch of it over water. The dust turns a cube of water 15 feet on a side into one marble-sized pellet, which floats or rests near where the dust was sprinkled. The pellet's weight is negligible. Someone can use an action to smash the pellet against a hard surface, causing the pellet to shatter and release the water the dust absorbed. Doing so ends that pellet's magic. An elemental composed mostly of water that is exposed to a pinch of the dust must make a AS -6 Body saving throw, taking 10d6 necrotic damage on a failed save, or half as much damage on a successful one.
+Immovable rod
+This flat iron rod has a button on one end. You can use an action to press the button, which causes the rod to become magically fixed in place. Until you or another creature uses an action to push the button again, the rod doesn't move, even if it is defying gravity. The rod can hold up to 8,000 pounds of weight. More weight causes the rod to deactivate and fall. A creature can use an action to make a AC -40 Body check, moving the fixed rod up to 10 feet on a success.
+Slippers of spider climbing (requires attunement)
+While you wear these light shoes, you can move up, down, and across vertical surfaces and upside down along ceilings, while leaving your hands free. You have a climbing speed equal to your walking speed. However, the slippers don't allow you to move this way on a slippery surface, such as one covered by ice or oil.
+Lantern of revealing
+While lit, this hooded lantern burns for 6 hours on 1 pint of oil, shedding bright light in a 30-foot radius and dim light for an additional 30 feet. Invisible creatures and objects are visible as long as they are in the lantern's bright light. You can use an action to lower the hood, reducing the light to dim light in a 5-foot radius.
+Hand of thieves
+This skeletal hand grabs anything put in its palm, but with a force equivalent to a firm handshake, making the grip easily broken. When a candle is held by the hand, it lights up with a blue-shy sickening radiance to the person in possession of this item, providing light as normal to that person, but not emitting heat and, in fact, its light not being seen by others. The candle is not consumed while lit in this way.
+Rare
+Dead man’s hands
+These gloves are made from the bones of a pickpocket’s severed hand. At dusk they gain a number of charges equal to your RoundDown(Mobility aspect/2) up to a maximum of five charges.
+If it has charges available, you can add advantage (intermediate type) to a dexterity check. You only lose a charge if it's used in the roll.
+Ring of feather falling (attunement)
+When you fall while wearing this ring, you descend 60 feet per round and take no damage from falling.
+Broom of flying
+This wooden broom, which weighs 3 pounds, functions like a mundane broom until you stand astride it and speak its command word. It then hovers beneath you and can be ridden in the air. To ride the broom, at least one creature must use its hands to steer and control its movement, being unable to make attacks or perform other activities ]that use their hands, or cast spells with somatic components. If no creature is steering the broom while it is being ridden, the broom plummets to the ground. It has a flying speed of 50 feet and can’t take actions. It can carry up to 400 pounds, but its flying speed becomes 30 feet while carrying over 200 pounds. The broom stops hovering when you land. You can send the broom to travel alone to a destination within 1 mile of you if you speak the command word, name the location, and are familiar with that place. The broom comes back to you when you speak another command word, provided that the broom is still within 1 mile of you.
+Winged boots (attunement)
+While you wear these boots, you have a flying speed equal to your walking speed. You can use the boots to fly for up to 4 hours, all at once or in several shorter flights, each one using a minimum of 1 minute from the duration. If you are flying when the duration expires, you descend at a rate of 30 feet per round until you land. The boots regain 2 hours of flying capability for every 12 hours they aren't in use.
+Cube of force (attunement)
+This cube is about an inch across. Each face has a distinct marking on it that can be pressed. The cube starts with 36 charges, and it regains 1d20 expended charges daily at dawn. You can use an action to press one of the cube's faces, expending a number of charges based on the chosen face, as shown in the cube of force faces table. Each face has a different effect. If the cube has insufficient charges remaining, nothing happens. Otherwise, a barrier of invisible force springs into existence, forming a cube 15 feet on a side. The barrier is centered on you, moves with you, and lasts for 1 minute, until you use an action to press the cube's sixth face, or the cube runs out of charges. You can change the barrier's effect by pressing a different face of the cube and expending the requisite number of charges, resetting the duration. If your movement causes the barrier to come into contact with a solid object that can't pass through the cube, you can't move any closer to that object as long as the barrier remains.
+Cube of force faces
+Face charges effect
+1 1 gasses, wind, and fog can't pass through the barrier.
+2 2 nonliving matter can't pass through the barrier. Walls, floors, and ceilings can pass through at your discretion, but if you choose to make an object partially passing through the barrier to no longer pass, either the cube or the object moves in order to accommodate the change. Only the one of the two requiring the least force in order to move the necessary amount, and creatures holding the cube might have to perform an athletics check at the dm’s discretion to maintain the cube in place. If too much force is needed to push the cube or the object out of the way, the cube can instead simply break, at the dm discretion.
+3 3 living matter can't pass through the barrier, the same rule for moving out of the way of the above applies to partially passing living matter, and creatures trying not to be pushed can perform an athletics check to resist being moved.
+4 4 spell effects can't pass through the barrier, like per the antimagic field spell.
+5 5 nothing material can pass through the barrier. Walls, floors, and ceilings can pass through at your discretion. The same rules for moving out of the way described in the second effect applies to every affected matter partially passing through the cube or those that you choose to no longer pass, in the case of walls, floors and ceilings. 
+6 0 the barrier deactivates.
+The cube loses charges when the barrier is targeted by certain spells or comes into contact with certain spell or magic item effects, as shown in the table below.
+Spell or item charges lost 
+Disintegrate 1d12 
+Horn of blasting 1d10 
+Passwall 1d6 
+Prismatic spray 1d20 
+Wall of fire 1d4
+Common
+Boots of false tracks
+Only humanoids can wear these boots. While wearing the boots, you can choose to have them leave tracks like those of another kind of humanoid of your size.
+Pole of collapsing
+While holding this 10-foot pole, you can use an action to speak a command word and cause it to collapse into a 1-foot-long rod, for ease of storage. The pole's weight doesn't change. You can use an action to speak a different command word and cause the rod to revert to a pole, however, the rod will elongate only as far as the surrounding space allows, fixitanting on that size as solid as always until you shrink it again, and then revert it again, now in different space, to a new size.
+Ring of gravity reversal
+Any object slipped through this 5 ft. diameter iron ring will have its gravity reversed for the next three seconds. This includes liquids.
+Very rare
+Ilusionist's bracers (attunement)
+A powerful illusionist of house dimir originally developed these bracers, which enabled her to create multiple minor illusions at once. The bracers' power, though, extends far beyond illusions. While wearing the bracers, whenever you cast a cantrip, you can use a bonus action on the same turn to cast that cantrip a second time.
+You can use your bonus action to change the nature of any number of illusion spells that have a duration of 1 minute or longer you’ve cast (using the spell's normal parameters for each illusion), provided that you can see those illusions.
+Sorting beast
+The sorting beast is a six-legged construct with eyes and antennae at both ends and an array of measuring devices near its center. It has a set of legs on both ends, and either set can manipulate and hold objects up to 30 points in weight.
+When activated as an action, the sorting beast sets about collecting and sorting all loose valuable items within 100 feet. It sorts all gold pieces, silver pieces, and copper pieces into neat stacks of 10. For material goods, such as precious stones, the sorting beast can appraise value by weight and quality, before sorting the goods appropriately and printing the result on a fine paper strip. The sorting beast continues sorting until finished or deactivated as an action.
+Additionally, the sorting beast can cast the spell identify on one object you designate each day.
+Portal chalk
+Each of these two pieces of chalk radiate a different luminescent aura; one orange, the other blue. Each piece of this chalk is finite, being reduced to nothing after 10 uses each. As an action, you can expend a use of this chalk to draw a circular or rectangular portal on a solid stone surface large enough for a medium creature. This portal instantly becomes linked to the most recent portal drawn with the other color of chalk, unlinking any portals other than these two. An unlinked portal is simply mundane chalk on the surface it was drawn. A pair of linked portals act as a magical gate.
+Anything that moves through the front of one portal instantly transports to the other. When a portal becomes unlinked, it ejects matter that is partially on both sides (passing through the opening) to the one of them that the matter was mostly in.
+Nolzur's marvelous pigments
+Typically found in 1d4 pots inside a fine wooden box with a brush (weighing 1 pound in total), these pigments allow you to create three-dimensional objects by painting them in two dimensions. The paint flows from the brush to form the desired object as you focus on its image.Each pot of paint is sufficient to cover 1,000 square feet of a surface, which lets you create inanimate objects or terrain features—such as a door, a pit, flowers, trees, cells, rooms, or weapons—that are up to 10,000 cubic feet. It takes 10 minutes to cover 100 square feet.When you complete the painting, the object or terrain feature depicted becomes a real, nonmagical object. Thus, painting a door on a wall creates an actual door that can be opened to whatever is beyond. Painting a pit on a floor creates a real pit, and its depth counts against the total area of objects you create.Nothing created by the pigments can have a value greater than 25 gp. If you paint an object of greater value (such as a diamond or a pile of gold), the object looks authentic, but close inspection reveals it is made from paste, bone, or some other worthless material.If you paint a form of energy such as fire or lightning, the energy appears but dissipates as soon as you complete the painting, doing no harm to anything.
+Abracadabrus
+An abracadabrus is an ornate, gemstone-studded wooden chest that weighs 25 pounds while empty. Its interior compartment is a cube measuring 1 1/2 feet on a side.
+The chest has 20 charges. A creature can use an action to touch the closed lid of the chest and expend 1 of the chest's charges while naming one or more nonmagical objects (including raw materials, foodstuffs, and liquids) worth a total of 1 gp or less. The named objects magically appear in the chest, provided they can all fit inside it and the chest doesn't contain anything else. For example, the chest can conjure a plate of strawberries, a bowl of hot soup, a flagon of water, a stuffed animal, or a bag of twenty caltrops. Food and drink conjured by the chest are delicious, and they spoil if not consumed after 24 hours. Gems and precious metals created by the chest disappear after 1 minute.
+The chest regains 1d20 expended charges daily at dawn. If the item's last charge is expended, roll a d20. On a 1, the chest loses its magic (becoming an ordinary chest), and its gemstones turn to dust.
+Amulet of the faceless
+While wearing this amulet, you can mask your ego into the magic around you, and prey on those searching for information they don’t have the right for. You are immediately aware of any magical attempt to directly get information about you or from you, no matter the distance of the origin of such attempt. This includes divination spells, item abilities and class or racial features, and other magical effects, including those that show a piece of the past where you are present or mentioned, spells that answer questions about you, effects that sense the presence of living beings and marks and curses that convey information about their bearer. This effect doesn't include creatures giving information about you under effects that would compel them, but effects probing their mind and getting their memories are eligible.
+If the attempt didn't require any check or saving throw, you can make a mind check contested by the origin’s mind check or a static difficulty determined by the dm in cases where the origin lacks this option. The origin doesn’t register this check. If the attempt already requires a check or saving throw, you use the result from that instead. If you fail, nothing happens and the effect continues as normal. If you succeed, you know the nature of the attempt, how it works and even receive what would be known before the origin does as if you were a censorship agency in the path of the broadcast. Succeeding doesn’t mean the attempt fails (for instance, those that didn't have a failing conditions to begin with don’t fail), and even if it would fail, you can perform the following alterations:
+You can allow the attempt to proceed as if you didn’t succeed the check or saving throw, and the origin doesn’t know you let it proceed despite succeeding.
+You can end an effect that didn't have a failing condition on you.
+You can alter the location or direction being informed to another in the range of the attempting effect, or cause it to inform that you are not in range. The origin automatically performs an investigation check against your wizard spell as to determine if the information has been altered; if it fails, it doesn’t suspect anything.
+You can alter yes or no answers and other information in the shape of words, as long as you maintain coherence in the type of answer (such as informing another creature type other than your own, since this was the original information). The origin automatically performs an investigation check against your wizard spell as to determine if it has been altered; if it fails, it doesn’t suspect anything.
+You can obscure and alter revealing details of an audiovisual information as much as you wish before delivering the result to the origin. Choose audio or visual. If you choose audio, you can erase words spoken and sounds and distort voices to be undistinguishable. If you choose visual, you can blur elements such as faces, the background, clothing, documents or items. You can choose this option more than once and select both audio and visual. These alterations mentioned above are instantly recognizable.
+When you choose this option, you can also mimic voices you have familiarity with and alter words, faces and other visual elements (clothing, items, background) as if you were reproducing any effect of quintessential illusion spells (minor illusion, major image, etc), but with greater detail and control. The origin may attempt  an investigation check against your wizard spell as (no action required) to determine if and what have been changed, but can’t know the original except by deducing from elements such as timing, upper limits for size and inconsistencies. See the illusion section in the spells folder for more information on discerning illusions.
+You can attempt to briefly reverse the effect, as a magical channel has been created and can be accessed from both sides, forcing the origin to reveal an information of similar nature to you instead if possible (for instance, there may not be an equivalent replacement for the targeted element of the effect, such as with the sanguine visions feature of the barbarian, or the sorcerer’s dark reconstitution), at the dm discretion. The origin must make a mind saving throw against your wizard spell as, and if it succeeds, nothing happens. Otherwise, you gain a dulled sample of the effect. For instance, you can reverse the detect thoughts or scrying spells, but only gain a brief glimpse from them, with scattered and flashing images beyond your control, at the dm discretion. These generally only target the source, even if they originally have multiple targets or the possibility of changing targets. The origin only registers that the effect is targeting him if the effect itself says that the target becomes conscious of it. If you try this mode, you can’t choose any other.
+Finally, while wearing this amulet you can make pacts with the dead, plants and creatures so that they can’t disclose information about you, even when magically compelled or with its memories stolen, as if you had erased their minds of everything in regard to even the most tangentially related information about you. To do so, you and the target must be able to communicate (this can be done via an intermediate), touch the amulet simultaneously and make a verbal agreement on which both parties are satisfied and informed of the rules; the agreement cannot be forced or be based on a direct lie, neither done without the partial presence of consciousness and agency of the target, although they can be somehow altered, such as with the charmed condition. You can stipulate exceptions for the disclosure of certain information under provided circumstances during the agreement. If you break promises made in this pact, the pact becomes null and void and the effect ends, but there can be well hidden loopholes in the terms. This pact can’t be detected or removed by anything short of a wish spell, and it remains even if you stop wearing the amulet.
+Magical arcanum of ritual spells (attunement)
+This tome can assume the form of any type of spellbook in a way that each class with the spellcasting feature can understand it as a font of magical knowledge. It displays the ancient druid’s writing and transcriptions of their oral tradition, or a magical copy of a sorcerer’s magic inscriptions in their skin. Either way, while attuned to this item, you know a number of spells with the ritual tag from any classes determined by the DM, and can prepare them with any of your spellcasting features.
+Additionally, copying spells with the ritual tag using any spellcasting feature doesn’t cost gold and can be accomplished in half the time.
+Finally, spells cast as rituals using any spellcasting feature only take an extra 5 minutes to be cast, instead of 10. 
+Magical arcanum of… spells (attunement)
+Same as above with another group of spells. Those groups can be: spells from a specific school of magic, that inherently deal a specific type of damage, have the same range, class, area of effect (cone, line, sphere), duration, component or base shard output, wall spells, hexes, summoning spells, having consumed materials with cost, etc. Copying spells of the chosen group using any spellcasting feature doesn’t cost gold and can be accomplished in half the time.
+Additionally, you have another simple effect related to the group of spells, such as gaining resistance against the corresponding damage type, gaining temporary pcn after casting such spells or only needing to consume materials worth half as much, not requiring either verbal or somatic components, increasing their range or duration, creating walls with higher combined length, spells of that group being treated as being cast with a tso one higher when cast at is bso (this increase determines the effect of the spell as if it was cast at the new tso, but doesn’t change its shard cost (tso) and the count towards saturation increased remains the original tso), etc. Be creative!
+Legendary:
+Shroud of oblivion (attunement)
+This seemingly mundane cloak is imbued powerful enchantment and illusion magic. You gain the following benefits while wearing this cloak: 
+Creatures that see you during that time can't recall your physical appearance, your mannerisms, or any other identifying features. 
+When you cast an enchantment spell that charm one or more creatures, you can alter any of those creatures’ understanding so that it remains unaware of being charmed.
+Creatures that interact with you must make a mind saving throw against your wizard spell as once the interaction ends. They don’t register this saving throw or this effect. You can choose to exclude a creature from this effect. On a failed save, the creature forgets all details of the interaction, rationalizing any of its outcomes. A remove curse or greater restoration spell cast on the creature can restore its memory to normal. Even without the core memory, they remain with the feelings that that event caused on them, which can leave them feeling confused despite usually shrugging it off, except if they are hypersensitive to the memory or predisposed to act accordingly to their ‘‘unexplainable instincts’’, such as a guard whose duty is to spot strange events being persistently pushed to investigate their surroundings by a ‘‘hint’’, or someone blindly seeking revenge having the feeling they saw something that would lead them to it, or even a compulsive brawler thinking they may have been insulted but not remembering the insult or who made it, instead attacking a random innocent bypasser.
+Spells you cast can't be perceived by spells, features and effects that detect or react to magic, unless you choose otherwise, and leave no magical trace. 
+Amulet of Quick Casting
+The amulet has 10 charges and regains 1d10 expended charges daily at dawn.
+Bend time. When you cast a spell of 1st level or higher with a casting time longer than 1 Action, you can expend a number of charges equal to the spell's tso, assuming the amulet has the necessary charges. If you do, the casting time of the spell becomes 1 action.
+Future:
+Feats:
+Prodigy
+You have a knack for learning new things. You gain the following benefits:
+You gain one aspect or knowledge field proficiency of your choice. You may instead gain expertise in one aspect you are proficient in, which means you add double your proficiency bonus to checks you make with them.
+You gain one tool or knowledge field proficiency of your choice. 
+Choose one aspect in which you have proficiency. You gain expertise with that aspect.
+Observant (sla)
+Class features:
+Wizard:
+Ritual savant and expanded ritual casting
+The gold and time you must spend to copy a spell with the ritual tag into your spellbook is halved.
+You treat the following wizard spells as if they had the ritual tag. You still need to learn them as normal.
+New ritual spells
+BSO Spells
+1 detect magic, disguise self, false life, protection from evil and good, silent image, speak with animals
+2 alter self, arcane lock, befuddling curse, continual flame, detect thoughts, enhance ability, enlarge/reduce, invisibility, knock, rope trick, see invisibility, locate object, zone of truth, befuddling curse
+3 clairvoyance, dispel magic, glyph of warding, magic circle, remove curse, tongues, fast friends, spectral pessage, speak with dead, stone tell, speak with plants 
+4 faded imprint, Leomund's secret chest, locate creature, Mordenkainen's faithful hound, private sanctum, stone shape, hallucinatory terrain, dimension door
+5 dream, legend lore, modify memory, scrying, teleportation circle
+Scholarly pursuits and flash recall
+You gain proficiency with two types of artisan's tools of your choice.
+Additionally, casting a spell as a ritual now only adds one minute to the casting time.
+You learn to plan for any situation. As a bonus action, you can replace one spell you have prepared with another spell from your spellbook.
+You can't use this feature again until you finish a short or long rest. You must have access to your spellbook to use this feature. When you reach 10th effective wizard level, you can use this feature twice between rests.
+Indirect mischief
+You can cast spells of the schools of illusion, enchantment and divination as though you were in a position you can see through, no matter how far away, such as with the find familiar, arcane eye and scrying spells. If the spell requires an additional verbal cue, such as the command or suggestion spells, the targets hear your voice in their minds delivering the necessary elements. You can’t cast spells with a range of touch unless the recipient of your perception has a physical form and is in contact with the target, and the DM may determine that you must make an awareness check to determine if that is the case and to successfully react quick enough to seize the opportunity, if you don’t control the movements of the recipient and are unable to force contact. If the point of view in which you cast the spell ends, your position is considered as the origin of the spell, as though you had teleported from the two positions.
+Additionally, you don’t need to focus on effects and spells that allow you to sense from another position or through a sensor or another creature’s senses, if they normally require focus. 
+Accelerated Rituals
+You can accelerate the ritual process for spells with which you are exceptionally familiar. You can cast the ritual version of any 1 bso spell from your spellbook without the additional 10 minute casting time.
+You can accelerate a ritual spell in this way a number of times equal to rounddown(concentration aspect/2) (minimum of once), and you regain all expended uses when you finish a long rest.
+As you gain effective levels in this class, you learn to accelerate higher-level ritual spells: 2 bso rituals at 10th effective wizard level, 3 bso rituals at 14th effective wizard level, and 4 bso rituals at 18th effective wizard level.
+Voodoo Doll 
+You have fashioned a voodoo doll to enhance your black magic. As an action, you can modify this voodoo doll to resemble a humanoid creature you can see within 60 feet of you. For 1 minute, while the doll resembles this creature, you can target the creature with spells, melee weapon attacks, and magical effects by targeting the doll instead. The creature takes half damage from effects targeting it in this way. If you modify your doll with a possession of the target, such as fabric from its garment or a lock of its hair, the creature has disadvantage (anterior type) on saving throws against the next feature or spell you target it with.
+Illusory reality
+You have learned the secret of weaving shadow magic into your illusions to give them a semi-reality. When you expand 1 or more shards in an illusion spell, you can choose one inanimate, nonmagical object that is part of the illusion and make that object real. You can do this on your turn as a bonus action while the spell is ongoing. The object remains real for 1 minute. For example, you can create an illusion of a bridge over a chasm and then make it real long enough for your allies to cross. The illusions made real aren’t affected by gravity.
+The object can't deal damage or otherwise directly harm anyone and a creature within 5 ft. of the object becoming real can make a senses saving throw against your wizard as to move to a point of its choice up to 5 ft. away from the object, without provoking opportunity attacks. The DM might also rule that the creature can make this save in other situations when this feature is used, such as if a falling object made real would hit it.
+The Old Ways
+Your master of ritual and tradition is extensive and unparalleled, you've unlocked ancient secrets and perfected techniques to master rituals completely. Any wizard spell you know of 3 bso or lower becomes a ritual spell for you. When you cast a spell that is not normally a ritual as a ritual, it requires additional consumed material components worth 10 gold per base shard output of the spell.
+Additionally, your mastery of rituals allows you to work them more quickly, and a spell only takes additional turns equal to the spells total shard output (for example, casting a 3 total shard output spell as a ritual would take four turns to cast, casting it as your action or bonus action on the fourth turn). Spells with a casting time of a reaction cannot be cast as a ritual.
+Shroud of oblivion
+You have access to a shroud of oblivion, a cloak of powerful enchantment and illusion magic. As an action, you can don the shroud for 1 hour. For the duration, you gain the following benefits: 
+Creatures that see you during that time can't recall your physical appearance, your mannerisms, or any other identifying features. 
+When you cast an enchantment spell that charm one or more creatures, you can alter any of those creatures’ understanding so that it remains unaware of being charmed. 
+Creatures that interact with you must make a mind saving throw against your wizard spell as once the interaction ends. They don’t register this saving throw or this effect. You can choose to exclude a creature from this effect. On a failed save, the creature forgets all details of the interaction, rationalizing any of its outcomes. A remove curse or greater restoration spell cast on the creature can restore its memory to normal. Even without the core memory, they remain with the feelings that that event caused on them, which can leave them feeling confused despite usually shrugging it off, except if they are hypersensitive to the memory or predisposed to act accordingly to their ‘‘unexplainable instincts’’, such as a guard whose duty is to spot strange events being persistently pushed to investigate their surroundings by a ‘‘hint’’, or someone blindly seeking revenge having the feeling they saw something that would lead them to it, or even a compulsive brawler thinking they may have been insulted but not remembering the insult or who made it, instead attacking a random innocent bypasser.
+Spells you cast can't be perceived by spells, features and effects that detect or react to magic, unless you choose otherwise, and leave no magical trace. 
+Once you've used this feature, you can't do so again until you finish a long rest.
+Sorcerer:
+Mimic Trait
+You gain an uncanny ability to mimic other people. As an action, you gain one trait of your choice from the following list that a humanoid you can see within 60 feet pocesses (even if they only possess it temporarily):
+One special sense, such as darkvision or tremorsense.
+One movement speed, such as a swim or climb speed.
+One aspect, knowledge field, tool or instrument proficiency.
+One damage resistance.
+Their accent, verbal ticks and mannerisms.
+You can keep this trait as long as you are within 60 feet of the target, or until you use this feature again.
+Master simulator
+You have become a master of crafting and controlling simulacra. Casting the simulacrum spell and repairing damaged simulacra requires half as much time and gold. You can have up to two active duplicates created by the simulacrum spell at one time.
+Expanded ritual casting and seamless ritual
+You treat the following spells as if they had the ritual tag for your sorcerer spellcasting feature. You still need to learn them as normal.
+New ritual spells
+BSO Spells
+1 detect magic, disguise self, false life, protection from evil and good, silent image, speak with animals
+2 alter self, arcane lock, befuddling curse, continual flame, detect thoughts, enhance ability, enlarge/reduce, invisibility, knock, rope trick, see invisibility, locate object, zone of truth, befuddling curse, locate creature
+3 clairvoyance, dispel magic, glyph of warding, magic circle, remove curse, tongues, fast friends, spectral pessage, speak with dead, stone tell, speak with plants 
+4 faded imprint, Leomund's secret chest, Mordenkainen's faithful hound, private sanctum, stone shape, hallucinatory terrain, dimension door
+5 dream, legend lore, modify memory, scrying, teleportation circle
+You have reached an unparalleled understanding of ritualistic magic and its applications. You can focus on the effects of one ritual spell while focusing on another spell or effect. This includes the focusing required during longer casting times (including the potential extra time for ritual casting) for ritual spells, and you don’t need to spend your action each turn during those longer casting times for ritual spells.
+The combined tso of the spells you focus on cannot exceed your spellcasting modifier (minimum of 1), and when you are forced to make a saving throw to maintain focusing on your effects, you make one saving throw for both focusing effects.
+Improved Quickened Spell
+You learn the Quickened Spell Metamagic option. If you already know it, you can select another metamagic option of your choice. Furthermore, you can use Quickened Spell in conjunction with one other Metamagic option and, if you use Quickened Spell on a cantrip, its cost is reduced to 1 sorcery point.
+Ruin Foretold
+Your predictions of ill luck always come true, mostly because you are able to use your magic to make them happen. When you cast a spell that targets a single hostile creature (not including area of effects), you can spend 1 sorcery point to delay the onset of the spell by up to 10 minutes. You must focus on the spell while it is being delayed (as if you were focusing on a spell). Concentration is your spellcasting aspect for this effect. The spell takes effect as soon as your focusing ends, or 1 minute after you initially cast it if you maintain focusing for the whole duration.
+Seamless ritual special cases and applications
+Spell (qualquer) com focus (próprio) seguido de ritual (CAR - Cast as Ritual ou CAN - Cast as Normal com longer casting time) com ou sem focus (próprio): permite new focus no casting time extra de ritual (se CAR) + casting time original do ritual spell (se com longer casting time) + no próprio ritual spell posteriormente (se ele exigir focus); 
+Caso especial (chain ritual): enquanto focus num ritual por mais de 10 min, casta ele próprio como ritual para que quando o primeiro acabe, o segundo tome efeito.
+Durante casting de ritual spell (CAR ou CAN com longer casting time) com ou sem focus (próprio) + bonus action spell (qualquer) com focus (próprio): permite manter focus no casting time extra de ritual (se CAR) + casting time original do ritual spell (se com longer casting time) e, DURANTE O CASTING do ritual, castar o bonus action spell e criar new focus nele próprio posteriormente. Se o ritual exigir focus (póprio) posteriormente, mantém ambos os focus;
+Ritual spell (CAR ou CAN) com focus (próprio) seguido de spell (qualquer) com focus (longer casting time e/ou prórprio): permite manter focus no próprio ritual spell e castar o outro spell (incluindo longer casting time focus) e criar new focus nele próprio posteriormente.
+Qualquer - ritual tag ou não;
+Próprio - o focus necessário para manter um spell depois de castá-lo;
+Seguido - implica que o primeiro spell já foi castado.
+Se retirasse necessidade de action durante casting time extra de ritual (se CAR) e casting time original do ritual spell (se com longer casting time):
+Spell (qualquer) com focus (próprio) seguido de ritual (CAR - Cast as Ritual ou CAN - Cast as Normal com longer casting time) com ou sem focus (próprio): permite new focus no casting time extra de ritual (se CAR) + casting time original do ritual spell (se com longer casting time) + no próprio ritual spell posteriormente (se ele exigir focus); 
+Caso especial (chain ritual): enquanto focus num ritual por mais de 10 min, casta ele próprio como ritual para que quando o primeiro acabe, o segundo tome efeito.
+Durante casting de ritual spell (CAR ou CAN com longer casting time) com ou sem focus (próprio) + spell (CAR, CAN com longer casting time ou não) com focus (próprio): permite manter focus no casting time extra de ritual (se CAR) + casting time original do ritual spell (se com longer casting time) e, DURANTE O CASTING do ritual, castar outro spell e new focus no casting time extra de ritual (se CAR) + casting time original do spell (se com longer casting time) + no próprio spell posteriormente (se ele exigir focus). Se o ritual exigir focus (póprio) posteriormente, mantém ambos os focus;
+Ritual spell (CAR ou CAN) com focus (próprio) seguido de spell (CAR, CAN com longer casting time ou não) com ou sem focus (prórprio): permite manter focus no próprio ritual spell e castar outro spell e new focus no casting time extra de ritual (se CAR) + casting time original do spell (se com longer casting time) + no próprio spell posteriormente (se ele exigir focus);

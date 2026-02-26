@@ -692,6 +692,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # desc_data_list is a mutable list [text] to allow updates from popup
         self.spells = [] # List of dicts: {id, name, level, prepared, source, time, range, comp, dur, desc}
         self.spell_widgets = {} # {id: (row_frame, prep_var, name_ent, source_ent, qprep_lbl)}
+        self.spell_tracking_widgets = {} # {id: (name_ent, cur_ent, max_ent, row_frame)}
+        
+        self.SCHOOL_SYMBOLS = {
+            "Abjuration": "🛡️", "Conjuration": "🌀", "Divination": "👁️",
+            "Enchantment": "💫", "Evocation": "💥", "Illusion": "🎭",
+            "Necromancy": "💀", "Transmutation": "🧪", "Unknown": "📜"
+        }
+        
         self.quick_prep_used = BooleanVar(value=False)
         self.hit_dice_vars = {die: [StringVar(value="0"), StringVar(value="0")] for die in ["d6", "d8", "d10", "d12"]}
         
@@ -725,6 +733,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.create_features_section()
         self.create_pets_section()
         self.create_shards_section()
+        self.create_spell_tracking_section()
         self.create_spells_section()
         self.create_footer()
         
@@ -1706,7 +1715,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                  fg_color="gray25", hover_color="gray30",
                                  border_width=2, border_color=self.color,
                                  command=self._add_shard_row)
-        add_btn.pack(pady=(self.p, 0))
+        add_btn.pack()
         
         # ── Normal Arcane Resonance Grid ──
         res_header = ctk.CTkLabel(content_frame, text="Arcane resonance (normal)",
@@ -2024,7 +2033,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                  command=self._add_feature_row)
         add_btn.pack(pady=(0, self.p))
 
-    def _add_feature_row(self, name="", current="", max_uses="", reset="LR", description="", used=False):
+    def _add_feature_row(self, name="", current="", max_uses="", reset="-", description="", used=False):
         """Add a feature row with Used checkbox and locking"""
         if not self.feature_widgets:
             # Show header if this is the first item
@@ -2175,8 +2184,84 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                             fg_color=self.color, hover_color="gray30",
                             border_width=2, border_color=self.color,
                             command=save_desc)
-        btn.pack(pady=self.p)
+        btn.pack(pady=(0, self.p))
         
+    def create_spell_tracking_section(self):
+        """Dedicated tracking for Spells Known and Spells Prepared"""
+        frame = self.create_bordered_frame(self.main_frame)
+        frame.pack(fill="x", pady=(0, self.p))
+        
+        self.create_section_header(frame, "Spell Tracking")
+        
+        # Header Row
+        self.spell_tracking_header_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        self.spell_tracking_header_frame.columnconfigure(0, weight=1)
+        ctk.CTkLabel(self.spell_tracking_header_frame, text="Tracker name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(self.spell_tracking_header_frame, text="Current", font=("Roboto", 12), width=80).grid(row=0, column=1, padx=(self.p, 0))
+        ctk.CTkLabel(self.spell_tracking_header_frame, text="/", font=("Roboto", 12), width=10).grid(row=0, column=2)
+        ctk.CTkLabel(self.spell_tracking_header_frame, text="Max", font=("Roboto", 12), width=40).grid(row=0, column=3, padx=(0, self.p))
+        ctk.CTkLabel(self.spell_tracking_header_frame, text="", width=28).grid(row=0, column=4, padx=(0, self.p))
+        
+        self.spell_tracking_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
+        self.spell_tracking_container.pack(fill="x", padx=self.p, pady=(0, self.p))
+        self.spell_tracking_container.columnconfigure(0, weight=1)
+        
+        add_btn = ctk.CTkButton(frame, text="Add Tracker", font=("Roboto", 12),
+                                 fg_color="gray25", hover_color="gray35",
+                                 border_color=self.color, border_width=2,
+                                 command=self._add_spell_tracking_row)
+        add_btn.pack(pady=(0, self.p))
+
+    def _add_spell_tracking_row(self, name="", current="", max_uses=""):
+        if not self.spell_tracking_widgets:
+            self.spell_tracking_header_frame.pack(fill="x", padx=self.p, before=self.spell_tracking_container)
+
+        if self.spell_tracking_widgets:
+            row_id = str(max([int(k) for k in self.spell_tracking_widgets.keys()]) + 1)
+        else:
+            row_id = "0"
+            
+        row_frame = ctk.CTkFrame(self.spell_tracking_container, fg_color="gray25", corner_radius=6)
+        row_frame.pack(fill="x", pady=(self.p, 0))
+        row_frame.columnconfigure(0, weight=1)
+        
+        name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, placeholder_text="Name",
+                                fg_color="gray30", border_width=1, border_color=self.color)
+        name_ent.insert(0, name)
+        name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
+        name_ent.bind("<FocusOut>", self.autosave_roll_configs)
+        
+        cur_var = StringVar(value=str(current) if current else "0")
+        cur_ent = IntSpinbox(row_frame, variable=cur_var,
+                             fg_color="gray30", hover_color="gray35",
+                             color=self.color, from_=0, to_=999)
+        cur_ent.grid(row=0, column=1, padx=(self.p, 0), pady=self.p)
+        
+        ctk.CTkLabel(row_frame, text="/", font=("Roboto", 12), width=10).grid(row=0, column=2)
+        
+        max_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=40, height=22, justify="center",
+                               fg_color="gray30", border_width=0)
+        max_ent.insert(0, max_uses)
+        max_ent.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
+        max_ent.bind("<FocusOut>", self.autosave_roll_configs)
+
+        cur_var.trace_add("write", lambda *args: self.autosave_roll_configs())
+        
+        rem_btn = ctk.CTkButton(row_frame, text="×", width=22, height=22,
+                                 fg_color="gray30", hover_color="gray35",
+                                 border_color=self.color, border_width=2,
+                                 command=lambda: self._remove_spell_tracking_row(row_id))
+        rem_btn.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
+        
+        self.spell_tracking_widgets[row_id] = (name_ent, cur_ent, max_ent, row_frame)
+
+    def _remove_spell_tracking_row(self, row_id):
+        if row_id in self.spell_tracking_widgets:
+            widgets = self.spell_tracking_widgets.pop(row_id)
+            widgets[-1].destroy()
+        if not self.spell_tracking_widgets:
+             self.spell_tracking_header_frame.pack_forget()
+
     # ---------------- SPELLS SECTION ----------------
     def create_spells_section(self):
         """Spell List with Levels, Prep, and Details"""
@@ -2189,14 +2274,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Column Headers Grid
         hdr = ctk.CTkFrame(frame, fg_color="transparent", height=20)
         hdr.pack(fill="x", padx=self.p)
-        # Cols: K(20), P(20), A(20), M(20), Name(exp), Src(30), Gear(24), X(24)
-        hdr.columnconfigure(4, weight=1)
+        # Cols: K(20), P(20), A(20), M(20), Sym(24), Name(exp), Src(30), Gear(24), X(24)
+        hdr.columnconfigure(5, weight=1)
         
         labels = [("K", 0), ("P", 1), ("A", 2), ("R", 3)]
         for txt, col in labels:
             ctk.CTkLabel(hdr, text=txt, font=("Roboto", 12), width=20, text_color="gray90").grid(row=0, column=col, pady=(self.p, 0), padx=(self.p, 0))
         
-        ctk.CTkLabel(hdr, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=4, pady=(self.p, 0), padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(hdr, text="", font=("Roboto", 12), width=24).grid(row=0, column=4, pady=(self.p, 0), padx=(self.p, 0)) # Symbol column header
+        ctk.CTkLabel(hdr, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=5, pady=(self.p, 0), padx=(self.p, 0), sticky="ew")
         
         # Container for Spell Levels (height=0 to collapse when empty)
         self.spells_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
@@ -2459,6 +2545,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 "id": str(uuid.uuid4()),
                 "name": "New Spell",
                 "level": 0,
+                "school": "Evocation",
                 "known": True,
                 "prepared": False,
                 "always": False,
@@ -2470,36 +2557,40 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 "dur": "Instantaneous",
                 "desc": ""
             }
-            self.spells.append(spell_data)
-        
-        # Refresh is inefficient for single add, but easiest for sorting/grouping
-        self._update_spell_list()
-        self.autosave_roll_configs()
+            self._open_spell_details(spell_data, is_new=True)
+        else:
+            if spell_data not in self.spells:
+                self.spells.append(spell_data)
+            self._update_spell_list()
+            self.autosave_roll_configs()
 
     def _render_spell_row(self, spell, first_row=False):
         """Renders a single spell row with 4 columns (K, P, A, F)"""
         row = ctk.CTkFrame(self.spells_container, fg_color="gray25", corner_radius=6)
         row.pack(fill="x", pady=(self.p if not first_row else 0, 0))
         
-        # Grid layout: K(0) P(1) A(2) M(3) Name(4) Src(5) Gear(6) Del(7)
-        row.columnconfigure(4, weight=1) # Name entry expands
+        # Grid layout: K(0) P(1) A(2) R(3) Sym(4) Name(5) Src(6) Gear(7) Del(8)
+        row.columnconfigure(5, weight=1) # Name entry expands
         
         def create_cb(col, key, default=False, visible=True):
+            # Enforce a strict 20px width element regardless of visibility to keep alignment
+            container = ctk.CTkFrame(row, width=20, height=20, fg_color="transparent")
+            container.pack_propagate(False)
+            container.grid(row=0, column=col, padx=(self.p, 0), pady=self.p)
+            
             if not visible:
-                # Placeholder
-                ctk.CTkLabel(row, text="", width=20).grid(row=0, column=col, pady=(0, self.p))
-                return
+                return None
             
             var = BooleanVar(value=spell.get(key, default))
             def toggle(s=spell, k=key, v=var):
                 s[k] = v.get()
-                self._update_spell_list() # Immediate re-sort and UI update
+                self._update_spell_list()
                 self.autosave_roll_configs()
             
-            cb = ctk.CTkCheckBox(row, text="", variable=var, command=toggle,
-                                 checkbox_width=16, checkbox_height=16, width=20,
+            cb = ctk.CTkCheckBox(container, text="", variable=var, command=toggle,
+                                 checkbox_width=16, checkbox_height=16, width=16,
                                  fg_color=self.color, hover_color=self.color, border_color=self.color)
-            cb.grid(row=0, column=col, padx=(self.p, 0), pady=self.p)
+            cb.place(relx=0.5, rely=0.5, anchor="center")
             return var
             
         lvl = int(spell.get("level", 0))
@@ -2517,10 +2608,22 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # 4. Ritual (R) - Leveled only
         create_cb(3, "ritual", False, is_leveled)
         
+        # School Symbol Label
+        school_name = spell.get("school", "Unknown")
+        school_sym = self.SCHOOL_SYMBOLS.get(school_name, "📜")
+        
+        # Standardize width to ensure alignment
+        sym_container = ctk.CTkFrame(row, width=24, height=24, fg_color="transparent")
+        sym_container.pack_propagate(False)
+        sym_container.grid(row=0, column=4, padx=(self.p, 0), pady=self.p)
+        
+        sym_lbl = ctk.CTkLabel(sym_container, text=school_sym, font=("Roboto", 14))
+        sym_lbl.place(relx=0.5, rely=0.5, anchor="center")
+        
         # Name Entry
         name_ent = ctk.CTkEntry(row, font=("Roboto", 12), height=24, border_width=1, fg_color="gray30", border_color="gray35")
         name_ent.insert(0, spell.get("name", ""))
-        name_ent.grid(row=0, column=4, sticky="ew", padx=self.p, pady=self.p)
+        name_ent.grid(row=0, column=5, sticky="ew", padx=self.p, pady=self.p)
         def _update_name(e=None):
             spell["name"] = name_ent.get()
             self.autosave_roll_configs()
@@ -2535,19 +2638,19 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Source Label (Mini)
         src_lbl = ctk.CTkLabel(row, text=spell.get("source", "")[:3], font=("Roboto", 12), text_color="gray90", width=30)
-        src_lbl.grid(row=0, column=5, pady=self.p)
+        src_lbl.grid(row=0, column=6, pady=self.p)
         
         # Details Button
         edit_btn = ctk.CTkButton(row, text="⚙", width=24, height=24, fg_color="gray30", hover_color="gray35",
                                   border_color=self.color, border_width=2,
                                   font=("Roboto", 12), command=lambda s=spell: self._open_spell_details(s))
-        edit_btn.grid(row=0, column=6, padx=self.p, pady=self.p)
+        edit_btn.grid(row=0, column=7, padx=self.p, pady=self.p)
         
         # Delete Button
         del_btn = ctk.CTkButton(row, text="×", width=24, height=24, fg_color="gray30", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  text_color="gray90", command=lambda s=spell: self._delete_spell(s))
-        del_btn.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
+        del_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
         
         spell_id = spell.get("id", str(uuid.uuid4()))
         if "id" not in spell: spell["id"] = spell_id
@@ -2559,55 +2662,71 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self._update_spell_list()
             self.autosave_roll_configs()
 
-    def _open_spell_details(self, spell):
+    def _open_spell_details(self, spell, is_new=False):
         """Popup to edit full spell details"""
         top = ctk.CTkToplevel(self)
-        top.title(f"Edit: {spell['name']}")
-        top.geometry("350x450")
+        top.title("Add New Spell" if is_new else f"Edit: {spell['name']}")
+        top.geometry("380x520")
         top.attributes("-topmost", True)
         
         # Helpers
         def add_field(parent, label, key, row):
-            ctk.CTkLabel(parent, text=label, font=("Roboto", 12)).grid(row=row, column=0, padx=5, pady=2, sticky="e")
+            ctk.CTkLabel(parent, text=label, font=("Roboto", 12)).grid(row=row, column=0, padx=(0, self.p), pady=(0, self.p), sticky="e")
             ent = ctk.CTkEntry(parent, font=("Roboto", 12))
             ent.insert(0, str(spell.get(key, "")))
-            ent.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
+            ent.grid(row=row, column=1, pady=(0, self.p if row < 7 else 0), sticky="ew")
             return ent
             
         f = ctk.CTkFrame(top, fg_color="transparent")
-        f.pack(fill="x", padx=10, pady=10)
+        f.pack(fill="x", padx=self.p, pady=self.p)
         f.columnconfigure(1, weight=1)
         
         # Fields
-        lvl_ent = add_field(f, "Level (0-9):", "level", 0)
-        src_ent = add_field(f, "Source:", "source", 1)
-        time_ent = add_field(f, "Casting Time:", "time", 2)
-        rng_ent = add_field(f, "Range:", "range", 3)
-        cmp_ent = add_field(f, "Components:", "comp", 4)
-        dur_ent = add_field(f, "Duration:", "dur", 5)
+        name_ent = add_field(f, "Name:", "name", 0)
+        lvl_ent = add_field(f, "Level (0-9):", "level", 1)
+        
+        ctk.CTkLabel(f, text="School:", font=("Roboto", 12)).grid(row=2, column=0, padx=(0, self.p), pady=(0, self.p), sticky="e")
+        sch_var = StringVar(value=spell.get("school", "Unknown"))
+        sch_dropdown = ctk.CTkOptionMenu(f, variable=sch_var, values=list(self.SCHOOL_SYMBOLS.keys()),
+                                         font=("Roboto", 12), fg_color="gray30", button_color="gray35",
+                                         button_hover_color=self.color, dropdown_hover_color=self.color)
+        sch_dropdown.grid(row=2, column=1, pady=(0, self.p), sticky="ew")
+        
+        src_ent = add_field(f, "Source:", "source", 3)
+        time_ent = add_field(f, "Casting Time:", "time", 4)
+        rng_ent = add_field(f, "Range:", "range", 5)
+        cmp_ent = add_field(f, "Components:", "comp", 6)
+        dur_ent = add_field(f, "Duration:", "dur", 7)
         
         # Description
-        ctk.CTkLabel(top, text="Description:", font=("Roboto", 12)).pack(anchor="w", padx=15)
+        ctk.CTkLabel(top, text="Description:", font=("Roboto", 12)).pack(anchor="w", padx=self.p)
         desc_txt = ctk.CTkTextbox(top, font=("Roboto", 12), height=150)
-        desc_txt.pack(fill="both", expand=True, padx=10, pady=5)
+        desc_txt.pack(fill="both", expand=True, padx=self.p, pady=(0, self.p))
         desc_txt.insert("0.0", spell.get("desc", ""))
         
         def save():
+            spell["name"] = name_ent.get()
             try:
                 spell["level"] = int(lvl_ent.get())
             except:
                 pass
+            spell["school"] = sch_var.get()
             spell["source"] = src_ent.get()
             spell["time"] = time_ent.get()
             spell["range"] = rng_ent.get()
             spell["comp"] = cmp_ent.get()
             spell["dur"] = dur_ent.get()
             spell["desc"] = desc_txt.get("0.0", "end").strip()
+            
+            if is_new:
+                self.spells.append(spell)
+                
             top.destroy()
             self._update_spell_list()
             self.autosave_roll_configs()
             
-        ctk.CTkButton(top, text="Save & Close", command=save, fg_color="gray30", hover_color="gray35", border_color=self.color, border_width=2).pack(pady=10)
+        btn_text = "Add Spell" if is_new else "Save & Close"
+        ctk.CTkButton(top, text=btn_text, command=save, fg_color="gray30", hover_color="gray35", border_color=self.color, border_width=2).pack(pady=(0, self.p))
 
     def _update_shards_calculations(self, _=None):
         # Parse Levels
@@ -2696,29 +2815,29 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
         # Header (Outputs)
         ctk.CTkLabel(res_grid, text="Output", font=("Roboto", 12),
-                     text_color="gray50", width=55).grid(row=0, column=0, padx=2, pady=2)
+                     text_color="gray50", width=55).grid(row=0, column=0)
         for i in range(1, 10):
             ctk.CTkLabel(res_grid, text=str(i), font=("Roboto", 12),
-                         text_color=color).grid(row=0, column=i, padx=1, pady=2)
+                         text_color=color).grid(row=0, column=i)
         
         # Saturation
         ctk.CTkLabel(res_grid, text="Satur.", font=("Roboto", 12),
-                     text_color="gray50", width=55).grid(row=1, column=0, padx=2, pady=1)
+                     text_color="gray50", width=55).grid(row=1, column=0)
         for i in range(9):
             ent = ctk.CTkEntry(res_grid, font=("Roboto", 12), width=30, height=20, justify="center",
                                fg_color="gray25", border_width=0)
-            ent.grid(row=1, column=i+1, padx=1, pady=1)
+            ent.grid(row=1, column=i+1)
             ent.insert(0, "–")
             ent.bind("<KeyRelease>", lambda e, idx=i, cl=count_list, sl=sat_list, ml=mult_list: self._update_res_h(idx, cl, sl, ml))
             sat_list.append(ent)
             
         # Count
         ctk.CTkLabel(res_grid, text="Count", font=("Roboto", 12),
-                     text_color="gray50", width=55).grid(row=2, column=0, padx=2, pady=1)
+                     text_color="gray50", width=55).grid(row=2, column=0)
         for i in range(9):
             ent = ctk.CTkEntry(res_grid, font=("Roboto", 12), width=30, height=20, justify="center",
                                fg_color="gray25", border_width=0)
-            ent.grid(row=2, column=i+1, padx=1, pady=(1, 2))
+            ent.grid(row=2, column=i+1)
             ent.insert(0, "0")
             # Bind using separated method to avoid closure issues
             ent.bind("<KeyRelease>", lambda e, idx=i, cl=count_list, sl=sat_list, ml=mult_list: self._update_res_h(idx, cl, sl, ml))
@@ -2738,7 +2857,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         """Add a dynamic shard source row"""
         row_id = str(len(self.shard_widgets))
         row_frame = ctk.CTkFrame(self.shards_container, fg_color="gray25", corner_radius=6)
-        row_frame.pack(fill="x", pady=self.p, padx=self.p)
+        row_frame.pack(fill="x", pady=(0, self.p))
         
         # --- Top Row: Source, Type, Shard Type, Delete ---
         top = ctk.CTkFrame(row_frame, fg_color="gray25", corner_radius=6)
@@ -2764,7 +2883,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                   fg_color="gray30", button_color="gray35",
                                   button_hover_color=self.color, dropdown_hover_color=self.color,
                                   command=lambda _: self._update_pact_visibility())
-        menu.pack(side="left", padx=(0, 5))
+        menu.pack(side="left", padx=(0, self.p))
         
         # Delete Button
         ctk.CTkButton(top, text="×", width=24, height=24,
@@ -2774,7 +2893,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
 
         # --- Bottom Row: Current, Total, MaxOut, Arc.Rest, rest Type ---
         bot = ctk.CTkFrame(row_frame, fg_color="transparent")
-        bot.pack(fill="x", padx=5, pady=(0, 5))
+        bot.pack(fill="x", padx=self.p, pady=(0, self.p))
         
         # Current / Total
         ctk.CTkLabel(bot, text="Curr:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
@@ -3312,6 +3431,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             "pact_resonance_counts": [e.get() for e in self.pact_count_entries],
             "arcane_recovery_amount": self.arcane_recovery_entry.get(),
             "arcane_recovery_used": self.arcane_recovery_used_var.get(),
+            "spell_tracking": {
+                w[0].get(): {"current": w[1].get(), "max": w[2].get()}
+                for _, w in self.spell_tracking_widgets.items()
+            },
             "features": [
                 (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[6][0], w[4].get())
                 for _, w in self.feature_widgets.items()
@@ -3489,6 +3612,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.arcane_recovery_entry.delete(0, "end")
         self.arcane_recovery_entry.insert(0, data.get("arcane_recovery_amount", "0"))
         self.arcane_recovery_used_var.set(data.get("arcane_recovery_used", False))
+
+        # Load Spell Tracking
+        self.spell_tracking_widgets.clear()
+        for child in self.spell_tracking_container.winfo_children():
+            child.destroy()
+        spell_tracking_data = data.get("spell_tracking", {})
+        if spell_tracking_data:
+            for name, val in spell_tracking_data.items():
+                self._add_spell_tracking_row(name, val.get("current", "0"), val.get("max", "0"))
 
         # Load Hit Dice
         for die, vals in data.get("hit_dice", {}).items():
@@ -4866,59 +4998,66 @@ class GUI(ctk.CTk):
             """Show a submenu list for a selected pie category."""
             self.dismiss_pie_menu()
 
-            sub_win = ctk.CTkToplevel(fg_color="gray20")
+            TRANSPARENT = '#000000'
+            sub_win = ctk.CTkToplevel(fg_color=TRANSPARENT)
             sub_win.overrideredirect(True)
             sub_win.attributes('-topmost', True)
+            try:
+                sub_win.attributes('-transparentcolor', TRANSPARENT)
+            except:
+                pass
             self._pie_win = sub_win  # Track for dismissal
+            sub_win.resizable(False, True)
 
-            frame = ctk.CTkScrollableFrame(sub_win, fg_color="gray20",
-                                            scrollbar_button_color="gray25",
-                                            scrollbar_button_hover_color="gray35",
-                                            width=220, height=300)
-            frame.pack(fill=BOTH, expand=True, padx=self.rescale, pady=self.rescale)
+            frame = ctk.CTkScrollableFrame(sub_win, fg_color="gray15", bg_color=TRANSPARENT,
+                                            corner_radius=15,
+                                            scrollbar_button_color="gray20",
+                                            scrollbar_button_hover_color="gray25",
+                                            width=220)
+            frame.pack(fill=BOTH, expand=True)
 
             # Back / title bar
-            title_frame = ctk.CTkFrame(frame, fg_color="gray25", corner_radius=6)
-            title_frame.pack(fill=X, padx=self.rescale, pady=(self.rescale, self.rescale))
+            title_frame = ctk.CTkFrame(frame, fg_color="gray20", corner_radius=6)
+            title_frame.pack(fill=X, padx=(0, self.rescale), pady=(0, self.rescale))
             back_btn = ctk.CTkButton(title_frame, text="◄", width=28, height=24,
-                                      fg_color="gray25", hover_color="gray35",
+                                      fg_color="gray25", hover_color="gray30",
                                       border_color=self.color, border_width=2,
                                       font=("Roboto", 12),
                                       command=lambda: [self.dismiss_pie_menu(), self.show_pie_menu()])
             back_btn.pack(side=LEFT, padx=self.rescale, pady=self.rescale)
-            ctk.CTkLabel(title_frame, text=cat_name, font=("Roboto", 12)).pack(side=LEFT, padx=self.rescale, pady=self.rescale)
+            ctk.CTkLabel(title_frame, text=cat_name, font=("Roboto", 12), fg_color="gray20").pack(side=LEFT, pady=self.rescale)
 
-            def add_item_button(parent, display_name, filepath):
+            def add_item_button(parent, display_name, filepath, last=False):
                 btn = ctk.CTkButton(parent, text=display_name, height=26,
-                                    fg_color="gray25", hover_color="gray35",
+                                    fg_color="gray20", hover_color="gray25",
                                     border_color=self.color, border_width=1,
                                     font=("Roboto", 12), anchor="w",
                                     command=lambda f=filepath: [self.dismiss_pie_menu(), self.openfile(f)])
-                btn.pack(fill=X, padx=self.rescale, pady=(0, self.rescale))
+                btn.pack(fill=X, padx=(0, self.rescale), pady=(0, 0 if last else self.rescale))
 
             if isinstance(cat_data, dict):
                 for sub_name, items in cat_data.items():
                     if not items:
                         continue
                     header = ctk.CTkLabel(frame, text=sub_name,
-                                          fg_color="gray30", corner_radius=4,
+                                          fg_color="gray20", corner_radius=6,
                                           font=("Roboto", 12))
-                    header.pack(fill=X, padx=self.rescale, pady=(self.rescale, self.rescale))
+                    header.pack(fill=X, padx=(0, self.rescale), pady=(0, self.rescale))
                     for display_name, filepath in items:
-                        add_item_button(frame, display_name, filepath)
+                        add_item_button(frame, display_name, filepath, last=True if display_name == items[-1][0] else False)
             else:
                 for display_name, filepath in cat_data:
-                    add_item_button(frame, display_name, filepath)
+                    add_item_button(frame, display_name, filepath, last=True if display_name == cat_data[-1][0] else False)
 
             # Position near the + button
             sub_win.update_idletasks()
             btn_x = self.pie_menu_btn.winfo_rootx()
             btn_y = self.pie_menu_btn.winfo_rooty()
             win_w = 230
-            win_h = min(350, sub_win.winfo_reqheight())
+            win_h = sub_win.winfo_reqheight()
             win_x = btn_x - win_w // 2 + self.pie_menu_btn.winfo_width() // 2
             win_y = btn_y - win_h - 5
-            sub_win.geometry(f"{win_w}x{win_h}+{win_x}+{win_y}")
+            sub_win.geometry(f"+{win_x}+{win_y}")
 
             # Escape key dismisses
             sub_win.bind('<Escape>', lambda e: self.dismiss_pie_menu())

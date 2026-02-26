@@ -1,0 +1,5 @@
+Extracted 466 spells from docx.
+
+Total updated: 33 / 53
+Not matched: ['Magical fidling', 'Detect thoughts', 'Calling', 'Befuddling curse', 'Augury', 'Suggestion', 'Enhance ability', 'Enlarge/reduce', 'Locate creature (Locate animals or plants)', 'Locate object', 'Silence', 'Skywrite', 'Gentle repose', 'Magic mouth', 'Spectral passage', 'Spider climb', 'Rope trick', 'Security bypass', 'Case the joint', 'Witness protection']
+Saved Molina.pkl
