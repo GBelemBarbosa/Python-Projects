@@ -9,7 +9,8 @@ from tkinter import *
 from tkinter import font, ttk, filedialog, messagebox, TclError
 import customtkinter as ctk
 import random
-#import numpy as np
+import math
+import re
 from datetime import datetime
 from colour import Color
 from time import sleep
@@ -22,7 +23,6 @@ import sys
 
 import re
 import pickle
-#import numpy as np
 from PIL import ImageTk, Image, ImageDraw
 from math import exp
 from math import floor, ceil
@@ -36,71 +36,36 @@ PAST_CONFIGS_DIR = os.path.join(BASE_DIR, 'Past configs')
 SAVED_CONFIGS_DIR = os.path.join(BASE_DIR, 'Saved configs')
 DICE_IMAGES_DIR = os.path.join(BASE_DIR, 'Dice_Images')
 from functools import partial
-# --- MATPLOTLIB / NUMPY STUBS (Fixes crash on broken environment) ---
-class Figure:
-    def __init__(self, *args, **kwargs): pass
-    def add_subplot(self, *args, **kwargs):
-        class DummyAx:
-            def set_facecolor(self, *args): pass
-            def axis(self, *args): pass
-            def set_axis_on(self, *args): pass
-            def clear(self): pass
-            def set_aspect(self, *args): pass
-            def set_xlabel(self, *args, **kwargs): pass
-            def set_ylabel(self, *args, **kwargs): pass
-            def tick_params(self, *args, **kwargs): pass
-            def plot(self, *args, **kwargs): pass
-            def bar(self, *args, **kwargs): pass
-            def text(self, *args, **kwargs): pass
-            def set_title(self, *args, **kwargs): pass
-            def set_ylim(self, *args, **kwargs): pass
-            def set_xlim(self, *args, **kwargs): pass
-            def legend(self, *args, **kwargs): pass
-        return DummyAx()
-    def tight_layout(self, *args, **kwargs): pass
-    def clear(self): pass
-
-class FigureCanvasTkAgg:
-    def __init__(self, figure=None, master=None):
-        self.master = master
-    def get_tk_widget(self):
-        return ctk.CTkFrame(self.master, width=1, height=1, fg_color="transparent")
-    def draw(self): pass
-
-class NavigationToolbar2Tk:
-    def __init__(self, *args, **kwargs): pass
-    def update(self): pass
-
-class np_stub:
-    @staticmethod
-    def sign(x): return 1 if x >= 0 else (-1 if x < 0 else 0)
-    @staticmethod
-    def linspace(a, b, n): return [a + i*(b-a)/(n-1) for i in range(n)]
-    @staticmethod
-    def array(data): return data
-    @staticmethod
-    def exp(x): return math.exp(x)
-    @staticmethod
-    def abs(x): return abs(x)
-    @staticmethod
-    def mean(x): return sum(x)/len(x) if x else 0
-    @staticmethod
-    def std(x): return 0
-    @staticmethod
-    def sqrt(x): return math.sqrt(x)
-
-np = np_stub()
-plt = type('plt_stub', (), {'rcParams': {}, 'figure': lambda *a, **k: Figure()})()
-fm = type('fm_stub', (), {'fontManager': type('fm_mgr', (), {'ttflist': [], 'addfont': lambda f: None})(), 'findSystemFonts': lambda *a, **k: []})()
-# --- END STUBS ---
-
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+from matplotlib.figure import Figure
 from collections import OrderedDict
 import itertools
 import math
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+import matplotlib.font_manager as fm
+### ROBOTO FONT DETECTION ###
+roboto_fonts = [f for f in fm.fontManager.ttflist if 'Roboto' in f.name]
+if not roboto_fonts:
+    print(">>> Roboto NOT in cache. Attempting deep refresh...")
+    font_dirs = [os.path.join(os.environ.get('LOCALAPPDATA',''), 'Microsoft', 'Windows', 'Fonts')]
+    for fdir in font_dirs:
+        if os.path.isdir(fdir):
+            for ffile in os.listdir(fdir):
+                if ffile.lower().endswith(('.ttf','.otf')):
+                    try:
+                        fm.fontManager.addfont(os.path.join(fdir, ffile))
+                    except:
+                        pass
+    roboto_fonts = [f for f in fm.fontManager.ttflist if 'Roboto' in f.name]
+    if roboto_fonts:
+        print(f">>> Found {len(roboto_fonts)} Roboto fonts after refresh")
 
-# Set Matplotlib to use Roboto as the default font (stubbed)
-#plt.rcParams['font.family'] = 'sans-serif'
-#plt.rcParams['font.sans-serif'] = ['Roboto'] + plt.rcParams['font.sans-serif']
+# Set Matplotlib to use Roboto as the default font
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Roboto'] + plt.rcParams['font.sans-serif']
 
 # DPI awareness already set at top of file
 
@@ -688,6 +653,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             "shield": BooleanVar(value=False)
         }
         self.exhaustion_var = IntVar(value=0)
+        self.speed_vars = {
+            "Walk": StringVar(value="30"),
+            "Swim": StringVar(value="0"),
+            "Fly": StringVar(value="0"),
+            "Climb": StringVar(value="0")
+        }
+        self.speed_flat_mod_var = IntVar(value=0)
+        self.speed_mult_var = StringVar(value="x1")
         self.feature_widgets = {} # {id: (name_ent, cur_ent, max_ent, reset_var, desc_data_list, row_frame)}
         # desc_data_list is a mutable list [text] to allow updates from popup
         self.spells = [] # List of dicts: {id, name, level, prepared, source, time, range, comp, dur, desc}
@@ -695,9 +668,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.spell_tracking_widgets = {} # {id: (name_ent, cur_ent, max_ent, row_frame)}
         
         self.SCHOOL_SYMBOLS = {
-            "Abjuration": "🛡️", "Conjuration": "🌀", "Divination": "👁️",
-            "Enchantment": "💫", "Evocation": "💥", "Illusion": "🎭",
-            "Necromancy": "💀", "Transmutation": "🧪", "Unknown": "📜"
+            "Abjuration": "🛡", "Conjuration": "🌀", "Divination": "👁",
+            "Enchantment": "🧭", "Evocation": "💥", "Illusion": "🎭",
+            "Necromancy": "💀", "Transmutation": "♻️", "Unknown": "📜"
+        }
+        
+        self.CONDITION_EMOJIS = {
+            "Blinded": "🙈", "Charmed": "😍", "Deafened": "🙉", "Frightened": "😱", "Grappled": "🫂", 
+            "Incapacitated": "😵", "Invisible": "🫥", "Paralyzed": "😬", "Petrified": "🗿", 
+            "Poisoned": "🤢", "Prone": "🙃", "Restrained": "🪢", "Stunned": "😵‍💫", "Unconscious": "😴"
         }
         
         self.quick_prep_used = BooleanVar(value=False)
@@ -864,9 +843,9 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # --- Top Row: Combat Stats ---
         stats_frame = ctk.CTkFrame(main_content, fg_color="transparent")
         stats_frame.pack(fill="x", pady=(0, self.p-2))
-        stats_frame.columnconfigure((0, 1, 2, 3, 4, 5, 6), weight=1)
+        stats_frame.columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
         
-        combat_stats = [("PCN", "PCN"), ("AA", "AA"), ("Spd", "Spd"), ("Prof", "Prof"), ("Vit", "Vit")]
+        combat_stats = [("PCN", "PCN"), ("AA", "AA"), ("Prof", "Prof"), ("Vit", "Vit")]
         for i, (lbl, key) in enumerate(combat_stats):
             sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
             sub.grid(row=0, column=i, sticky="nsew", padx=(0, self.p))
@@ -878,16 +857,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             entry.pack()
             entry.bind("<FocusOut>", self.autosave_roll_configs)
             self.combat_entries[key] = entry
-            
-            if key == "Spd":
-                entry.bind("<FocusIn>", lambda e: setattr(self, '_base_speed_val', self.combat_entries["Spd"].get()))
-                entry.bind("<FocusOut>", lambda e: setattr(self, '_base_speed_val', self.combat_entries["Spd"].get()))
         
         # Exhaustion (0-10)
         exh_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
-        exh_sub.grid(row=0, column=5, sticky="nsew", padx=(0, self.p))
+        exh_sub.grid(row=0, column=4, sticky="nsew", padx=2)
         exh_sub.columnconfigure(0, weight=1)
-        ctk.CTkLabel(exh_sub, text="Exh", font=("Roboto", 12)).pack()
+        ctk.CTkLabel(exh_sub, text="Exh 😩", font=("Roboto", 11, "bold")).pack(pady=(0, 2))
         exh_entry = ctk.CTkEntry(exh_sub, font=("Roboto", 12), width=42, justify="center",
                                   fg_color="gray25", border_width=0,
                                   textvariable=self.exhaustion_var)
@@ -896,12 +871,58 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Net Advantage (read-only)
         nadv_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
-        nadv_sub.grid(row=0, column=6, sticky="nsew", padx=(0, self.p))
+        nadv_sub.grid(row=0, column=5, sticky="nsew", padx=(0, self.p))
         nadv_sub.columnconfigure(0, weight=1)
         ctk.CTkLabel(nadv_sub, text="Net Adv", font=("Roboto", 12)).pack()
         self.net_adv_label = ctk.CTkLabel(nadv_sub, text="0", font=("Roboto", 12),
                                            fg_color="gray25", corner_radius=4, width=42, height=28)
         self.net_adv_label.pack()
+
+        # --- Middle Row: Movement & Speeds ---
+        movement_frame = ctk.CTkFrame(main_content, fg_color="gray25", corner_radius=6)
+        movement_frame.pack(fill="x", pady=(0, self.p))
+        movement_frame.columnconfigure((0, 1, 2, 3), weight=1)
+        
+        self.active_speed_labels = {}
+        for i, speed_type in enumerate(["Walk", "Swim", "Fly", "Climb"]):
+            sub = ctk.CTkFrame(movement_frame, fg_color="transparent")
+            sub.grid(row=0, column=i, sticky="nsew", pady=(self.p, 0))
+            sub.columnconfigure(0, weight=1)
+            
+            # Active Speed Label
+            act_lbl = ctk.CTkLabel(sub, text="0", font=("Roboto", 12, "bold"))
+            act_lbl.pack(pady=0)
+            self.active_speed_labels[speed_type] = act_lbl
+            
+            # Base Label & Entry
+            b_frame = ctk.CTkFrame(sub, fg_color="transparent")
+            b_frame.pack()
+            ctk.CTkLabel(b_frame, text=f"{speed_type}: ", font=("Roboto", 10)).pack(side="left")
+            b_entry = ctk.CTkEntry(b_frame, font=("Roboto", 11), width=40, justify="center",
+                                   fg_color="gray30", border_width=0, textvariable=self.speed_vars[speed_type])
+            b_entry.pack(side="left")
+            b_entry.bind("<KeyRelease>", lambda e: self.update_speeds())
+            b_entry.bind("<FocusOut>", self.autosave_roll_configs)
+            
+        # Modifiers
+        mod_sub = ctk.CTkFrame(movement_frame, fg_color="transparent")
+        mod_sub.grid(row=1, column=0, columnspan=4, pady=self.p)
+        
+        ctk.CTkLabel(mod_sub, text="Flat:", font=("Roboto", 10)).pack(side="left")
+        flat_mod_spin = IntSpinbox(mod_sub, width=80, height=20, variable=self.speed_flat_mod_var, 
+                                   fg_color="gray30", hover_color="gray40")
+        flat_mod_spin.pack(side="left", padx=(self.p, 0))
+        self.speed_flat_mod_var.trace_add("write", lambda *args: self.update_speeds(True))
+        
+        ctk.CTkLabel(mod_sub, text="Mult:", font=("Roboto", 10)).pack(side="left", padx=(self.p, 0))
+        mult_menu = ctk.CTkOptionMenu(mod_sub, variable=self.speed_mult_var, 
+                                      values=["x0.25", "x0.5", "x1", "x2", "x3"],
+                                      font=("Roboto", 10), width=60, height=20,
+                                      fg_color="gray30", button_color="gray35", button_hover_color="gray40",
+                                      command=lambda e: self.update_speeds(True))
+        mult_menu.pack(side="left", padx=self.p)
+
+        self.update_speeds(save=False)
 
         # --- Bottom Row: Horizontal Saves ---
         saves_frame = ctk.CTkFrame(main_content, fg_color="transparent")
@@ -971,11 +992,54 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         cond_list = sorted(list(self.conditions_vars.keys()))
         for i, cond in enumerate(cond_list):
             r, c = i // 3, i % 3
-            cb = ctk.CTkCheckBox(cond_frame, text=cond, variable=self.conditions_vars[cond],
+            display_text = f"{cond} {self.CONDITION_EMOJIS.get(cond, '')}".strip()
+            cb = ctk.CTkCheckBox(cond_frame, text=display_text, variable=self.conditions_vars[cond],
                                   font=("Roboto", 12), checkbox_width=16, checkbox_height=16,
                                   fg_color=self.color, border_color=self.color, hover_color=self.color,
                                   command=self.on_condition_change)
             cb.grid(row=r, column=c, padx=(self.p, 0), pady=(self.p if r == 0 else 0, self.p), sticky="w")
+
+    def update_speeds(self, save=False):
+        """Calculate and display active speeds based on base, flat mod, and multiplier"""
+        flat_mod = self.speed_flat_mod_var.get()
+        mult_str = self.speed_mult_var.get()
+        # Parse multiplier strings
+        mult = 1.0
+        if mult_str.startswith("x") and re.match(r'^x\d+(\.\d+)?$', mult_str):
+            mult = float(mult_str[1:])
+            
+        for s_type, var in self.speed_vars.items():
+            val = var.get().strip()
+            if not val:
+                if s_type == "Swim":
+                    try:
+                        w_val = self.speed_vars["Walk"].get().strip()
+                        w_base = int(w_val) if w_val else 0
+                    except ValueError:
+                        w_base = 0
+                    base = w_base // 2
+                else:
+                    base = 0
+            else:
+                try:
+                    base = int(val)
+                except ValueError:
+                    base = 0
+                
+            active = max(0, math.floor((base + flat_mod) * mult))
+            
+            # Update label text
+            if hasattr(self, 'active_speed_labels') and s_type in self.active_speed_labels:
+                lbl = self.active_speed_labels[s_type]
+                lbl.configure(text=str(active))
+                # Gray out if 0, vibrant if active (with normal gray90 color)
+                if active == 0:
+                    lbl.configure(text_color="gray40")
+                else:
+                    lbl.configure(text_color="gray90")
+                    
+        if save:
+            self.autosave_roll_configs()
 
     def create_aspect_row(self, parent, aspect_name, row):
         """Aspect row: Name | Value | Prof(None/Half/Full) | Adv(spinbox)"""
@@ -2845,7 +2909,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
         # Cost Multiplier
         ctk.CTkLabel(res_grid, text="Cost Mult.", font=("Roboto", 12),
-                     text_color="gray50", width=55, anchor="w").grid(row=3, column=0, padx=2, pady=(1, 4))
+                     text_color="gray50", width=55, anchor="w").grid(row=3, column=0, pady=(1, 4))
         for i in range(9):
             lbl = ctk.CTkLabel(res_grid, text="1x", font=("Roboto", 12),
                                text_color="gray90")
@@ -3421,6 +3485,9 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 "extra_adv": self.aa_extra_adv.get()
             },
             "exhaustion": self.exhaustion_var.get(),
+            "speeds": {k: v.get() for k, v in self.speed_vars.items()},
+            "speed_flat_mod": self.speed_flat_mod_var.get(),
+            "speed_mult": self.speed_mult_var.get(),
             "shards": [
                 (src.get(), st.get(), sht.get(), cur.get(), tot.get(), mo.get(), ar.get(), rt.get())
                 for _, (src, st, sht, cur, tot, mo, ar, rt, _) in self.shard_widgets.items()
@@ -3558,6 +3625,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Load Exhaustion
         self.exhaustion_var.set(data.get("exhaustion", 0))
+        
+        # Load Speeds
+        if "speeds" in data:
+            for k, v in data["speeds"].items():
+                if k in self.speed_vars:
+                    self.speed_vars[k].set(v)
+        self.speed_flat_mod_var.set(data.get("speed_flat_mod", 0))
+        self.speed_mult_var.set(data.get("speed_mult", "x1"))
+        self.update_speeds(save=False)
         
         # Load Shards
         self.shard_widgets.clear()
@@ -4369,8 +4445,6 @@ class GUI(ctk.CTk):
                     try:
                         if hasattr(self, 'wheelwindow') and self.wheelwindow.winfo_exists():
                             self.wheelwindow.withdraw()
-                        if hasattr(self, 'possi') and self.possi.winfo_exists():
-                            self.possi.withdraw()
                     except (TclError, Exception):
                         pass
                 self.after(0, close_windows)
@@ -4410,36 +4484,33 @@ class GUI(ctk.CTk):
                 info_header_initial = info_limits + "\n "
                 
                 if self.displaymode.get() == 'bar':
-                    def setup_bar_gui():
-                        self.InfoLabel2.configure(text = info_header_initial)
-                        self.ResultLabel2.configure(text = "")
-                        self.progress.set(0)
+                    self.InfoLabel2.configure(text = info_header_initial)
+                    self.ResultLabel2.configure(text = "")
+                    self.progress.set(0)
 
-                        p_norm = p/20
-                        crit_norm = crit/20
-                        cf_norm = p_norm / 2
-                        
-                        self.CFZone.place(relx=0, relwidth=cf_norm, relheight=1)
-                        self.FailZone.place(relx=cf_norm, relwidth=p_norm-cf_norm, relheight=1)
-                        self.SuccessZone.place(relx=p_norm, relwidth=crit_norm-p_norm, relheight=1)
-                        self.CritZone.place(relx=crit_norm, relwidth=1-crit_norm, relheight=1)
-                        
-                        # Place precision markers
-                        self.CFMarker.place(relx=cf_norm, rely=0.5, anchor="center")
-                        self.SMarker.place(relx=p_norm, rely=0.5, anchor="center")
-                        self.CSMarker.place(relx=crit_norm + 0.0025, rely=0.5, anchor="center")
-                        
-                        # Place threshold labels
-                        self.CFThreshLabel.place(relx=cf_norm, anchor="n")
-                        self.SuccessThreshLabel.place(relx=p_norm, anchor="n")
-                        self.CritThreshLabel.place(relx=crit_norm, anchor="n")
-
-                        if not self.progresswindow.winfo_viewable():
-                            self.progresswindow.update()
-                            self.progresswindow.deiconify()
-                        self.progresswindow.focus()
+                    p_norm = p/20
+                    crit_norm = crit/20
+                    cf_norm = p_norm / 2
                     
-                    self.after(0, setup_bar_gui)
+                    self.CFZone.place(relx=0, relwidth=cf_norm, relheight=1)
+                    self.FailZone.place(relx=cf_norm, relwidth=p_norm-cf_norm, relheight=1)
+                    self.SuccessZone.place(relx=p_norm, relwidth=crit_norm-p_norm, relheight=1)
+                    self.CritZone.place(relx=crit_norm, relwidth=1-crit_norm, relheight=1)
+                    
+                    # Place precision markers
+                    self.CFMarker.place(relx=cf_norm, rely=0.5, anchor="center")
+                    self.SMarker.place(relx=p_norm, rely=0.5, anchor="center")
+                    self.CSMarker.place(relx=crit_norm + 0.0025, rely=0.5, anchor="center")
+                    
+                    # Place threshold labels
+                    self.CFThreshLabel.place(relx=cf_norm, anchor="n")
+                    self.SuccessThreshLabel.place(relx=p_norm, anchor="n")
+                    self.CritThreshLabel.place(relx=crit_norm, anchor="n")
+
+                    if not self.progresswindow.winfo_viewable():
+                        self.progresswindow.update()
+                        self.progresswindow.deiconify()
+                    self.progresswindow.focus()
                     
                     p_norm = p/20
                     crit_norm = crit/20
@@ -4453,39 +4524,33 @@ class GUI(ctk.CTk):
                         x+=0.01
                         y=r_bar*n*x/(1+(n-1)*x)
                         
-                        def update_bar(y=y):
-                            if y < cf_norm:
-                                self.progress.configure(progress_color="#4d4d4d")
-                            elif y < p_norm:
-                                self.progress.configure(progress_color="#595959")
-                            elif y < crit_norm:
-                                self.progress.configure(progress_color="#666666")
-                            else:
-                                self.progress.configure(progress_color="#737373")
-                            self.progress.set(value=y)
-                        self.after(0, update_bar)
+                        if y < cf_norm:
+                            self.progress.configure(progress_color="#4d4d4d")
+                        elif y < p_norm:
+                            self.progress.configure(progress_color="#595959")
+                        elif y < crit_norm:
+                            self.progress.configure(progress_color="#666666")
+                        else:
+                            self.progress.configure(progress_color="#737373")
+                        self.progress.set(value=y)
                     
-                    def finalize_bar():
-                        self.progress.configure(progress_color=self.color)
-                        self.progress.set(value=r_bar)
-                        self.ResultLabel2.configure(text = resultStr)
-                        self.InfoLabel2.configure(text = info_limits + f"\nRolled: {r:.1f}")
-                    self.after(0, finalize_bar)
+                    self.progress.configure(progress_color=self.color)
+                    self.progress.set(value=r_bar)
+                    self.ResultLabel2.configure(text = resultStr)
+                    self.InfoLabel2.configure(text = info_limits + f"\nRolled: {r:.1f}")
 
                 elif self.displaymode.get() == 'dice':
-                    def setup_dice_gui():
-                        self.InfoLabel.configure(text = info_header_initial)
-                        self.ResultLabel.configure(text = "")
+                    self.InfoLabel.configure(text = info_header_initial)
+                    self.ResultLabel.configure(text = "")
 
-                        if not self.dicewindow.winfo_viewable():
-                            self.dicewindow.update()
-                            self.dicewindow.deiconify()
-                        self.dicewindow.focus()
-                        
-                        self.panel.configure(fg_color="gray90")
-                        self.ResultFrame.configure(fg_color="gray20")
-                        self.ResultLabel.configure(fg_color="gray20")
-                    self.after(0, setup_dice_gui)
+                    if not self.dicewindow.winfo_viewable():
+                        self.dicewindow.update()
+                        self.dicewindow.deiconify()
+                    self.dicewindow.focus()
+                    
+                    self.panel.configure(fg_color="gray90")
+                    self.ResultFrame.configure(fg_color="gray20")
+                    self.ResultLabel.configure(fg_color="gray20")
 
                     sleepTime = random.randint(self.minST,self.maxST)/100
                     maxSleepTime = random.randint(self.minMST,self.maxMST)/100
@@ -4497,7 +4562,7 @@ class GUI(ctk.CTk):
                             rolagem = random.randint(0, 20)
                         currentRoll = rolagem
                         
-                        self.after(0, lambda r=rolagem: self.panel.configure(image = self.dice_images_cache[str(r)+".png"]))
+                        self.panel.configure(image = self.dice_images_cache[str(rolagem)+".png"])
                         
                         sleep(sleepTime)
                         sleepTime = self.nextSleepTime(sleepTime, maxSleepTime)
@@ -4519,23 +4584,19 @@ class GUI(ctk.CTk):
                     else:
                         img_name = str(roundedRealDiceRoll) + ".png"
 
-                    def finalize_dice(img=img_name):
-                        self.panel.configure(image = self.dice_images_cache[img], fg_color=self.color)
-                        self.ResultFrame.configure(fg_color="gray20")
-                        self.ResultLabel.configure(fg_color="gray20")
-                        self.ResultLabel.configure(text = resultStr)
-                        self.InfoLabel.configure(text = info_limits + f"\nRolled: {r:.1f}")
-                    self.after(0, finalize_dice)
+                    self.panel.configure(image = self.dice_images_cache[img_name], fg_color=self.color)
+                    self.ResultFrame.configure(fg_color="gray20")
+                    self.ResultLabel.configure(fg_color="gray20")
+                    self.ResultLabel.configure(text = resultStr)
+                    self.InfoLabel.configure(text = info_limits + f"\nRolled: {r:.1f}")
                 elif self.displaymode.get() == 'wheel':
-                    def setup_wheel_gui():
-                        self.InfoLabel3.configure(text = info_header_initial)
-                        self.ResultLabel3.configure(text = "")
+                    self.InfoLabel3.configure(text = info_header_initial)
+                    self.ResultLabel3.configure(text = "")
 
-                        if not self.wheelwindow.winfo_viewable():
-                            self.wheelwindow.update()
-                            self.wheelwindow.deiconify()
-                        self.wheelwindow.focus()
-                    self.after(0, setup_wheel_gui)
+                    if not self.wheelwindow.winfo_viewable():
+                        self.wheelwindow.update()
+                        self.wheelwindow.deiconify()
+                    self.wheelwindow.focus()
 
                     # Sizes calculation (from previous code)
                     sizes = [p/2, p/2, crit-p, 20-crit]
@@ -6949,10 +7010,11 @@ class GUI(ctk.CTk):
                     
                     # Initial draw (hidden/empty or first frame)
                     colors = ['#404040'] * len(pmf_values)
-                    wedge_labels = [str(k) if len(pmf_values) < 30 else '' for k in dic.keys()]
+                    wedge_labels = [str(k) if p >= 0.02 else '' for k, p in zip(dic.keys(), pmf_values)]
                     
                     wedges, texts = self.possi_ax.pie(
                         pmf_values,
+                        labels=wedge_labels,
                         colors=colors,
                         startangle=90,
                         labeldistance=1.1,
@@ -7026,21 +7088,11 @@ class GUI(ctk.CTk):
         def run_animation_step(self, anim_id):
             try:
                 # If window closed or a new animation started, stop
-                if not self.possi.winfo_exists() or not self.possi.winfo_viewable() or anim_id != self.current_anim_id:
+                if not self.possi.winfo_exists() or anim_id != self.current_anim_id:
                     return
-                
-                # Update idle tasks to ensure state is consistent
-                try:
-                    self.possi.update_idletasks()
-                except:
-                    pass
                 
                 roll_val = self.anim_rolls[self.anim_index]
 
-                # Reset all bars to white first (inefficient but safe) or just reset previous?
-                # The original code re-drew the white bars every time.
-                # Let's just update the specific bar color.
-                
                 # Map roll value to bar index. 
                 # dic.keys() are x values. 
                 # bars are in order of dic.keys()
@@ -7064,12 +7116,12 @@ class GUI(ctk.CTk):
                 # Slowed down slightly: 200ms highlight
                 self.possi.after(200, self.reset_animation_step, roll_val, anim_id)
 
-            except (TclError, Exception):
-                pass
+            except Exception:
+                print(traceback.format_exc())
 
         def reset_animation_step(self, roll_val, anim_id):
              try:
-                if not self.possi.winfo_exists() or not self.possi.winfo_viewable() or anim_id != self.current_anim_id:
+                if not self.possi.winfo_exists() or anim_id != self.current_anim_id:
                     return
 
                     
@@ -7087,19 +7139,13 @@ class GUI(ctk.CTk):
                 # Slowed down slightly: 100ms between rolls
                 self.possi.after(100, self.run_animation_step, anim_id)
 
-             except (TclError, Exception):
-                pass
+             except Exception:
+                print(traceback.format_exc())
 
         def run_wheel_rolldic_animation_step(self, anim_id):
             try:
-                if not self.possi.winfo_exists() or not self.possi.winfo_viewable() or anim_id != self.current_anim_id:
+                if not self.possi.winfo_exists() or anim_id != self.current_anim_id:
                     return
-
-                # Update idle tasks to ensure state is consistent
-                try:
-                    self.possi.update_idletasks()
-                except:
-                    pass
 
                 t = self.wheel_anim_step / self.wheel_total_steps
                 # Ease-out cubic
@@ -7120,7 +7166,7 @@ class GUI(ctk.CTk):
                     except ValueError:
                         pass
                 
-                wedge_labels = [str(k) if len(self.wheel_pmf) < 30 else '' for k in self.wheel_keys]
+                wedge_labels = [str(k) if p >= 0.02 else '' for k, p in zip(self.wheel_keys, self.wheel_pmf)]
                 
                 wedges, texts = self.wheel_p.pie(
             self.wheel_pmf,
@@ -7150,8 +7196,8 @@ class GUI(ctk.CTk):
                     self.possi.after(delay, self.run_wheel_rolldic_animation_step, anim_id)
 
                 
-            except (TclError, Exception):
-                pass
+            except Exception:
+                print(traceback.format_exc())
                 
         # function to send messages 
         def sendMessage(self):
