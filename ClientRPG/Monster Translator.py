@@ -2,11 +2,11 @@ import re
 
 dic_skill={
     'acrobatics': [3, 1, 'acrobatics'],
-    'animal handling': [9, 4, 'animal handling'],
+    'animal handling': [9, 4, 'trustworthiness'],
     'arcana': [7, 4, 'arcana'],
     'athletics': [1, 0, 'athletics'],
     'deception': [11, 2, 'simulation'],
-    'history': [7, 4, 'lore'],
+    'history': [7, 4, 'lore/society'],
     'insight': [9, 3, 'awareness'],
     'intimidation': [11, 3, 'trustworthiness'],
     'investigation': [7, 2, 'investigation'],
@@ -15,7 +15,7 @@ dic_skill={
     'perception': [9, 3, 'awareness'],
     'performance': [11, 3, 'performance'],
     'persuasion': [11, 2, 'convincing'],
-    'religion': [7, 4, 'religion'],
+    'religion': [7, 4, 'religion/occultism'],
     'sleight of hand': [3, 1, 'dexterity'],
     'stealth': [3, 1, 'stealth'],
     'survival': [9, 4, 'survival']

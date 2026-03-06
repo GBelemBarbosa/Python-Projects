@@ -593,9 +593,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
     # Knowledge fields and their linked aspects
     KNOWLEDGE_ASPECTS = {
         "Arcana": "Investigation", "Alchemy": "Investigation", "Manufacturing": "Investigation",
-        "Lore": "Investigation", "Occultism": "Investigation", "Society": "Investigation",
-        "Animal handling": "Trustworthiness",
-        "Medicine": "Awareness", "Nature": "Awareness", "Religion": "Awareness", "Artistry": "Awareness",
+        "Lore/Society": "Investigation",
+        "Medicine": "Awareness", "Nature": "Awareness", "Religion/Occultism": "Awareness", "Artistry": "Awareness",
     }
     
     # Tool dropdown options (each linked to an aspect)
@@ -1077,9 +1076,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                                command=lambda v, a=aspect_name: self.on_aspect_prof_change(a, v))
             prof_seg.grid(row=0, column=2, padx=(0, self.p), pady=self.p, sticky="ew")
         else:
-            # Spacer
-            ctk.CTkLabel(row_frame, text="", width=84, height=24).grid(
-                row=0, column=2, padx=(0, self.p), pady=self.p, sticky="ew")
+            # Spacer - Use an invisible and disabled segmented button for perfect alignment matching
+            dummy_var = StringVar(value="")
+            spacer = ctk.CTkSegmentedButton(row_frame, values=["", " ", "  ", "    "], variable=dummy_var,
+                                            font=("Roboto", 12), width=80, height=24,
+                                            fg_color="gray25", bg_color="transparent",
+                                            text_color="gray25", unselected_color="gray25",
+                                            unselected_hover_color="gray25",
+                                            selected_color="gray25", selected_hover_color="gray25", state="disabled")
+            spacer.grid(row=0, column=2, padx=(0, self.p), pady=self.p, sticky="ew")
 
         # Total Label
         total_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=30,
@@ -1186,8 +1191,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             row=0, column=0, padx=(self.p, 0), sticky="ew")
         ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=70, anchor="center").grid(
             row=0, column=1, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), width=140, anchor="w").grid(
-            row=0, column=2, padx=(0, self.p), sticky="w")
+        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), width=140, anchor="center").grid(
+            row=0, column=2, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30, anchor="center").grid(
             row=0, column=3, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=60, anchor="center").grid(
@@ -1215,8 +1220,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             prof_seg.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
             
             ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", font=("Roboto", 12), text_color="gray90", 
-                         fg_color="gray30", corner_radius=6, width=140, anchor="w").grid(
-                row=0, column=2, padx=(0, self.p), pady=self.p, sticky="w")
+                         fg_color="gray30", corner_radius=6, width=140, anchor="center").grid(
+                row=0, column=2, padx=(0, self.p), pady=self.p)
             
             # Calculated Value Label
             val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=30,
@@ -1264,8 +1269,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             row=0, column=0, padx=(self.p, 0), sticky="ew")
         ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=70, anchor="center").grid(
             row=0, column=1, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), width=140, anchor="w").grid(
-            row=0, column=2, padx=(0, self.p), sticky="w")
+        ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), width=140, anchor="center").grid(
+            row=0, column=2, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30, anchor="center").grid(
             row=0, column=3, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=60, anchor="center").grid(
@@ -1359,8 +1364,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         prof_seg.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
         
         ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", fg_color="gray30", font=("Roboto", 12),
-                     text_color="gray90", corner_radius=6, width=140, anchor="w").grid(
-            row=0, column=2, padx=(0, self.p), pady=self.p, sticky="w")
+                     text_color="gray90", corner_radius=6, width=140, anchor="center").grid(
+            row=0, column=2, padx=(0, self.p), pady=self.p)
         
         val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=30,
                                fg_color="gray30", corner_radius=6)
@@ -1585,15 +1590,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hdr_frame.pack(fill="x", padx=self.p)
         hdr_frame.columnconfigure(0, weight=1) # Name
         
-        ctk.CTkLabel(hdr_frame, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), width=140, anchor="center").grid(row=0, column=1, padx=self.p)
-        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=2, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=self.p, sticky="ew")
+        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), width=140, anchor="center").grid(row=0, column=1, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=2, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Type", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=3, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="+", font=("Roboto", 12), width=35, anchor="center").grid(row=0, column=4, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=50, anchor="center").grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=6, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=65, anchor="center").grid(row=0, column=6, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=8, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="", width=22).grid(row=0, column=8, padx=(0, self.p))
 
         # Items List
         self.items_container = ctk.CTkFrame(content_frame, fg_color="transparent", height=0)
@@ -1622,7 +1627,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, placeholder_text="Name",
                                 fg_color="gray30", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
-        name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
+        name_ent.grid(row=0, column=0, padx=self.p, pady=self.p, sticky="ew")
         name_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Aspect Menu
@@ -1630,18 +1635,21 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         asp_var = StringVar(value=linked_aspect)
         asp_menu = ctk.CTkOptionMenu(row_frame, values=aspects, variable=asp_var,
                                       width=140, height=22, font=("Roboto", 12),
-                                      fg_color="gray30", button_color="gray35",
+                                      fg_color="gray30", button_color="gray35", dynamic_resizing=False,
                                       button_hover_color="gray40", dropdown_hover_color=self.color,
                                       command=lambda _: self.update_weapon_bonuses())
-        asp_menu.grid(row=0, column=1, padx=self.p, pady=self.p)
+        asp_menu.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
         
         # prof toggle
+        p_frame = ctk.CTkFrame(row_frame, width=30, height=22, fg_color="transparent")
+        p_frame.pack_propagate(False)
+        p_frame.grid(row=0, column=2, padx=(0, self.p), pady=self.p)
         p_var = BooleanVar(value=prof)
-        p_cb = ctk.CTkCheckBox(row_frame, text="", variable=p_var, font=("Roboto", 12),
+        p_cb = ctk.CTkCheckBox(p_frame, text="", variable=p_var, font=("Roboto", 12),
                                 checkbox_width=16, checkbox_height=16, width=16,
                                 fg_color=self.color, hover_color="gray35",
                                 command=self.update_weapon_bonuses)
-        p_cb.grid(row=0, column=2, padx=(0, self.p), pady=self.p) # Increased padding to center under "Prof" header (width 40 vs 16)
+        p_cb.place(relx=0.5, rely=0.5, anchor="center")
         
         # Type Menu (Atk / AS)
         type_var = StringVar(value=roll_type)
@@ -1675,7 +1683,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Note: we store the Var in the widget list to get() it later
         
         # Total Label
-        bonus_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=30,
+        bonus_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=65,
                                  fg_color="gray30", corner_radius=6)
         bonus_lbl.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
         
@@ -2448,7 +2456,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         ctk.CTkLabel(self.pets_header_frame, text="AA", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=5, padx=(0, self.p))
         ctk.CTkLabel(self.pets_header_frame, text="Spd", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=6, padx=(0, self.p))
         ctk.CTkLabel(self.pets_header_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="", width=28).grid(row=0, column=8, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="", width=22).grid(row=0, column=8, padx=(0, self.p))
         
         # Pets Container
         self.pets_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
@@ -3558,6 +3566,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 self.update_aspect_total(k)
         
         for k, v in data.get("knowledge", {}).items():
+            # Migration for renamed knowledge skills
+            if k in ("Lore", "Society"):
+                k = "Lore/Society"
+            elif k in ("Religion", "Occultism"):
+                k = "Religion/Occultism"
+            
             if k in self.knowledge_widgets:
                 prof_var, _, _, adv_var = self.knowledge_widgets[k]
                 if isinstance(v, tuple):

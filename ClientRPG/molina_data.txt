@@ -1,0 +1,2607 @@
+{'arcane_recovery_amount': '3',
+ 'arcane_recovery_used': False,
+ 'armor': {'aspect': 'Mobility',
+           'extra_adv': '',
+           'extra_const': '',
+           'prof': True,
+           'shield': False,
+           'shield_prof': False,
+           'type': 'Studded leather'},
+ 'aspects': {'Acrobatics': ('12', 'E', '0'),
+             'Athletics': ('-5', '-', '0'),
+             'Awareness': ('12', 'E', '1'),
+             'Concentration': ('12', '-', '0'),
+             'Constitution': ('-4', '-', '0'),
+             'Convincing': ('12', 'E', '0'),
+             'Dexterity': ('12', 'E', '0'),
+             'Investigation': ('12', 'E', '1'),
+             'Meditation': ('-8', '-', '0'),
+             'Mobility': ('12', 'E', '0'),
+             'Performance': ('12', '-', '0'),
+             'Potency': ('-8', '-', '0'),
+             'Precision': ('-6', '-', '0'),
+             'Resilience': ('-5', '-', '0'),
+             'Simulation': ('12', 'E', '0'),
+             'Trustworthiness': ('12', '-', '0')},
+ 'background': '',
+ 'caster_level': '6',
+ 'class': 'Wizard 4 / Sorcerer 2',
+ 'combat': {'AA': '-10', 'PCN': '56', 'Prof': '6', 'Vit': '5'},
+ 'conditions': {'Blinded': False,
+                'Charmed': False,
+                'Deafened': False,
+                'Frightened': False,
+                'Grappled': False,
+                'Incapacitated': False,
+                'Invisible': False,
+                'Paralyzed': False,
+                'Petrified': False,
+                'Poisoned': False,
+                'Prone': False,
+                'Restrained': False,
+                'Stunned': False,
+                'Unconscious': False},
+ 'exhaustion': 0,
+ 'features': [('Arcane Recovery',
+               1,
+               '1',
+               'LR',
+               'You have learned to regain some of your magical energy by '
+               'studying your spellbook. When you finish a short rest, you can '
+               'regain shards. The maximum amount is equal to '
+               'roundup(effective wizard level/2). Your count for keeping '
+               'track of saturation for total shard outputs of 5 or less whose '
+               'combined values (of shards) are less than or equal to the '
+               'amount of shards you regained decreases by 1 (you can choose a '
+               'total shard output more than once).\n'
+               '\n'
+               "For example, if you're a 4th-effective level wizard, you can "
+               'recover up to 2 shards, and decrease the count for keeping '
+               'track of saturation for total shard output 1 by 2 or '
+               'saturation for total shard output 2 by 1.\n'
+               '\n'
+               "Once you use this feature, you can't do so again until you "
+               'finish a long rest.',
+               False),
+              ('Sorcery Points',
+               6,
+               '6',
+               'LR',
+               'You have sorcery points equal to your effective sorcerer '
+               'level. You regain all spent sorcery points when you finish a '
+               'long rest.\n'
+               'Converting shards to sorcery points: On your turn, you can '
+               'expend shards and regain double the amount of sorcery points '
+               '(no action required).\n'
+               '\n'
+               'Converting sorcery points to shards: On your turn, you can '
+               'expend 3 sorcery points and regain one shard (no action '
+               'required).',
+               False),
+              ('Suppress Memory',
+               6,
+               '6',
+               'LR',
+               "You can befuddle a creature's mind with nothing but a gesture. "
+               'As an action, you can force up to your effective wizard level '
+               '(5) creatures you can see within 30 feet of you to make a mind '
+               'saving throw against your wizard spell as. The creatures don’t '
+               'register this attempt. On a failed save, you can force the '
+               'creature to forget a single aspect of a conversation, '
+               'observation or encounter it had, that you know of, in the past '
+               '10 minutes, such as your physical appearance, a question it '
+               'was asked or an insult that was made, or a short action an '
+               'ally performed. It can’t forget it was affected by a magical '
+               'effect if it knows it already, neither can it forget it was '
+               'attacked by someone. Even without the core memory forgotten, '
+               'it remains with the feelings that that event caused on it but '
+               'not knowing precisely why and generally shrugging it off '
+               'except if it is hypersensitive to it or predisposed to act '
+               'accordingly  to its unexplainable instincts somehow (such as a '
+               'guard whose duty is to spot strange events being persistently '
+               'pushed to investigate his surroundings by a ‘hint’, or an '
+               'avenger having the feeling it saw something that would lead '
+               'him to its revenge and searching for it against all logic, or '
+               'even a compulsive brawler thinking it maybe has been insulted '
+               'but not remembering the insult or who made it, instead '
+               'attacking a random innocent bypasser).\n'
+               '\n'
+               'A remove curse or greater restoration spell cast on the '
+               'creature can restore its memory to normal. Whether the '
+               "creature succeeds or fails their saving throw, you can't use "
+               'this feature on them again until you finish a long rest. You '
+               'can use this feature a number of times equal to '
+               'rounddown(concentration aspect/2) (minimum of 1). You regain '
+               'any expended uses when you finish a long rest.',
+               False),
+              ('Stonespeaker Crystal',
+               10,
+               '10',
+               'Dawn',
+               '(attunement)\n'
+               '\n'
+               'Created by the stone giant librarians of gravenhollow, this '
+               'nineteen-inch-long shard of quartz grants you advantage '
+               '(anterior type) on investigation checks while it is on your '
+               'person.the crystal has 10 charges. While holding it, you can '
+               'use an action to expend some of its charges to cast one of the '
+               'following spells from it: comprehend languages (1 charge), '
+               'speak with animals (2 charges), speak with dead (3 charges), '
+               'speak with plants (3 charges), inspect echo (3 charges), or '
+               'stone tell (3 charges). When you cast a divination spell, you '
+               'can use the crystal in place of one material component that '
+               'would normally be consumed by the spell, at a cost of 1 charge '
+               'times the base shard output of the spell. The crystal is not '
+               'consumed when used in this way. The crystal regains 1d6 + 4 '
+               "expended charges daily at dawn. If you expend the crystal's "
+               'last charge, roll a d20. On a 1, the crystal vanishes, lost '
+               'forever.',
+               False),
+              ('Innate Expertise',
+               1,
+               '1',
+               '-',
+               'Your natural magic blooms through your actions. Choose two of '
+               'your aspect proficiencies. You gain expertise with them, which '
+               'means your proficiency bonus is doubled for any ability check '
+               'you make that uses either of the chosen proficiencies.',
+               False),
+              ('Skilled',
+               0,
+               '-',
+               '-',
+               'You gain proficiency in any combination of three aspects or '
+               'tools of your choice. You may instead gain expertise in '
+               'aspects you already are proficient in, which means you add '
+               'double your proficiency bonus to checks you make with them.',
+               False),
+              ('Quick Fingered',
+               0,
+               '-',
+               '-',
+               'Your nimble fingers and agility let you perform dexterity. You '
+               'gain the following benefits:\n'
+               '\n'
+               'Increase your Senses stat by 1, to a maximum of 20. (knowledge '
+               'field prof instead)\n'
+               '\n'
+               'You gain proficiency in the dexterity aspect. \n'
+               '\n'
+               'As a bonus action, you can make a dexterity check to plant '
+               'something on someone else, conceal an object on a creature, '
+               'lift a purse, or take something from a pocket.',
+               False),
+              ('Practiced Expert',
+               0,
+               '-',
+               '-',
+               'You have honed your proficiency with particular skills or '
+               'tools, gaining the following benefits:\n'
+               '\n'
+               'Increase one stat of your choice by 1, to a maximum of 20. '
+               '(acrobatics prof instead)\n'
+               '\n'
+               'You gain proficiency with one aspect, knowledge field or tool '
+               'of your choice. You may instead gain expertise in one aspect '
+               'you are proficient in, which means you add double your '
+               'proficiency bonus to checks you make with them. \n'
+               '\n'
+               'Choose one of your aspect proficiencies. You gain expertise '
+               'with it.',
+               False),
+              ('Lupine Mask',
+               0,
+               '-',
+               '-',
+               'While wearing this dark ceramic mask, you have advantage '
+               '(anterior type) on awareness checks relying on hearing and '
+               'smell, as well as on Animal Handling checks made to interact '
+               'with wolves and other canines.',
+               False),
+              ('Bag of Holding',
+               0,
+               '-',
+               '-',
+               '(disguised as a removable pocket inside cloak)\n'
+               'This bag has an interior space considerably larger than its '
+               'outside dimensions, roughly 2 feet in diameter at the mouth '
+               'and 4 feet deep. The bag can hold up to 500 pounds, not '
+               'exceeding a volume of 64 cubic feet. The bag weighs 15 pounds, '
+               'regardless of its contents. Retrieving an item from the bag '
+               'requires an action. If the bag is overloaded, pierced, or '
+               'torn, it ruptures and is destroyed, and its contents are '
+               'scattered in the Astral Plane. If the bag is turned inside '
+               'out, its contents spill forth, unharmed, but the bag must be '
+               'put right before it can be used again. Breathing creatures '
+               'inside the bag can survive up to a number of minutes equal to '
+               '10 divided by the number of creatures (minimum 1 minute), '
+               'after which time they begin to suffocate. Placing a bag of '
+               "holding inside an extradimensional space created by a Heward's "
+               'handy haversack, portable hole, or similar item instantly '
+               'destroys both items and opens a gate to the Astral Plane. The '
+               'gate originates where the one item was placed inside the '
+               'other. Any creature within 10 feet of the gate is sucked '
+               'through it to a random location on the Astral Plane. The gate '
+               "then closes. The gate is one-way only and can't be reopened.",
+               False),
+              ('Telepathic Channel',
+               0,
+               '-',
+               '-',
+               'Your alien influence gives you the ability to touch the minds '
+               'of other creatures. You can create a channel to communicate '
+               'telepathically with one creature you can see within 30 feet of '
+               'you (no action required). If connected in this way, you lose '
+               'the channel as soon as the creature leaves your sight. If you '
+               'have expanded at least 1 minute familiarizing yourself with '
+               'the creature and expend one action to mentally concentrate, '
+               'the range becomes 120 ft., and you just need to know their '
+               'general direction instead of having direct sight. If, in this '
+               'case, the creature moves considerably from the spot you '
+               'originally guessed, you lose the channel, unless you know '
+               'where it moved. Either way, the creature doesn’t know the '
+               'origin of the voice in its head.\n'
+               '\n'
+               '1 foot of stone, 1 inch of common metal, a thin sheet of lead, '
+               'or 3 feet of wood block the communication but not the channel '
+               'itself, and contact can be made as soon as the creature leaves '
+               'the blocked area, as long as you keep track of its location.\n'
+               '\n'
+               'As an action, you grant the creature the ability to respond '
+               'until the start of your next turn. Neither of you gain the '
+               'ability to understand the other’s language, and you can’t link '
+               'with a creature that doesn’t know any language.',
+               False),
+              ('Obscurus Arcana Beginning',
+               0,
+               '-',
+               '-',
+               'Your mental and physical conditioning allow you to conceal '
+               'your spellcasting and spells from others. You learn the mage '
+               'hand cantrip. When you cast mage hand, you can make the '
+               'spectral hand invisible. Controlling its movement still takes '
+               'only a bonus action. The limitations on contested athletics '
+               "checks and its base athletics aspect don't change. You also "
+               'gain the following benefits with it:\n'
+               '\n'
+               '• You can add your dexterity bonuses to stow one object the '
+               'hand is holding in a container worn or carried by another '
+               'creature.\n'
+               '\n'
+               '• You can add your dexterity bonuses to retrieve an object in '
+               'a container worn or carried by another creature.\n'
+               '\n'
+               '• You can use any tools you are proficient with at the reach '
+               'of your mage hand, with your normal bonuses, as if you were '
+               'doing it yourself, but the dm might apply time penalties for '
+               'doing it with one free hand, depending on the activity.\n'
+               '\n'
+               '• When you cast a spell with a range of touch, your spectral '
+               'hand can deliver the spell as if it had cast the spell.\n'
+               '\n'
+               'Additionally, the current contents of your spellbook, as well '
+               'as any spells you learn by gaining wizard levels, are '
+               'committed to memory. Your memory is considered a spellbook. '
+               'You can add spells to your memory as you would to a spellbook '
+               'by spending time and gold as normal, to utilize mnemonic tools '
+               'and purchase research materials. \n'
+               '\n'
+               'You gain proficiency with forgery kits. You can also use a '
+               "forgery kit in place of calligrapher's supplies for crafting "
+               'spell scrolls. Your spell scrolls created this way are '
+               'disguised as other documents or content, and a creature must '
+               'make an investigation check against your forgery kit check to '
+               'notice they are spell scrolls.',
+               False),
+              ('Legalese',
+               0,
+               '-',
+               '-',
+               'Your experience with your local legal system has given you a '
+               'firm knowledge of the ins and outs of that system.\n'
+               '\n'
+               'Even when the law is not on your side, you can use complex '
+               'terms like ex injuriajus non oritur and cogitation is poenam '
+               'nemo patitur to frighten people into thinking you know what '
+               "you're talking about. With common folks who don't know any "
+               'better, you might be able to intimidate or deceive to get '
+               'favors or special treatment, or avoid legal repercussions from '
+               'your actions by convincing them that what you did is legal or '
+               'that you have special permissions.\n'
+               '\n'
+               'Uses magical, historical, medicinal, folk, religious and '
+               'scientific "legalese" too.',
+               False),
+              ('Metamagic',
+               4,
+               '4',
+               'LR',
+               'You tap into a deep wellspring of magic within yourself. This '
+               'wellspring is represented by sorcery points, which allow you '
+               'to create a variety of magical effects.\n'
+               '\n'
+               'Sorcery points\n'
+               'You have sorcery points equal to your effective sorcerer '
+               'level. You regain all spent sorcery points when you finish a '
+               'long rest.\n'
+               '\n'
+               'Converting shards to sorcery points. On your turn, you can '
+               'expend shards and regain double the amount of sorcery points '
+               '(no action required).\n'
+               '\n'
+               'Converting sorcery points to shards. On your turn, you can '
+               'expend 3 sorcery points and regain one shard (no action '
+               'required).',
+               False),
+              ('Metamagic: Quickened Spell',
+               0,
+               '',
+               '-',
+               'When you cast a spell that has a casting time of 1 action, you '
+               'can spend 2 sorcery points to change the casting time to 1 '
+               'bonus action for this casting.',
+               False),
+              ('Metamagic: Subtle Spell',
+               0,
+               '',
+               '-',
+               'Spend 1 sorcery point to cast a spell without somatic, verbal, '
+               'or Material components (excluding consumed/costly). Can be '
+               'used even if another metamagic option was already used.',
+               False),
+              ('Metamagic: Heightened Spell',
+               0,
+               '',
+               '-',
+               'Spend 2 sorcery points to give one target of the spell '
+               'disadvantage (anterior type) on its saving throws made against '
+               'the spell.',
+               False),
+              ('Psionic',
+               0,
+               '',
+               '-',
+               'Mentalist origin spells\n'
+               'Shards spells \n'
+               '1 command\n'
+               '2 detect thoughts\n'
+               '3 dispel magic\n'
+               '4 dominate beast\n'
+               '5 dominate person\n'
+               '6 mass suggestion\n'
+               '\n'
+               'Your particular magics are intertwined with the psionic powers '
+               'of alien creatures. When your spellcasting feature lets you '
+               'learn a sorcerer cantrip or a noncantrip sorcerer spell '
+               '(including at 1st sorcerer level), you can choose the new '
+               'spell from the sorcerer spell list or the psionic spell list. '
+               'You must otherwise obey all the restrictions for selecting the '
+               'spell, and it becomes a sorcerer spell for you. When you cast '
+               'a spell that appears on the psionic spell list, you can cast '
+               'it without any verbal or non-costly material components. This '
+               'effect also applies to the mentalist origin spells.\n'
+               '\n'
+               'Cantrip (0 shard)\n'
+               'Enhance pain\n'
+               'Forget\n'
+               'Friends\n'
+               'Glimmer\n'
+               'Guidance\n'
+               'Mage hand\n'
+               'Mending\n'
+               'Minor illusion\n'
+               'Moment to think\n'
+               'Prestidigitation\n'
+               'Thaumaturgy\n'
+               '\n'
+               '1 shard\n'
+               'Bane\n'
+               'Catapult\n'
+               'Cause fear\n'
+               'Charm person\n'
+               'Compelled duel\n'
+               'Comprehend languages\n'
+               'Detect magic\n'
+               'Disguise self\n'
+               'Dissonant whispers\n'
+               'Heroism\n'
+               'Hex\n'
+               'Interference\n'
+               'Magic missile\n'
+               "Tasha's hideous laughter\n"
+               'Silent image\n'
+               'Sleep\n'
+               'Speak with animals\n'
+               'Wrathful smite\n'
+               '\n'
+               '2 shards\n'
+               'Augury\n'
+               'Befuddling Curse\n'
+               'Crown of madness\n'
+               'Enhance ability\n'
+               'Enlarge/reduce\n'
+               'Enthrall\n'
+               'Hold person\n'
+               'Immovable object\n'
+               'Knock\n'
+               'Levitate\n'
+               'Locate creature\n'
+               'Locate object \n'
+               'Mind spike\n'
+               'Pass without trace\n'
+               'See invisibility\n'
+               'Silence\n'
+               'Skywrite\n'
+               'Spider climb\n'
+               'Suggestion\n'
+               'Zone of truth\n'
+               '\n'
+               '3 shards\n'
+               'Beacon of hope\n'
+               'Bestow curse\n'
+               'Catnap\n'
+               'Clairvoyance\n'
+               'Enemies abound\n'
+               'Fast friends\n'
+               'Fear\n'
+               'Feign death\n'
+               'Haste\n'
+               'Hypnotic pattern\n'
+               'Major image\n'
+               'Meld into stone\n'
+               'Nondetection\n'
+               "Plia's translocation\n"
+               'Sending\n'
+               'Speak with dead\n'
+               'Spectral passage\n'
+               'Tongues\n'
+               '\n'
+               '4 shards\n'
+               'Charm monster\n'
+               'Compulsion\n'
+               'Confusion\n'
+               'Divination\n'
+               '\n'
+               '5 shards\n'
+               'Commune\n'
+               'Dream\n'
+               'Geas\n'
+               'Hold monster\n'
+               'Modify memory\n'
+               "Rary's telepathic bond\n"
+               'Scrying\n'
+               'Synaptic static\n'
+               'Telekinesis\n'
+               'Wall of force\n'
+               '\n'
+               '6 shards\n'
+               'Find the path \n'
+               'Globe of invulnerability \n'
+               'Mental prison\n'
+               'Move earth\n'
+               'Otto’s irresistible dance\n'
+               'Programmed illusion\n'
+               'True seeing\n'
+               '\n'
+               '7 shards\n'
+               'Mirage arcane\n'
+               'Power word pain\n'
+               'Project image\n'
+               'Reverse gravity\n'
+               '\n'
+               '8 shards\n'
+               'Antipathy/sympathy\n'
+               'Dominate monster\n'
+               'Feeblemind\n'
+               'Glibness\n'
+               'Mind blank\n'
+               'Power word stun\n'
+               'Telepathy\n'
+               '\n'
+               '9 shards\n'
+               'Astral projection\n'
+               'Foresight\n'
+               'Psychic scream\n'
+               'Weird',
+               False),
+              ('4 Extra Spells Learned in Previous Adventures',
+               0,
+               '',
+               '-',
+               '',
+               False),
+              ('Extra 1st Level Feature', 0, '', '-', '', False)],
+ 'hit_dice': {'d10': ['0', '0'],
+              'd12': ['0', '0'],
+              'd6': ['6', '6'],
+              'd8': ['0', '0']},
+ 'knowledge': {'Alchemy': ('-', '0'),
+               'Arcana': ('F', '0'),
+               'Artistry': ('-', '0'),
+               'Lore/Society': ('-', '0'),
+               'Manufacturing': ('-', '0'),
+               'Medicine': ('-', '0'),
+               'Nature': ('-', '0'),
+               'Religion/Occultism': ('-', '0')},
+ 'languages': '',
+ 'level': '6',
+ 'name': 'Molina',
+ 'pact_resonance_counts': ['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+ 'pact_resonance_saturation': ['4', '3', '3', '–', '–', '–', '–', '–', '–'],
+ 'pets': [('Spider (João-com-braço)',
+           'Tiny beast',
+           '1',
+           '1',
+           '-4',
+           '20ft/climb20',
+           'Spider (João-com-braço)\n'
+           'Tiny beast, unaligned\n'
+           '\n'
+           'Aa. -4\n'
+           'Pcn. 1 (1d4 - 1)\n'
+           'Speed. 20ft., climb 20ft.\n'
+           'Body 5 (-5) senses 16 (+6) mind 1 (−9) soul 6 (-4) vitality -1 \n'
+           'Skills. Stealth +10\n'
+           'Senses. Darkvision 30ft, passive perception +0\n'
+           'Challenge 0 (10 xp)\n'
+           '\n'
+           'Spider climb. The spider can climb difficult surfaces, including '
+           'upside down on ceilings, without needing to make a check.\n'
+           '\n'
+           'Web sense. While in contact with a web, the spider knows the exact '
+           'location of any other creature in contact with the same web.\n'
+           '\n'
+           'Web walker. The spider ignores movement restrictions caused by '
+           'webbing.\n'
+           '\n'
+           "Undesired hitchhiker. The spider can occupy another creature's "
+           'space and vice versa. The spider has advantage (anterior type) on '
+           "stealth checks as long as it remains stationary on a creature's "
+           'body.'),
+          ('Giant salamander (Come-bosta jr.)',
+           'Small-Medium',
+           '7',
+           '7',
+           '-2',
+           '40/15cl/5bw',
+           'Giant salamander (Come-bosta jr.)\n'
+           'Small-medium beast, unaligned\n'
+           '\n'
+           'Aa -2\n'
+           'Pcn 7 (2d6) \n'
+           'Speed 40 ft., Climb 15 ft., Burrow 5 ft.\n'
+           'Body senses mind soul vitality\n'
+           '13 (3) 10 (0) 3 (-7) 6 (-4) 0\n'
+           'Damage vulnerability. The giant salamander has vulnerability to '
+           'fire damage. \n'
+           'Senses passive perception 9\n'
+           'Languages\n'
+           'Challenge 0 (10 xp)\n'
+           '\n'
+           'Amphibious. The giant salamander can breathe air and water.\n'
+           'Amphibious climb. The giant salamander can climb difficult '
+           'surfaces, including upside down on ceilings, without needing to '
+           'make a check.\n'
+           '\n'
+           'Dry skin. The giant salamander has to keep its skin moist or it '
+           'will take one level of exhaustion for each half hour it remains in '
+           'a dry climate unattended. It takes about twice the amount of water '
+           'that a medium creature needs to keep the salamander hydrated, and '
+           'another creature have to spend an action roughly every half hour '
+           "to moisten the salamander's skin if no body of waters where the "
+           'salamander can douse itself are nearby. In extremely hot and dry '
+           'climates (such as the elemental plane of fire), the DM might rule '
+           'that the salamander needs even more water and attention.')],
+ 'portrait': '6d1c57453bdf8112f6b248fdc9081d99.jpg',
+ 'quick_prep_used': False,
+ 'race': 'Variant Human',
+ 'resonance_counts': ['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+ 'resonance_saturation': ['4', '3', '3', '–', '–', '–', '–', '–', '–'],
+ 'saves': {'Body': ('-', '0', '3'),
+           'Mind': ('F', '0', '10'),
+           'Senses': ('½', '0', '10'),
+           'Soul': ('F', '0', '10')},
+ 'shards': [('Wizard', 'Class', 'Normal', '19', '19', '3', True, 'Long'),
+            ('Sorcerer', 'Class', 'Normal', '19', '19', '3', False, 'Long')],
+ 'speed_flat_mod': 0,
+ 'speed_mult': 'x1',
+ 'speeds': {'Climb': '0', 'Fly': '0', 'Swim': '15', 'Walk': '30'},
+ 'spell_tracking': {'Blank Spell (Wiz)': {'current': 0, 'max': '1'},
+                    'Spells Known (Sor)': {'current': 2, 'max': '2'},
+                    'Spells Known (Wiz)': {'current': 13, 'max': '13'},
+                    'Spells Prepared (Sor)': {'current': 6, 'max': '6'},
+                    'Spells Prepared (Wiz)': {'current': 8, 'max': '9'}},
+ 'spells': [{'comp': 's',
+             'desc': 'You channel magical insight to a creature. If you have '
+                     'your reaction available and ways to cast this spell, you '
+                     'can add 2d4 (posterior type) to a check a creature you '
+                     'can see within range makes, only using your reaction and '
+                     'casting this spell if it is used in the roll. A creature '
+                     'can be empowered by only one use of this spell at a '
+                     'time.',
+             'dur': 'Instantaneous',
+             'id': '861e330f-34fc-41ad-86d0-fa6eb3cb944b',
+             'level': 0,
+             'name': 'Guidance',
+             'prepared': True,
+             'range': '10 feet',
+             'school': 'Divination',
+             'source': 'Sorcerer',
+             'time': '1 reaction, which you take when this 2d4 (posterior '
+                     'type) is used on the roll'},
+            {'comp': 's',
+             'desc': 'A spectral, floating hand appears at an unoccupied space '
+                     'you can see within range. The hand lasts for the '
+                     'duration or until you dismiss it as an action. The hand '
+                     'is dismissed if it is ever more than 30 feet away from '
+                     "you or if you cast this spell again. The hand isn't a "
+                     "creature and can't be targeted by attacks and magical "
+                     'effects in any way, except to dispel it.\n'
+                     '\n'
+                     'You can use your action to control the hand. You can use '
+                     'the hand to manipulate an object, open an unlocked door '
+                     'or container, stow or retrieve an item from an open '
+                     'container, or pour the contents out of a vial without '
+                     'checks. You can move the hand up to 30 feet each time '
+                     'you use it. You can’t use tools with the hand.\n'
+                     '\n'
+                     'If you try to stow one object the hand is holding in a '
+                     'container worn or carried by another creature or '
+                     'otherwise retrieve an object in a container worn or '
+                     'carried by another creature with the hand you do so with '
+                     'a maximum modifier of +0 on the dexterity check '
+                     '(including advantage). If the hand is required to make a '
+                     'contested athletics check, it always loses. The hand has '
+                     'an athletics aspect of -10.\n'
+                     '\n'
+                     'The hand can’t attack, meaningfully use a shield or '
+                     'block attacks, activate magical items, or carry more '
+                     'than 10 pounds. If it tries to move while carrying more '
+                     "than its capacity, it instead doesn't move.",
+             'dur': '1 minute',
+             'id': 'db4da7e7-2ca0-4a09-8de4-44fa92524fbe',
+             'known': True,
+             'level': 0,
+             'name': 'Mage hand',
+             'prepared': True,
+             'range': '30 feet',
+             'school': 'Conjuration',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's',
+             'desc': 'This spell is a minor magical trick that novice '
+                     'spellcasters use for practice. You create one of the '
+                     'following magical effects within range:\n'
+                     '\n'
+                     '• You create an instantaneous, harmless sensory effect, '
+                     'such as a shower of sparks, a puff of wind, faint '
+                     'musical notes, or a specific odor.\n'
+                     '\n'
+                     '• You instantaneously light or snuff out a candle, a '
+                     'torch, or a small campfire.\n'
+                     '\n'
+                     '• You instantaneously clean or soil an object no larger '
+                     'than 1 cubic foot.\n'
+                     '\n'
+                     '• You chill, warm, or flavor up to 1 cubic foot of '
+                     'nonliving material for 1 hour.\n'
+                     '\n'
+                     '• You make a color, a small mark, or a symbol appear on '
+                     'an object or a surface for 1 hour. This effect can be up '
+                     'to 25 words of text, lines and shapes (up to the level '
+                     'of sigils and emblems, pictographic in nature, yet '
+                     'detailed) or a mixture of these elements, as you like,  '
+                     'within an area of approximately a round shield.\n'
+                     '\n'
+                     '• You create a nonmagical trinket or an illusory image '
+                     'that can fit in your hand and that lasts until the end '
+                     'of your next turn.\n'
+                     '\n'
+                     'If you cast this spell multiple times, you can have up '
+                     'to three of its non-instantaneous effects active at a '
+                     'time, and you can dismiss such an effect as an action.',
+             'dur': 'Up to 1 hour',
+             'id': 'f10ae13b-98d7-4540-bffe-5c0b08c5501e',
+             'level': 0,
+             'name': 'Prestidigitation',
+             'prepared': True,
+             'range': '10 feet',
+             'school': 'Transmutation',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'comp': 'v, s, m (a coin)',
+             'desc': 'It’s far easier to conceal by revealing than to reveal '
+                     'by concealing. You flick a coin into the air and make it '
+                     'sparkle with shimmering light, drawing the attention of '
+                     'all creatures within 30 feet of you. Each creature must '
+                     'make a mind saving throw. A creature that is in combat '
+                     'has advantage (anterior type) on this saving throw. If a '
+                     'creature fails, it suffers disadvantage (anterior type) '
+                     "on checks until the start of your next turn and doesn't "
+                     'register that you have cast this spell.',
+             'dur': '1 round',
+             'id': '51a0d400-408b-4bb6-98ef-e7577cb7ef47',
+             'level': 0,
+             'name': 'Glimmer',
+             'prepared': True,
+             'range': 'self (30 feet)',
+             'school': 'Illusion',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'comp': 'm, s (varies)',
+             'desc': 'You touch a non magical object and choose one effect, '
+                     'each one have a different component necessary for it to '
+                     'work, a duration and a target, listed in parenthesis '
+                     'respectively:\n'
+                     '\n'
+                     '• (Half an ounce of wax, 1 hour, an object that can fit '
+                     'in your hand) For 10 seconds you can record and store '
+                     'the surrounding sounds within the object; you can stop '
+                     'the recording at any point, no action required. '
+                     'Afterwards, while a creature touches the object (as an '
+                     'object interaction), it reproduces the sounds in a loop, '
+                     'beginning at any point in time it choses. When you cast '
+                     'this spell, you can forgo the trigger condition, instead '
+                     'having the effect be always active for the duration. '
+                     'Independent of the origin, the sounds reproduced can '
+                     'just vary from a whisper to a loud crowd talking, with '
+                     'louder recorded sounds being muffled to fit the '
+                     'criteria. If the object is destroyed, it stops recording '
+                     'or reproducing.\n'
+                     '\n'
+                     '• (Two ounces of wax, 1 week, a gold object that fits in '
+                     'your hand) When you cast this spell, you specify a fixed '
+                     'amount of time, up to one week. The gold object then '
+                     'remains dormant, recording its surroundings for the '
+                     'specified duration. If the effect ends, for instance '
+                     'because you dismiss it, as specified below, it is '
+                     'dispelled, or at the end of the duration, the object '
+                     'begins to reproduce its contents in order once, and '
+                     'cannot be paused or reproduced again. Independent of the '
+                     'origin, the sounds reproduced can just vary from a '
+                     'whisper to a loud crowd talking, with louder recorded '
+                     'sounds being muffled to fit the criteria. If the object '
+                     'is destroyed, it stops recording or reproducing.\n'
+                     '\n'
+                     '• (A piece of fleece, 5 minutes, a small silver bell) '
+                     "The bell prevents all sound within 1' of where you "
+                     'touched it as long as the bell’s sound is not physically '
+                     'impeded (although it is still silenced by this effect). '
+                     'If the bell’s clapper is impeded, or the bell is muffled '
+                     'with cloth or another material, the effect ends early. '
+                     'When the effect ends on the bell, it reproduces all '
+                     'sound created within the radius once, with the same '
+                     'intensity and in the same order; the bell ringing is one '
+                     'of these sounds. This reproduction is not muffled by '
+                     'physical barriers, and travels as far as it loudless '
+                     'allows it to. If the bell is put in an extradimensional '
+                     'space, the sound originates from that space’s opening '
+                     '(or where it used to be) instead, onto all dimensions it '
+                     'traveled through. If the bell is destroyed at any stage, '
+                     'be it silencing or reproducing sound, it makes a loud '
+                     'knock, audible from as far away as 300 feet, which also '
+                     'cannot be muffled.\n'
+                     '\n'
+                     'If the sounds recorded with this spell in any mode are '
+                     'that of an illusion, the creature listening or seeing '
+                     'the recording, respectively, can investigate its '
+                     'authenticity as an action as it would with a normal '
+                     'illusion of that type. The ac is that of the caster of '
+                     'the given illusion, not necessarily yours. For general '
+                     'rules and guidelines for illusions, see the illusion '
+                     'section on the spells folder.\n'
+                     '\n'
+                     'If you cast this spell multiple times, you can have up '
+                     'to three of its non-instantaneous effects active at a '
+                     'time, and you can dismiss such an effect as an action.',
+             'dur': 'Varies',
+             'id': '59ba34d9-72d8-4ba5-8c5f-27c10cc61bb9',
+             'known': True,
+             'level': 0,
+             'name': 'Magical tinkering',
+             'prepared': True,
+             'range': 'Touch',
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'm, s (varies)',
+             'desc': '',
+             'dur': 'Varies',
+             'id': 'cb0b5eb8-7134-4575-892d-17616417b44b',
+             'level': 0,
+             'name': 'Magical fidling',
+             'prepared': True,
+             'range': 'Touch',
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (a bit of fleece)',
+             'desc': 'You create a sound or an image of an object within range '
+                     'that lasts for the duration. The illusion also ends if '
+                     'you dismiss it as a reaction or cast this spell again.\n'
+                     '\n'
+                     'If you create a sound, its volume can range from a '
+                     'whisper to a scream. It can be your voice, someone '
+                     'else’s voice, steps, a lion’s roar, a beating of drums, '
+                     'or any other sound you choose. The sound continues '
+                     'unabated throughout the duration, or you can repeat '
+                     'discrete sounds at different times before the spell '
+                     'ends.\n'
+                     '\n'
+                     'If you create an image of an object—such as a chair, '
+                     'muddy footprints, or a small chest—it must be no larger '
+                     'than a 5-foot cube. The image can’t create sound, light, '
+                     'smell, or any other sensory effect. Physical interaction '
+                     'with the image reveals it to be an illusion.\n'
+                     '\n'
+                     'If a creature uses its action to examine the sound or '
+                     'image, the creature can determine that it is an illusion '
+                     'with a successful investigation check against your spell '
+                     'as. If a creature discerns the illusion for what it is, '
+                     'the illusion becomes faint to the creature. For general '
+                     'rules and guidelines for illusions, see the illusion '
+                     'section on the spells folder.',
+             'dur': '1 minute  (invisible sphere)',
+             'id': '28e2ab22-317f-4acf-b16e-6bb00970da08',
+             'level': 0,
+             'name': 'Minor illusion',
+             'prepared': True,
+             'range': '30 feet',
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (a small amount of makeup applied to the face as '
+                     'this spell is cast)',
+             'desc': 'For the duration, you have advantage (anterior type) on '
+                     'all checks to interact with one creature of your choice '
+                     'that isn’t hostile toward you. When the spell ends, the '
+                     'creature realizes that you used magic to influence its '
+                     'mood and becomes hostile toward you. A creature prone to '
+                     'violence might attack you. Another creature might seek '
+                     'retribution in other ways (at the dm’s discretion), '
+                     'depending on the nature of your interaction with it.',
+             'dur': 'Focusing, up to 5 minutes',
+             'id': 'baf4dfa5-85bb-4517-9f6a-0884cbe1d05b',
+             'known': True,
+             'level': 0,
+             'name': 'Friends',
+             'prepared': True,
+             'range': 'Self',
+             'school': 'Enchantment',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'always': True,
+             'comp': '',
+             'desc': 'You speak a one-word command to a creature you can see '
+                     'within range. The target must succeed on a mind saving '
+                     'throw or follow the command on its next turn. The spell '
+                     'has no effect if the target is undead, if it doesn’t '
+                     'understand your language, or if your command is directly '
+                     'harmful to it. The DM might use the Standardized command '
+                     'words document as a guide as to what can be issued and '
+                     'how the target behaves. You might issue a command other '
+                     'than one described there. If you do so, the dm '
+                     'determines how the target behaves. If the target can’t '
+                     'follow your command, the spell ends.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 2 or more shards, '
+                     'you can affect one additional creature for each shard '
+                     'above 1.',
+             'dur': '1 round',
+             'id': '8275f4fb-001f-43a2-ad65-381b354485ce',
+             'level': 1,
+             'name': 'Command',
+             'prepared': False,
+             'range': '60 feet',
+             'school': 'Enchantment',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'comp': 's',
+             'desc': 'For the duration, you sense the presence of magic within '
+                     '30 feet of you. If you sense magic in this way, you can '
+                     'use your action to see a faint aura around any visible '
+                     'creature or object in the area that bears magic, and you '
+                     'learn its school of magic, if any.\n'
+                     '\n'
+                     'The spell can penetrate most barriers, but is blocked by '
+                     '1 foot of stone, 1 inch of common metal, a thin sheet of '
+                     'lead, or 3 feet of wood or dirt.',
+             'dur': 'Focusing, up to 10 minutes',
+             'id': '9bb9831d-d2bb-46d6-b220-540bcae066d5',
+             'level': 1,
+             'name': 'Detect magic',
+             'prepared': True,
+             'range': 'Self',
+             'school': 'Divination',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'comp': 's, m (a bit of fleece)',
+             'desc': 'You create the image of an object, a creature, or some '
+                     'other visible phenomenon that is no larger than a '
+                     '15-foot cube. The image appears at a spot within range '
+                     'and lasts for the duration. The image is purely visual; '
+                     'it isn’t accompanied by sound, smell, or other sensory '
+                     'effects.\n'
+                     '\n'
+                     'You can use your action to cause the image to move to '
+                     'any spot within range. As the image changes location, '
+                     'you can alter its appearance so that its movements '
+                     'appear natural for the image. You can also use your '
+                     'action to animate the image within the constraints of '
+                     'its form, making it raise its arm, move its mouth, jump, '
+                     'etc. You can’t make fire appear out of its mouth or make '
+                     'it be beheaded if those elements weren’t in the image '
+                     'from the beginning. To make these more elaborate '
+                     'changes, or even morph the image into something new '
+                     'entirely, such a man turning into a wolf or demon, you '
+                     'can recast the spell without making the image disappear, '
+                     'seemingly from one to the other.\n'
+                     '\n'
+                     'Physical interaction with the image reveals it to be an '
+                     'illusion. A creature that uses its action to examine the '
+                     'image can determine that it is an illusion with a '
+                     'successful investigation check against your spell as. If '
+                     'a creature discerns the illusion for what it is, the '
+                     'creature can see through the image. For general rules '
+                     'and guidelines for illusions, see the illusion section '
+                     'on the spells folder.',
+             'dur': 'Focusing, up to 10 minutes (invisible sphere',
+             'id': '95ad6324-77e3-4ada-953e-001cf7602559',
+             'level': 1,
+             'name': 'Silent image',
+             'prepared': True,
+             'range': '60 feet',
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's',
+             'desc': 'You make yourself – including your clothing, armor, '
+                     'weapons, and other belongings on your person – look '
+                     'different until the spell ends or until you use your '
+                     'action to dismiss it. You can seem 1 foot shorter or '
+                     'taller and can appear thin, fat, or in between. You '
+                     'can’t change your body type, so you must adopt a form '
+                     'that has the same basic arrangement of limbs. Otherwise, '
+                     'the extent of the illusion is up to you.\n'
+                     '\n'
+                     'The changes wrought by this spell fail to hold up to '
+                     'physical inspection. For example, if you use this spell '
+                     'to add a hat to your outfit, objects pass through the '
+                     'hat, and anyone who touches it would feel nothing or '
+                     'would feel your head and hair. If you use this spell to '
+                     'appear thinner than you are, the hand of someone who '
+                     'reaches out to touch you would bump into you while it '
+                     'was seemingly still in midair. To discern that you are '
+                     'disguised, a creature can use its action to inspect your '
+                     'appearance and must succeed on an investigation check '
+                     'against your spell as. For general rules and guidelines '
+                     'on illusions, see the illusion section on the spells '
+                     'folder.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 2 or more shards, '
+                     'the range of the spell becomes touch. Make a spell '
+                     'attack against the target, casting the spell on them on '
+                     'a hit (a creature can choose to be hit by this if it '
+                     'wishes).',
+             'dur': '1 hour',
+             'id': '96f258d8-5b58-4ffe-8bbb-f9c2f6a1b033',
+             'level': 1,
+             'name': 'Disguise self',
+             'prepared': True,
+             'range': 'Self',
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s, m (10 gp worth of charcoal, incense, and herbs '
+                     'that must be consumed by fire in a brass brazier)',
+             'desc': 'You gain the service of a familiar, a spirit that takes '
+                     'an animal form you choose: octopus, owl, raven, spider, '
+                     'or weasel. Appearing in an unoccupied space within '
+                     'range, the familiar has the statistics of the chosen '
+                     'form, though it is a celestial, fey or fiend (your '
+                     'choice) instead of a beast.\n'
+                     '\n'
+                     'Your familiar acts independently of you, but it always '
+                     'obeys your commands. In combat, it rolls its own '
+                     'initiative and acts on its own turn. A familiar can’t '
+                     'attack or use the help action to attack, but it can take '
+                     'other actions as normal.\n'
+                     '\n'
+                     'When the familiar drops to 0 pcn, it disappears, leaving '
+                     'behind no physical form. It reappears after you cast '
+                     'this spell again.\n'
+                     '\n'
+                     'While your familiar is within 100 feet of you, you can '
+                     'communicate with it telepathically (the telepathic '
+                     'communication just works from you to your familiar, but '
+                     'not the other way around). Your familiar obeys your '
+                     'commands as best it can, and can convey to you its basic '
+                     "mood and intent. However, it can't attune to or activate "
+                     'magical items. It also can only normally do some checks '
+                     'or sometimes use the help action or be helped by other '
+                     'creatures in athletics, acrobatics, nature, and animal '
+                     'handling, as long as you respect the physical '
+                     'capabilities of your familiar. It can also do awareness '
+                     'checks even to determine a humanoid’s true intentions, '
+                     'and it can not use the help action or be helped by other '
+                     'creatures for these checks. Other uses may be allowed by '
+                     'the dm as long as you give him a valid explanation as to '
+                     'why, such as your familiar helping you in convincing or '
+                     'trustworthiness checks by being affable towards the '
+                     'target.\n'
+                     '\n'
+                     'Additionally, while your familiar is within 100 feet of '
+                     'you, as a bonus action, you can see through your '
+                     'familiar’s eyes and hear what it hears until the start '
+                     'of your next turn, gaining the benefits of any special '
+                     'senses that the familiar has, losing your own if they '
+                     'aren’t inherent (those that don’t target your body, such '
+                     'as a spell,  or depend on your position, such as an aura '
+                     'or item that must be on your person) or if they are '
+                     'dependent on your physiology, such as keen hearing, but '
+                     'using the highest between your stats regarding soul and '
+                     'mind checks. You can’t use the help action between '
+                     'yourself and your familiar in this state, but can be '
+                     'helped or help other creatures as normal, as long as you '
+                     'respect the physical capabilities of your familiar’s '
+                     'body. During this time, you are deaf and blind with '
+                     'regard to your own senses, effects and conditions cast '
+                     'and imposed in your body don’t affect your perception '
+                     'and capability to perform activities in this state (but '
+                     'are not ended), while the ones affecting your familiar '
+                     'affect you both as normal, and they keep their original '
+                     'individual rules and durations. Any inherent (same '
+                     'definition) mental resistance or immunity (such as '
+                     'immunity to charm effects) that you have still has an '
+                     'effect on you in this state.\n'
+                     '\n'
+                     'As an action, you can temporarily dismiss your familiar. '
+                     'It disappears into a pocket dimension where it awaits '
+                     'you to summon it. Alternatively, you can dismiss it '
+                     'forever.  As an action while it is temporarily '
+                     'dismissed, you can cause it to reappear in an unoccupied '
+                     'space you can see within 30 feet of you. Its '
+                     'reappearance makes a popping sound, audible from as far '
+                     'away as 100 feet.\n'
+                     '\n'
+                     'You can’t have more than one familiar at a time. If you '
+                     'cast this spell while you already have a familiar, you '
+                     'instead cause it to adopt a new form. Choose one of the '
+                     'forms from the above list. Your familiar transforms into '
+                     'the chosen creature.\n'
+                     '\n'
+                     'When you cast this spell, choose one of these extra '
+                     'abilities:\n'
+                     '\n'
+                     'As a bonus action while the familiar is temporarily '
+                     'dismissed, you can cause it to reappear in any space of '
+                     'your choice within 100 feet of you instead. If the '
+                     'familiar would reappear inside an occupied space, it '
+                     'stays dismissed. Its reappearance doesn’t cause any '
+                     'sound.\n'
+                     '\n'
+                     'When you cast a spell with a range of touch, your '
+                     'familiar can deliver the spell as if it had cast the '
+                     'spell. Your familiar must be within 100 feet of you, and '
+                     'it must use its reaction to deliver the spell when you '
+                     'cast it. If the spell requires an attack roll, you use '
+                     'your appropriate attack modifier for the roll.\n'
+                     '\n'
+                     'Octopus\n'
+                     '\n'
+                     'Small beast, unaligned\n'
+                     '\n'
+                     'Aa. -4\n'
+                     '\n'
+                     'Pcn. 3 (1d6)\n'
+                     '\n'
+                     'Speed. 5ft., swim 30ft.\n'
+                     '\n'
+                     'Body 7 (-3) senses 16 (+6) mind 3 (−7) soul 7 (−3) '
+                     'vitality +0\n'
+                     '\n'
+                     'Skills. awareness +1, stealth +10\n'
+                     '\n'
+                     'Senses. Darkvision 30ft., passive perception +1\n'
+                     '\n'
+                     'Challenge 0 (10 xp)\n'
+                     '\n'
+                     'Hold breath. While out of water, the octopus can hold '
+                     'its breath for 30 minutes.\n'
+                     '\n'
+                     'Underwater camouflage. The octopus has advantage '
+                     '(anterior type) on stealth checks made while '
+                     'underwater.\n'
+                     '\n'
+                     'Water breathing. The octopus can breathe only '
+                     'underwater.\n'
+                     '\n'
+                     'Actions\n'
+                     '\n'
+                     'Ink cloud (recharges after a short or long rest). A '
+                     '5-foot-radius cloud of ink extends all around the '
+                     'octopus if it is underwater. The area is heavily '
+                     'obscured for 1 minute, although a significant current '
+                     'can disperse the ink. After releasing the ink, the '
+                     'octopus can use the dash action as a bonus action.\n'
+                     '\n'
+                     'Owl\n'
+                     '\n'
+                     'Tiny beast, unaligned\n'
+                     '\n'
+                     'Aa. -2\n'
+                     '\n'
+                     'Pcn. 1 (1d4 - 1)\n'
+                     '\n'
+                     'Speed. 5ft., fly 60ft.\n'
+                     '\n'
+                     'Body 5 (-5) senses 12 (+2) mind 4 (−6) soul 10 (+0) '
+                     'vitality -1\n'
+                     '\n'
+                     'Skills. awareness +4, stealth +6\n'
+                     '\n'
+                     'Senses darkvision 120ft., passive perception +4\n'
+                     '\n'
+                     'Challenge 0 (10 xp)\n'
+                     '\n'
+                     "Flyby. The owl doesn't provoke opportunity attacks when "
+                     "it flies out of an enemy's reach.\n"
+                     '\n'
+                     'Keen hearing and sight. The owl has advantage (anterior '
+                     'type) on awareness checks that rely on hearing or '
+                     'sight.\n'
+                     '\n'
+                     'Spider\n'
+                     '\n'
+                     'Tiny beast, unaligned\n'
+                     '\n'
+                     'Aa. -4\n'
+                     '\n'
+                     'Pcn. 1 (1d4 - 1)\n'
+                     '\n'
+                     'Speed. 20ft., climb 20ft.\n'
+                     '\n'
+                     'Body 5 (-5) senses 16 (+6) mind 1 (−9) soul 6 (-4) '
+                     'vitality -1\n'
+                     '\n'
+                     'Skills. Stealth +10\n'
+                     '\n'
+                     'Senses. Darkvision 30ft, passive perception +0\n'
+                     '\n'
+                     'Challenge 0 (10 xp)\n'
+                     '\n'
+                     'Spider climb. The spider can climb difficult surfaces, '
+                     'including upside down on ceilings, without needing to '
+                     'make a check.\n'
+                     '\n'
+                     'Web sense. While in contact with a web, the spider knows '
+                     'the exact location of any other creature in contact with '
+                     'the same web.\n'
+                     '\n'
+                     'Web walker. The spider ignores movement restrictions '
+                     'caused by webbing.\n'
+                     '\n'
+                     'Undesired hitchhiker. The spider can occupy another '
+                     "creature's space and vice versa. The spider has "
+                     'advantage (anterior type) on stealth checks as long as '
+                     "it remains stationary on a creature's body.\n"
+                     '\n'
+                     'Raven\n'
+                     '\n'
+                     'Tiny beast, unaligned\n'
+                     '\n'
+                     'Aa. -4\n'
+                     '\n'
+                     'Pcn. 1 (1d4 - 1)\n'
+                     '\n'
+                     'Speed. 10ft., fly 50ft.\n'
+                     '\n'
+                     'Body 5 (-5) senses 14 (+4) mind 4 (−6) soul 9 (-1) '
+                     'vitality -1\n'
+                     '\n'
+                     'Skills. awareness +3\n'
+                     '\n'
+                     'Senses. Passive perception +3\n'
+                     '\n'
+                     'Challenge 0 (10 xp)\n'
+                     '\n'
+                     'Mimicry. The raven can mimic simple sounds it has heard, '
+                     'such as a person whispering, a baby crying, or an animal '
+                     'chittering. A creature that hears the sounds can tell '
+                     'they are imitations with a successful ac +0 awareness '
+                     'check.\n'
+                     '\n'
+                     'Weasel\n'
+                     '\n'
+                     'Tiny beast, unaligned\n'
+                     '\n'
+                     'Aa. -6\n'
+                     '\n'
+                     'Pcn. 1 (1d4 - 1)\n'
+                     '\n'
+                     'Speed 30ft.\n'
+                     '\n'
+                     'Body 5 (-5) senses 16 (+6) mind 2 (−8) soul 8 (-2) '
+                     'vitality -1\n'
+                     '\n'
+                     'Skills. awareness +2, stealth +10\n'
+                     '\n'
+                     'Senses passive perception +2\n'
+                     '\n'
+                     'Challenge 0 (10 xp)\n'
+                     '\n'
+                     'Keen hearing and smell. The weasel has advantage '
+                     '(anterior type) on awareness checks that rely on hearing '
+                     'or smell.',
+             'dur': 'Instantaneous',
+             'id': '23555cfd-7978-4137-a4b5-369e00bd921d',
+             'level': 1,
+             'name': 'Find familiar',
+             'prepared': False,
+             'range': '10 feet',
+             'ritual': True,
+             'school': 'Conjuration',
+             'source': 'Wizard',
+             'time': '1 hour'},
+            {'comp': 'v, s, m (a magnifying glass and pipe)',
+             'desc': 'When you cast this spell, all footprints and '
+                     'fingerprints within range become highlighted and glow '
+                     'faintly for the duration. At the time of casting, choose '
+                     'any period of time up to the last 10 days to the '
+                     'present; only footprints and fingerprints left within '
+                     'that time period will be highlighted. Each creature '
+                     'whose footprints or fingerprints are detected by the '
+                     'spell is assigned an unique color, but are not otherwise '
+                     'identified. Any creature that moves or touches objects '
+                     'in the area will also leave colorful footprints and '
+                     'fingerprints, which might reveal invisible creatures in '
+                     'the area.',
+             'dur': '10 minutes',
+             'future': True,
+             'id': '5fe98489-8ff8-4da3-baaf-f871575bc8c5',
+             'level': 1,
+             'name': 'Clue',
+             'prepared': False,
+             'range': '30 feet',
+             'ritual': True,
+             'school': 'Divination',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'v, s, m (a piece of string and a bit of wood)',
+             'desc': 'This spell creates an invisible, mindless, shapeless, '
+                     'medium force (that is treated as an object) that appears '
+                     'in an unoccupied space you can see within range. It '
+                     'performs simple tasks at your command until the spell '
+                     'ends. The servant springs into existence in an '
+                     'unoccupied space on the ground within range. It has aa '
+                     '+0, 1 pcn, and a body stat of 2, and it can’t attack. If '
+                     'it drops to 0 pcn, the spell ends.\n'
+                     '\n'
+                     'Once on each of your turns as a bonus action, you can '
+                     'mentally command the servant to move up to 15 feet in '
+                     'any direction (including up or down in the air) and '
+                     'interact with an object. The servant can perform simple '
+                     'tasks that a human servant could do, such as fetching '
+                     'things, cleaning, mending, folding clothes, lighting '
+                     'fires, serving food, and pouring wine, as long as you '
+                     'point it to the right direction and guide it thoroughly, '
+                     'i.e. clear to follow step-by-step instructions that '
+                     'don’t allow the space for any creative interpretations '
+                     "that the servant lacks. However, it can't attune to or "
+                     'activate magical items. It also can only do checks or '
+                     'use the help action or be helped by other creatures in '
+                     'athletics, and acrobatics, as long as you respect its '
+                     'physical capabilities. It is utterly oblivious to its '
+                     "surroundings' changes and details, and can’t do "
+                     'awareness or investigation checks or use the help action '
+                     'for these checks; if you want your servant to pick up '
+                     'wood in the forest, you have to point out what to pick '
+                     'up, for instance, since it can’t find it for himself.\n'
+                     '\n'
+                     'If you command the servant to perform a task that would '
+                     'move it more than 60 feet away from you, the spell ends.',
+             'dur': '1 hour',
+             'future': True,
+             'id': '6a3c1de8-056d-4374-9c79-e5ce993c6757',
+             'known': False,
+             'level': 1,
+             'name': 'Unseen servant',
+             'prepared': False,
+             'range': '60 feet',
+             'ritual': True,
+             'school': 'Conjuration',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s, m (a drop of mercury)',
+             'desc': 'This spell creates a circular, horizontal plane of '
+                     'force, 3 feet in diameter, that floats 3 feet above the '
+                     'lowest elevation of your body in an unoccupied space of '
+                     'your choice that you can see within range. The disk '
+                     'remains for the duration, and can hold up to 700 pounds '
+                     'of force (approx. 7303.5 N) pushing straight down on its '
+                     'surface. If more force is exerted upon it, the spell '
+                     'ends, and everything on the disk falls to the ground. '
+                     'The disk can’t be reoriented, and the only surface that '
+                     'is tangible is its top, meaning it can pass through '
+                     'objects and walls. An object cohesive in regards to '
+                     'itself (in a single piece) partially inside of the disk '
+                     'can’t interact with its surface, and objects on top of '
+                     'it may be pushed off of it in the process if their '
+                     'momentum isn’t enough to remove the obstacle. The '
+                     'surface of the disk has friction comparable to rough '
+                     'rock.\n'
+                     '\n'
+                     'The disk is immobile while you are within 20 feet of it. '
+                     'If you move more than 20 feet away from it, the disk '
+                     'follows you in a straight line so that it remains within '
+                     '20 feet of you at the same relative height with a '
+                     'movement speed of up to 10 ft. and acceleration of 1 G '
+                     '(meaning that if 350 pounds are on top of it, the disk’s '
+                     'own movement don’t cause the force on top of it to '
+                     'exceed 500 pounds of force even when moving vertically). '
+                     'While within 5 feet of the disk, you or creatures you '
+                     'designate when you cast this spell can also gently guide '
+                     'it horizontally within the 20 feet around you by '
+                     'expending all your movement to move it at its normal '
+                     'speed, while still within 5 feet of it throughout the '
+                     'movement.\n'
+                     '\n'
+                     'A non-incapacitated creature can perform an acrobatics '
+                     'check with AC determined by the DM to move up to 5ft. '
+                     'out of the disk’s (and whatever is on top of it) path in '
+                     'a direction of its choice.\n'
+                     '\n'
+                     'If you move more than 100 feet from the disk, the spell '
+                     'ends.',
+             'dur': '1 hour',
+             'future': True,
+             'id': '8781455d-d11b-47e7-86e0-8a6561758356',
+             'known': False,
+             'level': 1,
+             'name': "Tenser's floating disk",
+             'prepared': False,
+             'range': '30 feet',
+             'ritual': True,
+             'school': 'Conjuration',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s, m (a tiny bell and a piece of fine silver wire)',
+             'desc': 'You set an alarm against unwanted intrusion. Choose a '
+                     'door, a window, or an area within range that is no '
+                     'larger than a 20-foot cube. Until the spell ends, an '
+                     'alarm alerts you whenever a tiny or larger creature '
+                     'touches or enters the warded area. When you cast the '
+                     'spell, you can designate creatures that won’t set off '
+                     'the alarm. You also choose whether the alarm is mental '
+                     'or audible.\n'
+                     '\n'
+                     'A mental alarm alerts you with a ping in your mind if '
+                     'you are within 1 mile of the warded area. This ping '
+                     'awakens you if you are sleeping. An audible alarm '
+                     'produces the sound of a hand bell for 10 seconds within '
+                     '60 feet.',
+             'dur': '8 hours',
+             'future': True,
+             'id': '81537efc-cbd1-4002-a78d-2182eedc81fd',
+             'known': False,
+             'level': 1,
+             'name': 'Alarm',
+             'prepared': False,
+             'range': '30 feet',
+             'ritual': True,
+             'school': 'Abjuration',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': True,
+             'comp': 's, m (a copper piece)',
+             'desc': 'You befuddle the mind of a target creature you can see '
+                     'within range, swapping the position of two things you '
+                     'and them can see that are of the same size and category '
+                     '(for example, two medium creatures or two gargantuan '
+                     'buildings). The target perceives the two things as being '
+                     'swapped and rationalizes this occurrence as a kind of '
+                     'magical effect or simply confusion on its part, and acts '
+                     'accordingly. Sounds, smells and other stimuli are also '
+                     'perceived as being from the new positions, and strange '
+                     'occurrences, such as creatures seemingly attacking '
+                     'nothingness, floating in midair (if the original is '
+                     'lifted or sitting on a chair, for instance), or some '
+                     'instances of overlapping objects caused by the '
+                     'non-perfect match of dimensions and movement not fit for '
+                     'the swapped locations, are dismissed as hallucinations. '
+                     'Creatures immune to the charmed condition aren’t '
+                     'affected by this spell.\n'
+                     '\n'
+                     'Each time the creature interacts with, attacks, or is '
+                     'attacked by a swapped target, it can make a mind saving '
+                     'throw, ending the effect on a success.\n'
+                     '\n'
+                     'If this spell’s material component was something from '
+                     'the target creature, you don’t need to see the creature '
+                     'for the casting and the spell’s range becomes 1 mile.',
+             'dur': 'Focusing, up to 1 minute',
+             'id': 'fc46859e-51e7-4ebe-b745-eb60da47d164',
+             'level': 2,
+             'name': 'Detect thoughts',
+             'prepared': False,
+             'range': 'Self',
+             'school': 'Divination',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'comp': 's, m (a compass)',
+             'desc': 'An object cohesive in regards to itself (in a single '
+                     'piece) you touch becomes linked to you. The DM might '
+                     'require a spell attack roll to affect an object that is '
+                     'being worn or carried. As an action while within 30 ft. '
+                     'of the object and you have a free hand, you can call it '
+                     '(which is imperceptible), making the object return to a '
+                     'free hand.',
+             'dur': 'Focusing, up to 1 hour',
+             'future': True,
+             'id': '134b3fe1-db31-424d-ad7e-ed0529839103',
+             'level': 2,
+             'name': 'Calling',
+             'prepared': True,
+             'range': 'Self',
+             'ritual': True,
+             'school': 'Conjuration',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'm (magician props, such as a deck of cards, a wand, a '
+                     'top hat or a set for the shell game or something from '
+                     'the target creature (such as blood, hair, or scales) '
+                     'which the spell consumes)',
+             'desc': 'You befuddle the mind of a target creature you can see '
+                     'within range, swapping the position of two things you '
+                     'and them can see that are of the same size and category '
+                     '(for example, two medium creatures or two gargantuan '
+                     'buildings). The target perceives the two things as being '
+                     'swapped and rationalizes this occurrence as a kind of '
+                     'magical effect or simply confusion on its part, and acts '
+                     'accordingly. Sounds, smells and other stimuli are also '
+                     'perceived as being from the new positions, and strange '
+                     'occurrences, such as creatures seemingly attacking '
+                     'nothingness, floating in midair (if the original is '
+                     'lifted or sitting on a chair, for instance), or some '
+                     'instances of overlapping objects caused by the '
+                     'non-perfect match of dimensions and movement not fit for '
+                     'the swapped locations, are dismissed as hallucinations. '
+                     'Creatures immune to the charmed condition aren’t '
+                     'affected by this spell.\n'
+                     '\n'
+                     'Each time the creature interacts with, attacks, or is '
+                     'attacked by a swapped target, it can make a mind saving '
+                     'throw, ending the effect on a success.\n'
+                     '\n'
+                     'If this spell’s material component was something from '
+                     'the target creature, you don’t need to see the creature '
+                     'for the casting and the spell’s range becomes 1 mile.',
+             'dur': 'Focusing, up to 1 minute',
+             'id': 'ec3e9788-94e9-49d5-8f39-ab7fe04ff3f2',
+             'level': 2,
+             'name': 'Befuddling curse',
+             'prepared': True,
+             'range': '60 feet',
+             'school': 'Enchantment',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 's, m (specially marked sticks, bones, or similar tokens '
+                     'worth at least 25 gp)',
+             'desc': 'By casting gem-inlaid sticks, rolling dragon bones, '
+                     'laying out ornate cards, or employing some other '
+                     'divining tool, you receive an omen from an otherworldly '
+                     'entity about the results of a specific course of action '
+                     'that you plan to take within the next 30 minutes. The dm '
+                     'chooses from the following possible omens:\n'
+                     '\n'
+                     '• Weal, for good results\n'
+                     '• Woe, for bad results\n'
+                     '• Weal and woe, for both good and bad results\n'
+                     '• Nothing, for results that aren’t especially good or '
+                     'bad\n'
+                     '\n'
+                     'The spell doesn’t take into account any possible '
+                     'circumstances that might change the outcome, such as the '
+                     'casting of additional spells or the loss or gain of a '
+                     'companion. If you cast the spell two or more times '
+                     'before completing your next long rest, there is a '
+                     'cumulative 25 percent chance for each casting after the '
+                     'first that you get a random reading. The dm makes this '
+                     'roll in secret.',
+             'dur': 'Instantaneous',
+             'future': True,
+             'id': 'd6e4c16f-f00b-4b95-9ff2-83aa6d1ddb59',
+             'known': False,
+             'level': 2,
+             'name': 'Augury',
+             'prepared': False,
+             'range': 'Self',
+             'ritual': True,
+             'school': 'Divination',
+             'source': 'Sorcerer',
+             'time': '1 minute'},
+            {'comp': 'm (a snake’s tongue and either a bit of honeycomb or a '
+                     'drop of sweet oil)',
+             'desc': 'You suggest a course of activity (limited to a sentence '
+                     'or two) and magically influence a creature you can see '
+                     'within range that can hear and understand you. Creatures '
+                     'that can’t be charmed are immune to this effect. The '
+                     'suggestion must be worded in such a manner as to make '
+                     'the course of action sound reasonable. Asking the '
+                     'creature to stab itself, throw itself onto a spear, '
+                     'immolate itself, or do some other obviously harmful act '
+                     'ends the spell.\n'
+                     '\n'
+                     'The target must make a mind saving throw. On a failed '
+                     'save, it purses the course of action you described to '
+                     'the best of its ability. The suggested course of action '
+                     'can continue for the entire duration. If the suggested '
+                     'activity can be completed in a shorter time, the spell '
+                     'ends when the subject finishes what it was asked to do.\n'
+                     '\n'
+                     'You can also specify conditions that will trigger a '
+                     'special activity during the duration. For example, you '
+                     'might suggest that a knight give her warhorse to the '
+                     'first beggar she meets. If the condition isn’t met '
+                     'before the spell expires, the activity isn’t preformed. '
+                     'Whether the triggering condition is met or not is based '
+                     'on your senses and interpretations, therefore what you '
+                     'don’t have a way of knowing can’t trigger the effect, '
+                     'and the triggering might be affected by a confused state '
+                     'or illusory effects, such as a pond that you believe you '
+                     'fell on, but is actually an illusion.\n'
+                     '\n'
+                     'If you or any of your companions damage the target, the '
+                     'spell ends.',
+             'dur': 'Focusing, up to 8 hours',
+             'id': 'dd9055f1-686b-4a66-8154-e84c39d8a848',
+             'level': 2,
+             'name': 'Suggestion',
+             'prepared': True,
+             'range': '30 feet',
+             'school': 'Enchantment',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'v, s, m (fur or a feather from a beast)',
+             'desc': 'You touch a creature and bestow upon it a magical '
+                     'enhancement. Choose one of the following effects; the '
+                     'target gains the effect until the spell ends.\n'
+                     '\n'
+                     'Deer’s sight. The target has darkvision out to a range '
+                     'of 60 feet.\n'
+                     '\n'
+                     'Bear’s endurance. The target has advantage (anterior '
+                     'type) on body checks. It also gains 2d6 pcn temporary '
+                     'pcn, which are lost when the spell ends. Its carrying '
+                     'capacity doubles.\n'
+                     '\n'
+                     'Cat’s grace. The target has advantage (anterior type) on '
+                     'senses based checks. It also doesn’t take damage from '
+                     'falling 20 feet or less if it isn’t incapacitated.\n'
+                     '\n'
+                     'Eagle’s splendor and owl’s wisdom. The target has '
+                     'advantage (anterior type) on soul based checks.\n'
+                     '\n'
+                     'Fox’s cunning. The target has advantage (anterior type) '
+                     'on mind based checks.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 3 or more shards, '
+                     'you can target one additional creature for each shard '
+                     'above 2.',
+             'dur': 'Focusing, up to 1 hour',
+             'id': '91d4707e-ad53-4ed7-95f8-b81b4222d362',
+             'level': 2,
+             'name': 'Enhance ability',
+             'prepared': True,
+             'range': 'Touch',
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (a pinch of powdered iron)',
+             'desc': 'You cause a creature or an object you can see within '
+                     'range to grow larger or smaller for the duration. Choose '
+                     'either a creature or an object cohesive in regards to '
+                     'itself (in a single piece) not larger than 500 cubic '
+                     'feet that is neither worn nor carried. If the target is '
+                     'unwilling, it can make a body saving throw. On a '
+                     'success, the spell has no effect.\n'
+                     '\n'
+                     'If the target is a creature, everything it is wearing '
+                     'and carrying changes size with it. Any item dropped by '
+                     'an affected creature returns to normal size at once.\n'
+                     '\n'
+                     'Enlarge. The target’s size doubles in all dimensions, '
+                     'and its weight is multiplied by eight. This growth '
+                     'increases its size by one category – from medium to '
+                     'large, for example. If there isn’t enough room for the '
+                     'target to double its size, the creature or object '
+                     'attains the maximum possible size in the space '
+                     'available. Until the spell ends, the target also has '
+                     'advantage (anterior type) on body checks and saving '
+                     'throws. The target’s weapons also grow to match its new '
+                     'size. While these weapons are enlarged, the target’s '
+                     'attack with them deal 1d4 extra damage.\n'
+                     '\n'
+                     'Reduce. The target’s size is halved in all dimensions, '
+                     'and its weight is reduced to one-eighth of normal. This '
+                     'reduction decreases its size by one category – from '
+                     'medium to small, for example. If there isn’t enough '
+                     'leeway for the target to halve its size, the creature or '
+                     'object attains the minimum possible size possible. Until '
+                     'the spell ends, the target also has disadvantage '
+                     '(anterior type) on body checks and saving throws. The '
+                     'target’s weapons also shrink to match its new size. '
+                     'While these weapons are reduced, the target’s attacks '
+                     'with them deal 1d4 less damage (this can’t reduce the '
+                     'damage below 1).',
+             'dur': 'Focusing, up to 1 minute',
+             'id': 'ef611e93-b25a-43ed-8bee-a7daf970321d',
+             'level': 2,
+             'name': 'Enlarge/reduce',
+             'prepared': True,
+             'range': '30 feet',
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (A bit of fur from a bloodhound)',
+             'desc': 'Describe or name a creature that is familiar to you. The '
+                     'magnet material component of this spell points to it as '
+                     'if it were a compass as long as that creature is within '
+                     '1 mile of you. If the creature is moving, you know the '
+                     'direction of its movement in your mind.\n'
+                     '\n'
+                     'The spell can locate a specific creature known to you, '
+                     'or the nearest creature of a specific kind (such as a '
+                     'bear or oak tree), that is also a plant or beast, so '
+                     'long as you have seen such a creature up close—within 30 '
+                     'feet—at least once. If the creature you described or '
+                     'named is in a different form, such as being under the '
+                     "effects of a *polymorph* spell, this spell doesn't "
+                     'locate the creature. \n'
+                     '\n'
+                     'You can also touch an object as part of casting this '
+                     'spell to identify the aura of the last creature that '
+                     'touched it. Make an awareness or Investigation check '
+                     'against an AC of - (6 + double the number of days since '
+                     'the last contact occurred). On a success, you learn the '
+                     "creature's type and the spell resolves targeting that "
+                     'creature. On a failure, the spell ends.\n'
+                     '\n'
+                     "This spell can't locate a creature if running water at "
+                     'least 10 feet wide blocks a direct path between you and '
+                     'the creature.\n'
+                     '\n'
+                     'Even if you don’t get a pinpoint, you can keep focusing '
+                     'on this spell until the target enters the range. While '
+                     'focusing on this spell, you can only move with one '
+                     'fourth of your movement speed. If you dislocate (such as '
+                     'pushed, carried or teleported) more than half your '
+                     'movement speed during a turn, the spells end.\n'
+                     '\n'
+                     'Kicker. If you learned this spell as Locate creature, '
+                     'when you cast this spell using 3 or more shards, the '
+                     'range and the type of creature you can locate increase '
+                     'as show in the table below:\n'
+                     '\n'
+                     'TSO\tRange\t\tCreature Types\n'
+                     '3\t2 miles\t\tDragon, Giant, Humanoid, Monstrosity, '
+                     'Ooze\n'
+                     '4\t3 miles\t\tAberration, Construct, Undead\n'
+                     '5\t5 miles\t\tCelestial, Elemental, Fey, Fiend',
+             'dur': 'Focusing, up to 1 hour',
+             'id': 'db75fa87-77f1-4cf0-83b8-aeb015e400b0',
+             'level': 2,
+             'name': 'Locate creature (Locate animals or plants)',
+             'prepared': False,
+             'range': 'Self',
+             'school': 'Divination',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (a forked twig)',
+             'desc': 'Describe or name an object that is familiar to you. You '
+                     'sense the direction to the object’s location, as long as '
+                     'that object is within 1,000 feet of you. If the object '
+                     'is in motion, you know the direction of its movement. \n'
+                     '\n'
+                     'The spell can locate a specific object known to you, as '
+                     'long as you have seen it up close – within 30 feet – at '
+                     'least once. Alternatively, the spell can locate the '
+                     'nearest object of a particular kind, such as a certain '
+                     'kind of apparel, jewelry, furniture, tool, or weapon.\n'
+                     '\n'
+                     'This spell can’t locate an object if any thickness of '
+                     'lead, even a thin sheet, blocks a direct path between '
+                     'you and the object.\n'
+                     '\n'
+                     'Even if you don’t get a pinpoint, you can keep focusing '
+                     'on this spell until the target enters the range. While '
+                     'focusing in this spell, you can only move with one '
+                     'fourth of your movement speed. If you dislocate (such as '
+                     'pushed, carried or teleported) more than half your '
+                     'movement speed during a turn, the spells end.',
+             'dur': 'Focusing, up to 10 minutes',
+             'id': '1ef51c53-2a11-4a91-862d-21f148cc6ebf',
+             'level': 2,
+             'name': 'Locate object',
+             'prepared': False,
+             'range': 'Self',
+             'school': 'Divination',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's',
+             'desc': 'For the duration, no sound can be created within or pass '
+                     'through a 20-foot-radius sphere centered on a point you '
+                     'choose within range. Any creature or object entirely '
+                     'inside the sphere is immune to thunder damage, and '
+                     'creatures are deafened while entirely inside it. Casting '
+                     'a spell that includes a verbal component is impossible '
+                     'there.',
+             'dur': 'Focusing, up to 10 minutes',
+             'future': True,
+             'id': '2c481dd9-5c2f-41c6-b85e-cf3ba78b83bc',
+             'known': False,
+             'level': 2,
+             'name': 'Silence',
+             'prepared': False,
+             'range': '120 feet',
+             'ritual': True,
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's',
+             'desc': 'You cause up to ten words to form in a part of the sky '
+                     'you can see. The words appear to be made of cloud and '
+                     'remain in place for the spell’s duration. The words '
+                     'dissipate when the spell ends. A strong wind can '
+                     'disperse the clouds and end the spell early.',
+             'dur': 'Focusing, up to 1 day',
+             'future': True,
+             'id': 'ab4480a9-44a3-4638-aca1-ce1427df8318',
+             'known': False,
+             'level': 2,
+             'name': 'Skywrite',
+             'prepared': False,
+             'range': 'Sight',
+             'ritual': True,
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'v, s, m (a pinch of salt and one copper piece placed on '
+                     'each of the corpse’s eyes, which must remain there for '
+                     'the duration)',
+             'desc': 'You touch a corpse or other remains. For the duration, '
+                     'the target is protected from decay and can’t become '
+                     'undead.\n'
+                     '\n'
+                     'The spell also effectively extends the time limit on '
+                     'raising the target from the dead, since days spent under '
+                     'the influence of this spell don’t count against the time '
+                     'limit of spells such as raise dead.',
+             'dur': '10 days',
+             'future': True,
+             'id': '61be2328-1fbe-4703-8207-3c33791066b7',
+             'known': False,
+             'level': 2,
+             'name': 'Gentle repose',
+             'prepared': False,
+             'range': 'Touch',
+             'ritual': True,
+             'school': 'Necromancy',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'v, s m (a butterfly)',
+             'desc': 'Choose a willing creature that you can see within range. '
+                     'During its next turn, the target gains an additional '
+                     'action. That action can be used only to take the Attack '
+                     '(one weapon attack only), Dash, Disengage, Hide, or Use '
+                     'an Object action.',
+             'dur': 'Instantaneous',
+             'future': True,
+             'id': '7ca36714-3ac1-4f3e-8afa-ad879f15ab75',
+             'known': False,
+             'level': 2,
+             'name': 'Fatal distraction',
+             'prepared': False,
+             'range': '120 feet',
+             'ritual': True,
+             'school': 'Enchantment',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'v, s, m (a small bit of honeycomb and jade dust worth at '
+                     'least 10 gp, which the spell consumes)',
+             'desc': 'You record and implant a message within an object in '
+                     'range, a message that is uttered when a trigger '
+                     'condition is met. Choose an object that you can see and '
+                     'that isn’t being worn or carried by another creature. '
+                     'Then speak the message, which must be 25 words or less, '
+                     'though it can be delivered over as long as 10 minutes. '
+                     'Finally, determine the circumstance that will trigger '
+                     'the spell to deliver your message.\n'
+                     '\n'
+                     'When that circumstance occurs, a magical mouth appears '
+                     'on the object and recites the message in your voice and '
+                     'at the same volume you spoke. As long as you are on the '
+                     'same plane of existence as the spell, you instantly know '
+                     'when it triggers and exactly which instance of this '
+                     'spell it was. If the object you chose has a mouth or '
+                     'something that looks like a mouth (for example, the '
+                     'mouth of a statue), the magical mouth appears there so '
+                     'that words appear to come from the object’s mouth. When '
+                     'you cast this spell, you can have the spell end after it '
+                     'delivers its message, or it can remain and repeat its '
+                     'message whenever the trigger occurs.\n'
+                     '\n'
+                     'The triggering circumstance can be as general or as '
+                     'detailed as you like, though it must be based on visual '
+                     'or audible conditions that occur within 30 feet of the '
+                     'object. For example, you could instruct the mouth to '
+                     'speak when any creature moves within 30 feet of the '
+                     'object or when a silver bell rings within 30 feet of it. '
+                     'This 30 feet sense has no special properties such as '
+                     'darkvision, blindsight, capability of seeing in magical '
+                     'darkness or hear through magical silence etc. A good '
+                     'rule of thumb when it is unclear whether or not an event '
+                     'would qualify as a trigger is to cogitate what the '
+                     'caster would conclude if in the same situation, based on '
+                     'its knowledge of the world and of specific elements '
+                     'involved, ideologies and worldviews, and interpretations '
+                     'and suppositions, given what the sensor can perceive. '
+                     'The triggering might be affected by illusory effects, '
+                     'such as an illusory item that is involved on the '
+                     'trigger, such as an illusory sword on a condition of '
+                     'being armed.',
+             'dur': 'Until dispelled',
+             'future': True,
+             'id': '20ffbbe0-f29d-4dd7-afb4-70c1efccf235',
+             'known': False,
+             'level': 2,
+             'name': 'Magic mouth',
+             'prepared': False,
+             'range': '30 feet',
+             'ritual': True,
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 minute'},
+            {'always': True,
+             'comp': 's',
+             'desc': 'Choose any creature, object, or magical effect within '
+                     'range. Any spell of 3 total shard output or fewer on the '
+                     'target ends. For each spell of 4 total shard output or '
+                     'more on the target, make a check using your spellcasting '
+                     'aspect. The AS equals - twice the total shard output. On '
+                     'a successful check, the spell ends.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 4 shards or more, '
+                     'you automatically end the effects of a spell on the '
+                     'target if the spell’s base shard output is equal to or '
+                     'less than the shards you used.',
+             'dur': 'Instantaneous',
+             'id': 'adc336ac-4dcc-4e6a-b2bf-2ebe699c5bc9',
+             'level': 3,
+             'name': 'Dispel magic',
+             'prepared': False,
+             'range': '120 feet',
+             'school': 'Abjuration',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'comp': 's, m (a focus worth at least 100 gp, either a jeweled '
+                     'horn for hearing or a glass eye for seeing)',
+             'desc': 'You create an invisible sensor within range in a '
+                     'location familiar to you (a place you have visited or '
+                     'seen before) or in an obvious location that is '
+                     'unfamiliar to you (such as behind a door, around a '
+                     'corner, or in a grove of trees). The sensor is not a '
+                     'creature and cannot be targeted or damaged in any way, '
+                     'but can be detected.\n'
+                     '\n'
+                     'When you cast the spell, you choose seeing or hearing. '
+                     'You can use the chosen sense through the sensor as if '
+                     'you were in its space. As an action, you can switch '
+                     'between seeing and hearing. While benefiting from this '
+                     'vantage point, you lose the benefits of any special '
+                     'senses if they aren’t inherent (those that don’t target '
+                     'your body, such as a spell,  or depend on your position, '
+                     'such as an aura or item that must be on your person) or '
+                     'if they are dependent on your physiology, such as keen '
+                     'hearing. A creature that can see the sensor (such as a '
+                     'creature benefitting from see invisibility or truesight) '
+                     'sees a luminous, intangible orb about the size of your '
+                     'fist.',
+             'dur': 'Focusing, up to 10 minutes',
+             'id': '5e461e48-9a57-4d64-ad68-4e6be2cd5360',
+             'level': 3,
+             'name': 'Clairvoyance',
+             'prepared': True,
+             'range': '1 mile',
+             'school': 'Divination',
+             'source': 'Sorcerer',
+             'time': '10 minutes'},
+            {'comp': '',
+             'desc': 'For the duration, you have advantage (anterior type) on '
+                     'all checks to interact with one creature of your choice '
+                     'that isn’t hostile toward you. When the spell ends, the '
+                     'creature realizes that you used magic to influence its '
+                     'mood and becomes hostile toward you. A creature prone to '
+                     'violence might attack you. Another creature might seek '
+                     'retribution in other ways (at the dm’s discretion), '
+                     'depending on the nature of your interaction with it.',
+             'dur': 'Focusing, up to 1 hour',
+             'id': 'b34dfb42-dd6e-4b32-b423-2289c0ecc13a',
+             'level': 3,
+             'name': 'Fast friends',
+             'prepared': True,
+             'range': '30 feet',
+             'school': 'Enchantment',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (a short piece of fine copper wire)',
+             'desc': 'You send a short message of twenty-five words or less to '
+                     'a creature with which you are familiar. You don’t need '
+                     'to speak the message out loud, and the message itself '
+                     'isn’t the verbal component of this spell. The creature '
+                     'hears the message in its mind, recognizes you as the '
+                     'sender if it knows you, and can answer in a like manner '
+                     'immediately. The spell enables creatures with mind stat '
+                     'of at least 1 to understand the meaning of your '
+                     'message.\n'
+                     '\n'
+                     'You can send the message across any distance and even to '
+                     'other planes of existence, but if the target is on a '
+                     'different plane than you, there is a 5 percent chance '
+                     'that the message doesn’t arrive.\n'
+                     '\n'
+                     'If you instead cast this spell as a ritual, it instead '
+                     'has a range of only 150 miles. You can extend the '
+                     'duration of ritual casting this spell, and the spell’s '
+                     'range increases by 50 miles per increment of extra 10 '
+                     'minutes you spend casting it. These increments of 10 '
+                     'minutes are considered to be the one  extra instance of '
+                     'the time for ritual casting for the purposes of features '
+                     'or items that alter ritual casting time. For instance, '
+                     'the wizard’s the old ways can replace each instance of '
+                     '10 minutes by 3 turns, and features that half the ritual '
+                     'casting time apply to the total extra time you spent to '
+                     'cast this spell as well.',
+             'dur': '1 round',
+             'future': True,
+             'id': 'edb5189e-cca8-46c6-8027-0b5222cd80a5',
+             'known': False,
+             'level': 3,
+             'name': 'Sending',
+             'prepared': False,
+             'range': 'Unlimited',
+             'ritual': True,
+             'school': 'Evocation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 'v, s, m (a small crystal bead)',
+             'desc': 'A 10-foot-radius immobile dome of force springs into '
+                     'existence around and above you and remains stationary '
+                     'for the duration. The spell ends if you leave its area.\n'
+                     '\n'
+                     'Nine creatures of medium size or smaller can fit inside '
+                     'the dome with you. The spell fails if its area includes '
+                     'a larger creature or more than nine creatures. Creatures '
+                     'not entirely within the dome when it is cast are pushed '
+                     'to the nearest unoccupied space. Creatures and objects '
+                     'within the dome when you cast this spell can move '
+                     'through it freely. All other creatures and objects are '
+                     'barred from passing through it.\n'
+                     '\n'
+                     "Any spells cast from outside the barrier can't target "
+                     'creatures, points or objects within it or vice-versa. '
+                     'Similarly, the area within the barrier is excluded from '
+                     'the areas affected by such spells. The atmosphere inside '
+                     'the space is comfortable and dry, regardless of the '
+                     'weather outside.\n'
+                     '\n'
+                     'Until the spell ends, you can command the interior to '
+                     'become dimly lit or dark. The dome is opaque and dull in '
+                     'color as to blend in with surroundings, but it is '
+                     'transparent from the inside. A creature outside the dome '
+                     'have to make a successful investigation or awareness '
+                     'check to spot it.',
+             'dur': '8 hours',
+             'future': True,
+             'id': 'fb434aae-2752-4bbf-b3fe-cfa88b9f8924',
+             'known': False,
+             'level': 3,
+             'name': "Leomund's tiny hut",
+             'prepared': False,
+             'range': 'Self (10-foot-radius hemisphere)',
+             'ritual': True,
+             'school': 'Evocation',
+             'source': 'Wizard',
+             'time': '1 minute'},
+            {'comp': 'v, s',
+             'desc': 'You share yourself, and allow others the same '
+                     'opportunity. For the duration of the spell, you and any '
+                     'creature of your choice within range can use their '
+                     'action to enter a shared dreamscape, entering a '
+                     "meditative trance or falling asleep (target's choice). "
+                     'The appearance of the dreamscape is up to you; you and '
+                     'any creature of your choice can shape the environment of '
+                     'the dreamscape, creating landscapes, objects, and other '
+                     'images, such as showing memories. The dreamscape relies '
+                     'on the creativity of its residents, and cannot create '
+                     'something that has not been seen or imagined by a '
+                     'creature within the dreamscape. A creature within the '
+                     'dreamscape can leave at any time, waking from their '
+                     'trance or sleep. Regardless of its contents, the '
+                     'dreamscape soothes the soul with its catharsis. A '
+                     'creature that spends at least 4 hours of a long rest '
+                     'within the dreamscape recovers an additional level of '
+                     'exhaustion at the end of the rest.',
+             'dur': '8 hours',
+             'future': True,
+             'id': '17a508e1-a450-44d2-830e-25471c3ad66e',
+             'known': False,
+             'level': 3,
+             'name': 'Dreamscape',
+             'prepared': False,
+             'range': 'Self (30-foot radius)',
+             'ritual': True,
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's',
+             'desc': 'You step into a stone object or surface large enough to '
+                     'fully contain your body, melding yourself and all the '
+                     'equipment you carry with the stone for the duration. '
+                     'Using your movement, you step into the stone at a point '
+                     'you can touch. Nothing of your presence remains visible '
+                     'or otherwise detectable by nonmagical means.\n'
+                     '\n'
+                     'While merged with the stone, you can’t see what occurs '
+                     'outside it, and any awareness checks you make to hear '
+                     'sounds outside it are made with disadvantage (anterior '
+                     'type). You remain aware of the passage of time and can '
+                     'cast spells with a range of self while merged in the '
+                     'stone. You can use your movement to leave the stone '
+                     'where you entered it, which ends the spell. You '
+                     'otherwise can’t move.\n'
+                     '\n'
+                     'Minor physical damage to the stone doesn’t harm you, but '
+                     'its partial destruction or a change in its shape (to the '
+                     'extent that you no longer fit within it) expels you and '
+                     'deals 6d6 bludgeoning damage to you. The stone’s '
+                     'complete destruction (or transmutation into a different '
+                     'substance) expels you and deals 50 bludgeoning damage to '
+                     'you. If expelled, you fall prone in the unoccupied space '
+                     'closest to where you first entered.',
+             'dur': '8 hours',
+             'future': True,
+             'id': '2af53da2-8937-43d1-ad24-7628461a98be',
+             'known': False,
+             'level': 3,
+             'name': 'Meld into stone',
+             'prepared': False,
+             'range': 'Touch',
+             'ritual': True,
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'comp': 's, m (a pinch of graveyard dirt)',
+             'desc': 'You touch a willing creature and put it into a '
+                     'cataleptic state that is indistinguishable from death.\n'
+                     '\n'
+                     'For the spell’s duration, or until you use an action to '
+                     'touch the target and dismiss the spell, the target '
+                     'appears dead to all outward inspection and to spells '
+                     'used to determine the target’s status. The target is '
+                     'blinded and incapacitated, and its speed drops to 0. The '
+                     'target has resistance to all damage except psychic '
+                     'damage. If the target is diseased or poisoned when you '
+                     'cast the spell, or becomes diseased or poisoned while '
+                     'under the spell’s effect, the disease and poison have no '
+                     'effect until the spell ends.',
+             'dur': '1 hour',
+             'future': True,
+             'id': 'f8fb7354-e4a8-4549-adbb-91f043804dd2',
+             'known': False,
+             'level': 3,
+             'name': 'Feign death',
+             'prepared': False,
+             'range': 'Touch',
+             'ritual': True,
+             'school': 'Necromancy',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': '',
+             'desc': 'You magically distract the triggering creature and turn '
+                     'its momentary uncertainty into encouragement for another '
+                     'creature. If you have your reaction available and ways '
+                     'to cast this spell, you can add disadvantage (posterior '
+                     'type) to a check, attack roll or saving throw a creature '
+                     'you can see within range makes, only using your reaction '
+                     'and casting this spell if it is used in the roll.\n'
+                     '\n'
+                     'Once cast, you can then choose a different creature you '
+                     'can see within range (you can choose yourself). The '
+                     'chosen creature has advantage (anterior type) on the '
+                     'next attack roll, check, or saving throw it makes within '
+                     '1 minute. A creature can be empowered by only one use of '
+                     'this spell at a time.',
+             'dur': 'Instantaneous',
+             'id': '620e7f22-958f-42dc-adeb-03dc9b2b1ecb',
+             'known': True,
+             'level': 1,
+             'maybe': False,
+             'name': 'Interference',
+             'prepared': True,
+             'range': '60 ft',
+             'school': 'Enchantment',
+             'source': 'Wizard',
+             'time': '1 reaction, which you take when this disadvantage '
+                     '(posterior type) is used on the roll'},
+            {'always': False,
+             'comp': 's',
+             'desc': 'You touch a single creature, or unattended object of up '
+                     'to 400 pounds in weight, and instantly teleport it to an '
+                     'unoccupied space you can see within 30 feet. A creature '
+                     'can resist the spell with a successful soul saving '
+                     'throw.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 4 or more shards, '
+                     'the range of the teleportation doubles and the weight by '
+                     '50 pounds for each shard above 3.',
+             'dur': 'Instantaneous (ready action before acrobatics check over '
+                    'a fall, while using mage hand as balancing for advantage)',
+             'id': '30b19be0-45cc-4e0a-add4-39bb7047ff1d',
+             'known': True,
+             'level': 3,
+             'maybe': False,
+             'name': "Plia's translocation",
+             'prepared': True,
+             'range': 'Touch',
+             'school': 'Conjuration',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 's, m (an object a spirit has passed through',
+             'desc': 'You touch a willing creature. Until the spell ends, it '
+                     'becomes semi-incorporeal and can move through other '
+                     'creatures and objects as if they were difficult terrain. '
+                     'If the creature ends its movement inside another object '
+                     'or creature, it is immediately shunted to the nearest '
+                     'unoccupied space, taking 1d10 force damage for every 5 '
+                     'feet it was forced to travel.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 4 shards or more '
+                     'shards, you can target one additional creature for each '
+                     'shard above 3.',
+             'dur': 'Focusing, up to 1 minute',
+             'id': '3bff0e94-df64-40fb-a77b-0de22d2ef5a3',
+             'known': True,
+             'level': 3,
+             'maybe': False,
+             'name': 'Spectral passage',
+             'prepared': True,
+             'range': 'Touch',
+             'school': 'Necromancy',
+             'source': 'Sorcerer',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 's, m (a drop of bitumen and a spider)',
+             'desc': 'Until the spell ends, one willing creature you touch '
+                     'gains the ability to move up, down, and across vertical '
+                     'surfaces and upside down along ceilings, while leaving '
+                     'its hands free. The target also gains a climbing speed '
+                     'equal to its walking speed.\n'
+                     '\n'
+                     'Kicker: when you cast this spell using 3 shards or more, '
+                     'you can target one additional creature for each shard '
+                     'above 2.',
+             'dur': 'Focusing, up to 1 hour',
+             'id': '96ef87ab-91d0-43f3-a394-fbe69646ab38',
+             'known': False,
+             'level': 2,
+             'maybe': False,
+             'name': 'Spider climb',
+             'prepared': False,
+             'range': 'Touch',
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s, m (powdered corn extract and a twisted loop of '
+                     'parchment)',
+             'desc': 'You touch a length of rope that is up to 60 feet long. '
+                     'One end of the rope then rises into the air until the '
+                     'whole rope hangs perpendicular to the ground. At the '
+                     'upper end of the rope, an invisible entrance opens to an '
+                     'extradimensional space that lasts until the spell ends.\n'
+                     '\n'
+                     'The extradimensional space can be reached by climbing to '
+                     'the top of the rope. The space can hold as many as eight '
+                     'medium or smaller creatures. The rope can be pulled into '
+                     'the space, making the rope disappear from view outside '
+                     'the space.\n'
+                     '\n'
+                     'Spells and magical effects can’t cross through the '
+                     'entrance into or out of the extradimensional space, but '
+                     'those inside can see out of it as if through a '
+                     '3-foot-by-5-foot window centered on the rope. The '
+                     'entrance blocks spells and effects that mention blockage '
+                     'from 1 foot of stone, 1 inch of common metal, a thin '
+                     'sheet of lead, or 3 feet of wood and other material '
+                     'based barriers, such as locate creatures and detect '
+                     'magic, or that work only while on the same plane or '
+                     'within a certain range.  Any creature, objects or points '
+                     'within the space cannot be targeted by anything outside '
+                     'of it, and vice versa. Similarly, the space is excluded '
+                     'from the areas affected by spells. The space is '
+                     'considered occupied by effects outside of it, and vice '
+                     'versa.\n'
+                     '\n'
+                     'Anything inside the extradimensional space drops out '
+                     'when the spell ends. When the entrance closes, it ejects '
+                     'matter that is partially on both sides (passing through '
+                     'the opening) out.',
+             'dur': '1 hour',
+             'id': '630d85c4-9901-456e-887b-9f5eff8919ef',
+             'known': False,
+             'level': 2,
+             'maybe': False,
+             'name': 'Rope trick',
+             'prepared': False,
+             'range': 'Touch',
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s, m (incense and powdered diamond worth at least 200 '
+                     'gp, which the spell consumes)',
+             'desc': 'You trace a sigil of warding, imposing disadvantage '
+                     "(anterior type) on the creature's attack roll against "
+                     'you.',
+             'dur': 'Until dispelled or triggered',
+             'id': 'c6ec7511-76ef-4b90-ae09-304b481f8d2d',
+             'known': False,
+             'level': 3,
+             'maybe': False,
+             'name': 'Glyph of warding',
+             'prepared': False,
+             'range': 'Touch',
+             'ritual': False,
+             'school': 'Abjuration',
+             'source': 'Wizard',
+             'time': '1 hour'},
+            {'always': True,
+             'comp': '',
+             'desc': 'For the duration, you understand the literal meaning of '
+                     'any spoken language that you hear. You also understand '
+                     'any written language that you see, but you must be '
+                     'touching the surface of which the words are written. It '
+                     'takes about 1 minute to read one page of text.\n'
+                     '\n'
+                     'This spell doesn’t decode secret messages in a text or '
+                     'glyph, such as an arcane sigil, that isn’t part of a '
+                     'written language.',
+             'dur': '1 hour',
+             'id': '82fc1ebd-7922-4eb6-a496-18bbaa8d3354',
+             'known': False,
+             'level': 1,
+             'name': 'Comprehend languages',
+             'prepared': False,
+             'range': 'Self',
+             'ritual': False,
+             'school': 'Divination',
+             'source': 'Stonespeaker crystal',
+             'time': '1 action'},
+            {'always': True,
+             'comp': '',
+             'desc': 'You imbue plants within 30 feet of you with limited '
+                     'sentience and animation, giving them the ability to '
+                     'communicate with you and follow your simple commands. '
+                     'You can question plants about events in their immediate '
+                     'area within the past few days, gaining information about '
+                     'creatures that have passed, weather, and other '
+                     'circumstances. The plants can specify the type of '
+                     'creature and some prominent details about them, such as '
+                     'their clothes, or even what they seem to be doing in a '
+                     'general and vague manner, such as arguing and yelling '
+                     'about the path they chose and the general direction they '
+                     'intend to head, if they were cutting down trees or '
+                     'capturing animals, if they murdered someone or discussed '
+                     'murder in some manner, etc. Plants have a hard time '
+                     'remembering names of locations and creatures, specific '
+                     'dates and don’t have knowledge about humanoid culture. '
+                     'It may describe to you a jester outfit or a knight’s '
+                     'armor vaguely, but would never know what those things '
+                     'are, for example. They can try to imitate the syllables '
+                     'that they heard in a very confusing and unreliable way, '
+                     'like a person hearing whispers would reproduce them.\n'
+                     '\n'
+                     'You can also turn difficult terrain caused by plant '
+                     'growth (such as thickets and undergrowth) into ordinary '
+                     'terrain that lasts for the duration. Or you can turn '
+                     'ordinary terrain where plants are present into difficult '
+                     'terrain that lasts for the duration, causing vines and '
+                     'branches to hinder pursuers, for example.\n'
+                     '\n'
+                     'Plants might be able to perform other tasks on your '
+                     'behalf, at the dm’s discretion. The spell doesn’t enable '
+                     'plants to uproot themselves and move about, but they can '
+                     'freely move branches, tendrils, and stalks.\n'
+                     '\n'
+                     'If a plant creature is in the area, you can communicate '
+                     'with it as if you shared a common language, but you gain '
+                     'no magical ability to influence it.\n'
+                     '\n'
+                     'This spell can cause the plants created by the entangle '
+                     'spell to release a restrained creature.',
+             'dur': '10 minutes',
+             'id': '3385b600-23e5-41d8-bed3-52d34b8d41f6',
+             'known': False,
+             'level': 3,
+             'name': 'Speak with plants',
+             'prepared': False,
+             'range': 'Self (30-foot radius)',
+             'ritual': False,
+             'school': 'Transmutation',
+             'source': 'Stonespeaker crystal',
+             'time': '1 action'},
+            {'always': True,
+             'comp': '',
+             'desc': 'You grant the semblance of life and intelligence to a '
+                     'corpse of your choice within range, allowing it to '
+                     'answer the questions you pose. The corpse must still '
+                     'have a mouth and can’t be undead. The spell fails if the '
+                     'corpse was the target of this spell within the last 10 '
+                     'days.\n'
+                     '\n'
+                     'Until the spell ends, you can ask the corpse up to five '
+                     'questions. The corpse knows only what it knew in life, '
+                     'including the languages it knew. Answers are usually '
+                     'brief, cryptic, or repetitive, and the corpse is under '
+                     'no compulsion to offer a truthful answer if you are '
+                     'hostile to it or it recognizes you as an enemy. This '
+                     'spell doesn’t return the creature’s soul to its body, '
+                     'only its animating spirit. Thus, the corpse can’t learn '
+                     'new information, doesn’t comprehend anything that has '
+                     'happened since it died, and can’t speculate about future '
+                     'events.',
+             'dur': '10 minutes',
+             'id': 'eac4aa34-bcd6-4cea-91c8-f46ae533ad3a',
+             'known': False,
+             'level': 3,
+             'name': 'Speak with dead',
+             'prepared': False,
+             'range': '10 ft',
+             'ritual': False,
+             'school': 'Necromancy',
+             'source': 'Stonespeaker crystal',
+             'time': '1 action'},
+            {'always': True,
+             'comp': '',
+             'desc': 'You touch a Large or smaller piece of natural rock or '
+                     'worked stone and imbue it with limited sentience and '
+                     'animation, giving it the ability to communicate with you '
+                     'and follow your simple commands. If you touch a larger '
+                     'piece of stone, a 10-foot-square section of it is '
+                     'affected.\n'
+                     '\n'
+                     'You can question stones about events in their immediate '
+                     'area within the past few days, gaining information about '
+                     'creatures that have passed, weather, and other '
+                     'circumstances. The stones can specify the type of '
+                     'creature and some prominent details about them, such as '
+                     'their clothes, or even what they seem to be doing in a '
+                     'general and vague manner, such as arguing and yelling '
+                     'about the path they chose and the general direction they '
+                     'intend to head, if they were breaking down rocks or '
+                     'capturing animals, if they murdered someone or discussed '
+                     'murder in some manner, etc. Stones have a hard time '
+                     'remembering names of locations and creatures, specific '
+                     'dates and don’t have knowledge about humanoid culture. '
+                     'It may describe to you a jester outfit or a knight’s '
+                     'armor vaguely, but would never know what those things '
+                     'are, for example. They can try to imitate the syllables '
+                     'that they heard in a very confusing and unreliable way, '
+                     'like a person hearing whispers would reproduce them.',
+             'dur': '10 minutes',
+             'id': '5bfb209f-9582-4e73-8803-7560e32fccd3',
+             'known': False,
+             'level': 3,
+             'name': 'Stone tell',
+             'prepared': False,
+             'range': 'Touch',
+             'ritual': False,
+             'school': 'Transmutation',
+             'source': 'Stonespeaker crystal',
+             'time': '1 action'},
+            {'always': True,
+             'comp': 'v, s',
+             'desc': 'This spell creates a translucent illusion of recent '
+                     'events in your vicinity, up to a 15-foot cube, going '
+                     'back a number of days equal to half your spellcasting '
+                     'aspect modifier. For each minute you concentrate, the '
+                     'spell recreates one significant event, beginning with '
+                     'the most recent. Significant events typically involve '
+                     'powerful emotions, such as battles and betrayals, '
+                     'marriages and murders, births and funerals. However, '
+                     'they might also include more mundane events that are '
+                     'nevertheless important in your current situation.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 4 or more shards, '
+                     'the size of the illusory cube increases by 5 feet for '
+                     'each shard above 3.',
+             'dur': 'Focusing, up to 10 minutes',
+             'id': '2b14378a-ffb2-4b63-b72d-d225e34aad13',
+             'known': False,
+             'level': 3,
+             'name': 'Inspect echo',
+             'prepared': False,
+             'range': 'Self',
+             'ritual': False,
+             'school': 'Divination',
+             'source': 'Wizard',
+             'time': '1 minute'},
+            {'always': False,
+             'comp': 'v, s',
+             'desc': 'You become incorporeal for the duration. You gain the '
+                     'following benefits until the spell ends:\n'
+                     '\n'
+                     'You can move through other creatures and objects as if '
+                     'they were difficult terrain. You take 5 (1d10) force '
+                     'damage if you end your turn inside an object.\n'
+                     '\n'
+                     'You have advantage (anterior type) on stealth and '
+                     'sleight of hand checks.\n'
+                     '\n'
+                     'You have resistance to acid, fire, lightning, and '
+                     'thunder damage, and to nonmagical bludgeoning, piercing, '
+                     'and slashing damage.\n'
+                     '\n'
+                     'You have advantage (anterior type) on saving throws you '
+                     'make to avoid or end the grappled, paralyzed, petrified, '
+                     'prone, and restrained conditions on yourself.\n'
+                     '\n'
+                     'You are immune to poison damage and the poisoned '
+                     'condition.',
+             'dur': 'Focusing, up to 1 minute',
+             'id': 'b9f06246-60a3-4077-b8ee-f08443371eb2',
+             'known': False,
+             'level': 5,
+             'name': 'Security bypass',
+             'prepared': False,
+             'range': 'Self',
+             'ritual': False,
+             'school': 'Transmutation',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s, m (a spyglass)',
+             'desc': 'You touch a willing creature and grant it the ability to '
+                     'see into and through solid matter out to 30 feet for the '
+                     'duration. To the target, solid objects within that '
+                     "radius appear transparent and don't prevent light from "
+                     'passing through them. This vision can penetrate 1 foot '
+                     'of stone, 1 inch of common metal, or up to 3 feet of '
+                     'wood or dirt. Thicker substances block the vision, as '
+                     'does a thin sheet of lead.\n'
+                     '\n'
+                     'If you cast the spell two or more times before taking a '
+                     'long rest, you must succeed on an AC -10 body saving '
+                     'throw or gain one level of exhaustion.\n'
+                     '\n'
+                     'Kicker. When you cast this spell using 3 or more shards, '
+                     'the range of vision increases by 10 feet for each shard '
+                     'above 2.',
+             'dur': '1 minute',
+             'id': '6897d21b-93db-4a9a-9348-26286720950d',
+             'known': True,
+             'level': 2,
+             'name': 'Case the joint',
+             'prepared': True,
+             'range': 'Touch',
+             'ritual': False,
+             'school': 'Divination',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 'v, s',
+             'desc': 'You make one creature you touch look and sound different '
+                     "until the spell ends. This spell affects the target's "
+                     'appearance and voice, but not its clothing, armor, '
+                     'weapons, or other belongings on its person. The target '
+                     'can seem 1 foot shorter or taller and can appear thin, '
+                     "fat, or in between. You can't change the target's body "
+                     'type, so the target must adopt a form that has the same '
+                     'basic arrangement of limbs. Otherwise, the extent of the '
+                     'illusion is up to you.\n'
+                     '\n'
+                     'The changes wrought by this spell fail to hold up to '
+                     'physical inspection. For example, if you use this spell '
+                     "to add a hat to the target's outfit, objects pass "
+                     'through the hat, and anyone who touches it would feel '
+                     "nothing or would feel the target's head and hair. If you "
+                     'use this spell to cause the target to appear thinner '
+                     'than they are, the hand of someone who reaches out to '
+                     'touch them would bump into them while it was seemingly '
+                     'still in midair.\n'
+                     '\n'
+                     'To discern that the target is disguised, a creature can '
+                     "use its action to inspect the target's appearance and "
+                     'must succeed on an Investigation check against your '
+                     'spell save AS. For general rules and guidelines on '
+                     'illusions, see the illusion section on the spells '
+                     'folder.\n'
+                     '\n'
+                     'If you focus on this spell for its entire duration, the '
+                     'illusion becomes permanent. A remove curse spell ends '
+                     'this effect.',
+             'dur': 'Focusing, up to 1 hour',
+             'id': 'a4a23ec0-68fe-4eca-ae65-c95d4c37cdda',
+             'known': False,
+             'level': 2,
+             'name': 'Witness protection',
+             'prepared': False,
+             'range': 'Touch',
+             'ritual': False,
+             'school': 'Illusion',
+             'source': 'Wizard',
+             'time': '1 action'},
+            {'always': False,
+             'comp': 's, m (ashes from a burned leaf of mistletoe and a sprig '
+                     'of spruce)',
+             'desc': 'A veil of shadows and silence radiates from you, masking '
+                     'you and your companions from detection. For the '
+                     'duration, while in this aura, you and creatures you '
+                     'choose while within 30 feet of you have a +20 bonus '
+                     '(anterior type) to stealth checks and can’t be tracked '
+                     'except by magical means. A creature that receives this '
+                     'bonus leaves behind no tracks or other traces of its '
+                     'passage: footprints are erased, plants regrow or reform '
+                     'over trails and broken branches decompose, etc.',
+             'dur': 'Focusing, up to 1 hour',
+             'id': 'f90c7512-0b9c-4bb2-aab0-95d41e317f33',
+             'known': True,
+             'level': 2,
+             'name': 'Pass without trace',
+             'prepared': False,
+             'range': 'Self',
+             'ritual': False,
+             'school': 'Abjuration',
+             'source': 'Wizard',
+             'time': '1 action'}],
+ 'stats': {'Body': '15', 'Mind': '20', 'Senses': '17', 'Soul': '16'},
+ 'tools': {'Forgery kit': ('F', '0', 'Dexterity'),
+           "Thieves' tools": ('F', '0', 'Dexterity')},
+ 'warlock_level': '0',
+ 'weapons': [('Spell attack', 'Concentration', True, 'Atk', '', '', ''),
+             ('Switchblade',
+              'Precision',
+              True,
+              'Atk',
+              '',
+              '',
+              '5 gp\n'
+              '1d4+3 piercing\n'
+              '1 lb.\n'
+              'Covert, finesse, light\n'
+              '\n'
+              'Covert. Any dexterity and stealth checks to conceal this weapon '
+              'are made with advantage (anterior type).'),
+             ('Dagger',
+              'Precision',
+              True,
+              'Atk',
+              '',
+              '',
+              '2 gp\n1d4+3 piercing\n1 lbs\nFinesse, light, thrown (20/60)'),
+             ('Spell AS', 'Trustworthiness', True, 'AS', '', '', ''),
+             ('Spell AS disadvantage',
+              'Concentration',
+              True,
+              'AS',
+              '',
+              '-1',
+              '')]}

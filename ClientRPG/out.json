@@ -1,0 +1,120 @@
+{
+  "STATS": {
+    "Mind": "20",
+    "Soul": "16",
+    "Senses": "17",
+    "Body": "15"
+  },
+  "SAVES": {
+    "Mind": [
+      "F",
+      "0",
+      "10"
+    ],
+    "Soul": [
+      "F",
+      "0",
+      "10"
+    ],
+    "Senses": [
+      "\u00bd",
+      "0",
+      "10"
+    ],
+    "Body": [
+      "-",
+      "0",
+      "3"
+    ]
+  },
+  "COMBAT": {
+    "PCN": "56",
+    "AA": "-10",
+    "Prof": "6",
+    "Vit": "5"
+  },
+  "ASPECTS": {
+    "Concentration": [
+      "12",
+      "-",
+      "0"
+    ],
+    "Investigation": [
+      "12",
+      "E",
+      "1"
+    ],
+    "Convincing": [
+      "12",
+      "E",
+      "0"
+    ],
+    "Simulation": [
+      "12",
+      "E",
+      "0"
+    ],
+    "Meditation": [
+      "-8",
+      "-",
+      "0"
+    ],
+    "Awareness": [
+      "12",
+      "E",
+      "1"
+    ],
+    "Performance": [
+      "12",
+      "-",
+      "0"
+    ],
+    "Trustworthiness": [
+      "12",
+      "-",
+      "0"
+    ],
+    "Precision": [
+      "-6",
+      "-",
+      "0"
+    ],
+    "Mobility": [
+      "12",
+      "E",
+      "0"
+    ],
+    "Acrobatics": [
+      "12",
+      "E",
+      "0"
+    ],
+    "Dexterity": [
+      "12",
+      "E",
+      "0"
+    ],
+    "Potency": [
+      "-8",
+      "-",
+      "0"
+    ],
+    "Resilience": [
+      "-5",
+      "-",
+      "0"
+    ],
+    "Athletics": [
+      "-5",
+      "-",
+      "0"
+    ],
+    "Constitution": [
+      "-4",
+      "-",
+      "0"
+    ]
+  },
+  "LEVEL": "6",
+  "CLASS": "Wizard 4 / Sorcerer 2"
+}
