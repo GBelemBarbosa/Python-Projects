@@ -1,3 +1,4 @@
+# pyre-ignore-all-errors
 # import all the required modules
 # Set DPI awareness BEFORE any GUI imports
 from ctypes import windll
@@ -586,6 +587,368 @@ class posterior_selection:
         self.selection_index = selection_index  # Index of chosen res option (-1 for N/A)
 
 # Character Sheet Window for D&D 5.5e
+class GridInventoryWindow(ctk.CTkToplevel):
+    def __init__(self, parent, data_ref, default_stat, title_text="Backpack"):
+        super().__init__(parent)
+        self.parent = parent
+        self.data_ref = data_ref # dict ref from the character sheet 
+        
+        self.p = getattr(parent, 'p', 8)
+        
+        self.title(f"Inventory: {title_text}")
+        self.geometry("600x600")
+        self.configure(fg_color="gray15")
+        
+        self.cell_size = 40
+        
+        # Fallback initializer
+        if "override_squares" not in self.data_ref: self.data_ref["override_squares"] = 0
+        if "stat_mod" not in self.data_ref: self.data_ref["stat_mod"] = default_stat
+        if "items" not in self.data_ref: self.data_ref["items"] = []
+        if "cols" not in self.data_ref: self.data_ref["cols"] = 5
+        
+        # Top Controls
+        top_frame = ctk.CTkFrame(self, fg_color="gray20")
+        top_frame.pack(fill="x", padx=self.p, pady=(self.p, 0))
+        
+        top_frame.columnconfigure(0, weight=1)
+        top_frame.columnconfigure(1, weight=1)
+        
+        # Row 1: Headers
+        ctk.CTkLabel(top_frame, text="Resilience/Body:", font=("Roboto", 12), text_color="gray85").grid(row=0, column=0, pady=(self.p, self.p/2))
+        ctk.CTkLabel(top_frame, text="Custom limit:", font=("Roboto", 12), text_color="gray85").grid(row=0, column=1, pady=(self.p, self.p/2))
+        
+        # Row 2: Fields
+        self.stat_var = StringVar(value=str(self.data_ref["stat_mod"]))
+        stat_spin = ctk.CTkEntry(top_frame, textvariable=self.stat_var, width=40, height=24, fg_color="gray35")
+        stat_spin.grid(row=1, column=0)
+        self.stat_var.trace_add("write", lambda *args: self.recalculate_grid())
+        
+        self.override_var = StringVar(value=str(self.data_ref["override_squares"]))
+        override_spin = ctk.CTkEntry(top_frame, textvariable=self.override_var, width=50, height=24, fg_color="gray35")
+        override_spin.grid(row=1, column=1)
+        self.override_var.trace_add("write", lambda *args: self.recalculate_grid())
+        
+        # Row 3: Squares used Information
+        self.info_lbl = ctk.CTkLabel(top_frame, text="", font=("Roboto", 12, "bold"), text_color="gray90")
+        self.info_lbl.grid(row=2, column=0, columnspan=2, pady=(self.p, self.p/2))
+        
+        # Row 4: Add Item button
+        add_btn = ctk.CTkButton(top_frame, text="+ Add Item", width=80, height=24, fg_color="gray30", hover_color="gray35", border_width=1, border_color=parent.color, command=self.prompt_add_item)
+        add_btn.grid(row=3, column=0, columnspan=2, pady=(0, self.p))
+        
+        # Canvas (Wrapped in Frame with scrollbars for large grids)
+        self.canvas_frame = ctk.CTkFrame(self, fg_color="#333333")
+        self.canvas_frame.pack(pady=(self.p, 0), padx=self.p, expand=True, fill="both")
+        
+        self.canvas_frame.grid_rowconfigure(0, weight=1)
+        self.canvas_frame.grid_columnconfigure(0, weight=0)  # Don't stretch canvas column
+        
+        # Inner canvas — exact size set in recalculate_grid, no sticky so it doesn't stretch
+        self.canvas = Canvas(self.canvas_frame, bg="#333333", highlightthickness=0)
+        self.canvas.grid(row=0, column=0)
+        
+        self.v_scroll = ctk.CTkScrollbar(self.canvas_frame, orientation="vertical", command=self.canvas.yview)
+        self.v_scroll.grid(row=0, column=1, sticky="ns")
+        
+        self.h_scroll = ctk.CTkScrollbar(self.canvas_frame, orientation="horizontal", command=self.canvas.xview)
+        self.h_scroll.grid(row=1, column=0, sticky="ew")
+        
+        self.canvas.configure(yscrollcommand=self.v_scroll.set, xscrollcommand=self.h_scroll.set)
+        
+        # Column width frame below canvas
+        cols_frame = ctk.CTkFrame(self, fg_color="transparent")
+        cols_frame.pack(fill="x", padx=self.p, pady=self.p)
+        
+        col_inner = ctk.CTkFrame(cols_frame, fg_color="transparent")
+        col_inner.pack(side="right")
+        ctk.CTkLabel(col_inner, text="Width (Columns):", font=("Roboto", 12)).pack(side="left", padx=(0, self.p))
+        self.cols_var = StringVar(value=str(self.data_ref["cols"]))
+        cols_spin = ctk.CTkEntry(col_inner, textvariable=self.cols_var, width=60, height=24, fg_color="gray35")
+        cols_spin.pack(side="left")
+        self.cols_var.trace_add("write", lambda *args: self.recalculate_grid())
+        
+        # Dragging State
+        self.drag_item_idx = None
+        self.drag_start_x = 0
+        self.drag_start_y = 0
+        self.drag_has_moved = False
+        
+        self.canvas.bind("<ButtonPress-1>", self.on_press)
+        self.canvas.bind("<B1-Motion>", self.on_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_release)
+        self.canvas.bind("<ButtonPress-3>", self.on_right_click) # Delete
+        
+        # Mouse scrolling
+        if sys.platform.startswith("win"):
+            self.canvas.bind("<MouseWheel>", self._on_mousewheel)
+        else:
+            self.canvas.bind("<Button-4>", self._on_mousewheel)
+            self.canvas.bind("<Button-5>", self._on_mousewheel)
+            
+        self.recalculate_grid()
+        
+        # Bring window to front
+        self.after(50, self.lift)
+        self.after(50, self.focus_force)
+
+    def _on_mousewheel(self, event):
+        # Only scroll if scrollbars represent a subregion (meaning view is larger than canvas frame)
+        if self.v_scroll.get() != (0.0, 1.0):
+            if sys.platform.startswith("win"):
+                self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            else:
+                if event.num == 4:
+                    self.canvas.yview_scroll(-1, "units")
+                elif event.num == 5:
+                    self.canvas.yview_scroll(1, "units")
+        
+    def get_max_squares(self):
+        try: override = int(self.override_var.get() or 0)
+        except: override = 0
+        
+        try: stat = int(self.stat_var.get() or 0)
+        except: stat = 0
+        self.data_ref["stat_mod"] = stat
+        
+        calc_max = (10 + stat) * 3
+        return override if override > 0 else max(1, calc_max)
+
+    def recalculate_grid(self):
+        old_cols = getattr(self, 'cols', None)  # Column count from last calc
+        
+        try: self.cols = max(1, int(self.cols_var.get() or 1))
+        except: self.cols = 5
+        self.data_ref["cols"] = self.cols
+        
+        try: self.data_ref["override_squares"] = max(0, int(self.override_var.get() or 0))
+        except: pass
+        
+        self.max_sq = self.get_max_squares()
+        self.encumbered_sq = self.max_sq * 2 # D&D rules: Max push/drag is 2x capacity
+        self.rows = max(1, math.ceil(self.encumbered_sq / self.cols))
+        
+        # Reposition items by linear square index when columns change
+        if old_cols is not None and old_cols != self.cols:
+            for item in self.data_ref["items"]:
+                # Convert (x,y) → linear square using OLD column count
+                sq = item["y"] * old_cols + item["x"]
+                # Convert linear square → (x,y) using NEW column count
+                item["x"] = sq % self.cols
+                item["y"] = sq // self.cols
+                # Clamp multi-cell items that overflow new grid bounds
+                if item["x"] + item["w"] > self.cols:
+                    item["x"] = max(0, self.cols - item["w"])
+                if item["y"] + item["h"] > self.rows:
+                    item["y"] = max(0, self.rows - item["h"])
+        
+        cw = self.cols * self.cell_size
+        ch = self.rows * self.cell_size
+        
+        # Canvas sized exactly to grid (capped for very large grids)
+        display_w = min(cw, 1200)
+        display_h = min(ch, 600)
+        self.canvas.configure(scrollregion=(0, 0, cw, ch), width=display_w, height=display_h)
+        
+        # Window sized to fit canvas exactly
+        scrollbar_w = 20
+        base_h = 240
+        target_w = display_w + scrollbar_w + self.p * 2
+        target_h = base_h + display_h + scrollbar_w + self.p * 2
+        
+        self.geometry(f"{target_w}x{target_h}")
+        
+        self.draw_grid()
+
+    def draw_grid(self):
+        self.canvas.delete("all")
+        cs = self.cell_size
+        
+        current_used = sum(item["w"] * item["h"] for item in self.data_ref["items"])
+        
+        color = "#ff6666" if current_used > self.max_sq else "white"
+        self.info_lbl.configure(text=f"Squares Used: {current_used} / {self.max_sq} (Hard Limit: {self.encumbered_sq})", text_color=color)
+        
+        # Draw cells — outline matches parent frame bg (gray20 = #333333)
+        grid_line = "#333333"
+        for r in range(self.rows):
+            for c in range(self.cols):
+                idx = r * self.cols + c
+                if idx < self.max_sq:
+                    fill = "#444444" # Normal valid
+                elif idx < self.encumbered_sq:
+                    fill = "#4d2222" # Encumbered space (dark red)
+                else:
+                    fill = "#1a1a1a" # Blocked (beyond 2x max sq)
+                self.canvas.create_rectangle(c*cs, r*cs, (c+1)*cs, (r+1)*cs, fill=fill, outline=grid_line, tags="bg")
+
+        # Draw Items
+        for i, item in enumerate(self.data_ref["items"]):
+            self.draw_item(i, item)
+            
+    def draw_item(self, idx, item):
+        cs = self.cell_size
+        x, y = item["x"], item["y"]
+        w, h = item["w"], item["h"]
+        color = self.parent.color  # Always use current color
+        
+        px1 = x * cs + 2
+        py1 = y * cs + 2
+        px2 = (x + w) * cs - 2
+        py2 = (y + h) * cs - 2
+        
+        # Draw rect
+        rect_id = self.canvas.create_rectangle(px1, py1, px2, py2, fill=color, outline="white", tags=("item", f"item_{idx}"))
+        
+        # Draw text centered
+        cx, cy = (px1+px2)/2, (py1+py2)/2
+        txt_id = self.canvas.create_text(cx, cy, text=item["name"], fill="white", font=("Roboto", 10, "bold"), width=(w*cs)-4, justify="center", tags=("item", f"item_{idx}"))
+        
+    def on_press(self, event):
+        cs = self.cell_size
+        clicked_items = self.canvas.find_withtag("current")
+        if not clicked_items: return
+        
+        tags = self.canvas.gettags(clicked_items[0])
+        for t in tags:
+            if t.startswith("item_"):
+                self.drag_item_idx = int(t.split("_")[1])
+                self.drag_start_x = event.x
+                self.drag_start_y = event.y
+                self.drag_has_moved = False
+                # lift shape
+                self.canvas.tag_raise(t)
+                break
+
+    def on_drag(self, event):
+        if self.drag_item_idx is None: return
+        self.drag_has_moved = True
+        dx = event.x - self.drag_start_x
+        dy = event.y - self.drag_start_y
+        self.canvas.move(f"item_{self.drag_item_idx}", dx, dy)
+        self.drag_start_x = event.x
+        self.drag_start_y = event.y
+
+    def _check_overlap(self, new_x, new_y, w, h, exclude_idx):
+        """Return True if placing an item at (new_x, new_y) with size (w, h) would overlap another item."""
+        for i, other in enumerate(self.data_ref["items"]):
+            if i == exclude_idx:
+                continue
+            # Axis-aligned bounding box overlap test
+            ox, oy, ow, oh = other["x"], other["y"], other["w"], other["h"]
+            if new_x < ox + ow and new_x + w > ox and new_y < oy + oh and new_y + h > oy:
+                return True
+        return False
+
+    def on_release(self, event):
+        if self.drag_item_idx is None: return
+        
+        item = self.data_ref["items"][self.drag_item_idx]
+        
+        if self.drag_has_moved:
+            cs = self.cell_size
+            
+            # Find current visual position of the item
+            coords = self.canvas.coords(f"item_{self.drag_item_idx}")
+            if not coords or len(coords) < 4: 
+                self.draw_grid() # abort 
+                return
+                
+            # Coords: x1, y1, x2, y2 from the rectangle
+            # Reconstruct top-left grid snap (subtract the 2px padding)
+            vx = coords[0] - 2
+            vy = coords[1] - 2
+            
+            new_x = round(vx / cs)
+            new_y = round(vy / cs)
+            
+            # Clamp to grid bounds
+            new_x = max(0, min(new_x, self.cols - item["w"]))
+            new_y = max(0, min(new_y, self.rows - item["h"]))
+            
+            # Verify capacity bounds (don't go into blocked cells)
+            valid = True
+            for r in range(item["h"]):
+                for c in range(item["w"]):
+                    gr = new_y + r
+                    gc = new_x + c
+                    if (gr * self.cols + gc) >= self.encumbered_sq:
+                        valid = False
+                        break
+                if not valid:
+                    break
+            
+            # Prevent overlap with other items
+            if valid and not self._check_overlap(new_x, new_y, item["w"], item["h"], self.drag_item_idx):
+                item["x"] = new_x
+                item["y"] = new_y
+            # else: item stays at original position (snap back)
+            
+        # Redraw entirely to snap cleanly
+        self.draw_grid()
+        self.parent.autosave_roll_configs()
+        self.drag_item_idx = None
+        
+    def on_right_click(self, event):
+        clicked_items = self.canvas.find_withtag("current")
+        if not clicked_items: return
+        
+        tags = self.canvas.gettags(clicked_items[0])
+        for t in tags:
+            if t.startswith("item_"):
+                idx = int(t.split("_")[1])
+                name = self.data_ref["items"][idx]["name"]
+                if messagebox.askyesno("Delete", f"Remove '{name}' from inventory?", parent=self):
+                    self.data_ref["items"].pop(idx)
+                    self.draw_grid()
+                    self.parent.autosave_roll_configs()
+                self.lift()
+                self.focus_force()
+                break
+
+    def prompt_add_item(self):
+        top = ctk.CTkToplevel(self)
+        top.title("Add Item")
+        top.transient(self)
+        top.configure(fg_color="gray15", resizable=False)
+        
+        ctk.CTkLabel(top, text="Item Name:").pack()
+        name_ent = ctk.CTkEntry(top, font=("Roboto", 12), fg_color="gray20", border_width=0, width=60, height=24)
+        name_ent.pack(pady=(0,  self.p))
+        
+        f = ctk.CTkFrame(top, fg_color="transparent")
+        f.pack()
+        
+        ctk.CTkLabel(f, text="Width:").grid(row=0, column=0, padx=self.p, pady=(0,self.p))
+        w_var = StringVar(value="1")
+        w_spin = ctk.CTkEntry(f, textvariable=w_var, font=("Roboto", 12), fg_color="gray20", border_width=0, width=60, height=24)
+        w_spin.grid(row=0, column=1, pady=(0, self.p))
+        
+        ctk.CTkLabel(f, text="Height:").grid(row=1, column=0, padx=self.p, pady=(0,self.p))
+        h_var = StringVar(value="1")
+        h_spin = ctk.CTkEntry(f, textvariable=h_var, font=("Roboto", 12), fg_color="gray20", border_width=0, width=60, height=24)
+        h_spin.grid(row=1, column=1, pady=(0,self.p))
+        
+        def save():
+            n = name_ent.get().strip() or "Unnamed"
+            try: w = max(1, int(w_var.get() or 1))
+            except: w = 1
+            try: h = max(1, int(h_var.get() or 1))
+            except: h = 1
+            
+            # Find an empty spot for it
+            self.data_ref["items"].append({
+                "name": n,
+                "w": w, "h": h,
+                "x": 0, "y": 0, # Starts top left
+                # No color key — uses self.parent.color at draw time
+            })
+            self.draw_grid()
+            self.parent.autosave_roll_configs()
+            top.destroy()
+            
+        ctk.CTkButton(top, text="Create", command=save, fg_color="gray20", hover_color="gray25", border_color=self.parent.color, border_width=2).pack(pady=(0, self.p), padx=self.p)
+
 class CharacterSheetWindow(ctk.CTkToplevel):
     # Advantage values allowed by rules (Net Advantage: -3 to 3)
     ADV_VALUES = ["-3", "-2", "-1", "0", "1", "2", "3"]
@@ -615,6 +978,29 @@ class CharacterSheetWindow(ctk.CTkToplevel):
     GAMING_SET_OPTIONS = [
         "Dice set", "Playing card set", "Dragonchess set", "Three-Dragon Ante set",
     ]
+    # Default aspect per tool (from Aspects.txt)
+    TOOL_DEFAULT_ASPECTS = {
+        "Alchemist's supplies": "Investigation", "Brewer's supplies": "Investigation",
+        "Calligrapher's supplies": "Investigation", "Carpenter's tools": "Investigation",
+        "Cartographer's tools": "Investigation", "Cobbler's tools": "Dexterity",
+        "Cook's utensils": "Trustworthiness", "Glassblower's tools": "Investigation",
+        "Jeweler's tools": "Investigation", "Leatherworker's tools": "Dexterity",
+        "Mason's tools": "Athletics", "Painter's supplies": "Performance",
+        "Potter's tools": "Investigation", "Smith's tools": "Athletics",
+        "Tinker's tools": "Investigation", "Weaver's tools": "Dexterity",
+        "Woodcarver's tools": "Dexterity", "Disguise kit": "Simulation",
+        "Forgery kit": "Investigation", "Herbalism kit": "Investigation",
+        "Navigator's tools": "Awareness", "Poisoner's kit": "Investigation",
+        "Thieves' tools": "Dexterity",
+        # Instruments
+        "Bagpipes": "Performance", "Drum": "Performance", "Dulcimer": "Performance",
+        "Flute": "Performance", "Horn": "Performance", "Lute": "Performance",
+        "Lyre": "Performance", "Pan flute": "Performance", "Shawm": "Performance",
+        "Viol": "Performance",
+        # Gaming sets
+        "Dice set": "Simulation", "Playing card set": "Simulation",
+        "Dragonchess set": "Simulation", "Three-Dragon Ante set": "Simulation",
+    }
     
     def __init__(self, parent):
         super().__init__(parent)
@@ -665,6 +1051,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.spells = [] # List of dicts: {id, name, level, prepared, source, time, range, comp, dur, desc}
         self.spell_widgets = {} # {id: (row_frame, prep_var, name_ent, source_ent, qprep_lbl)}
         self.spell_tracking_widgets = {} # {id: (name_ent, cur_ent, max_ent, row_frame)}
+        
+        # Grid Inventory Backends
+        self.inventory_data = {"override_squares": 0, "items": []}
+        self.pet_inventories = {} # {row_id: {"override_squares": 0, "items": []}}
         
         self.SCHOOL_SYMBOLS = {
             "Abjuration": "🛡", "Conjuration": "🌀", "Divination": "👁",
@@ -722,6 +1112,154 @@ class CharacterSheetWindow(ctk.CTkToplevel):
     def create_bordered_frame(self, parent):
         """Section frame matching standard client style"""
         return ctk.CTkFrame(parent, fg_color="gray20", corner_radius=8)
+
+    # ── Drag-and-Drop Reorder Helpers ──
+    def _make_drag_handle(self, parent_frame, column=0):
+        """Create a drag handle label (⠿) in the given column of a grid row."""
+        handle = ctk.CTkLabel(parent_frame, text="⠿", font=("Roboto", 14),
+                              text_color="gray50", width=18, cursor="fleur")
+        handle.grid(row=0, column=column, padx=(self.p, 0), pady=self.p)
+        return handle
+
+    def _setup_drag_reorder(self, handle, row_frame, container, widgets_dict, row_id,
+                            on_reorder_callback=None, allowed_group_fn=None):
+        """
+        Bind drag events on 'handle' to allow reordering 'row_frame' among siblings
+        packed in 'container'.
+        
+        widgets_dict: the dict storing widget tuples keyed by row_id (e.g. self.feature_widgets).
+                      The last element of each tuple MUST be the row_frame.
+        on_reorder_callback: called after a successful reorder (e.g. autosave).
+        allowed_group_fn: optional fn(row_id) -> group_key. If set, rows can only swap
+                          within the same group. Used for spells (same level + state).
+        """
+        drag_state = {"active": False, "start_y": 0, "start_index": -1, "indicator": None}
+
+        def _get_packed_row_ids():
+            """Return row_ids in their current pack (visual) order."""
+            children = container.pack_slaves()
+            # Map row_frame -> row_id
+            frame_to_id = {}
+            for rid, w_tuple in widgets_dict.items():
+                frame_to_id[id(w_tuple[-1])] = rid
+            ordered = []
+            for child in children:
+                cid = id(child)
+                if cid in frame_to_id:
+                    ordered.append(frame_to_id[cid])
+            return ordered
+
+        def _on_press(event):
+            drag_state["active"] = True
+            drag_state["start_y"] = event.y_root
+
+        def _on_motion(event):
+            if not drag_state["active"]:
+                return
+
+            # Find all sibling row_frames in pack order
+            ordered_ids = _get_packed_row_ids()
+            if row_id not in ordered_ids:
+                return
+
+            # Determine allowed siblings
+            if allowed_group_fn:
+                my_group = allowed_group_fn(row_id)
+                allowed_ids = [rid for rid in ordered_ids if allowed_group_fn(rid) == my_group]
+            else:
+                allowed_ids = ordered_ids
+
+            if len(allowed_ids) <= 1:
+                return
+
+            # Find which row the cursor is over
+            cursor_y = event.y_root
+            target_id = None
+            for rid in allowed_ids:
+                rf = widgets_dict[rid][-1]
+                try:
+                    ry = rf.winfo_rooty()
+                    rh = rf.winfo_height()
+                    if ry <= cursor_y <= ry + rh:
+                        target_id = rid
+                        break
+                except:
+                    continue
+
+            # Reset all borders in group
+            for rid in allowed_ids:
+                try:
+                    widgets_dict[rid][-1].configure(border_width=0)
+                except:
+                    pass
+
+            # Highlight target
+            if target_id and target_id != row_id:
+                try:
+                    widgets_dict[target_id][-1].configure(border_width=2, border_color=self.color)
+                except:
+                    pass
+
+        def _on_release(event):
+            if not drag_state["active"]:
+                return
+            drag_state["active"] = False
+
+            ordered_ids = _get_packed_row_ids()
+            if row_id not in ordered_ids:
+                return
+
+            if allowed_group_fn:
+                my_group = allowed_group_fn(row_id)
+                allowed_ids = [rid for rid in ordered_ids if allowed_group_fn(rid) == my_group]
+            else:
+                allowed_ids = ordered_ids
+
+            # Reset all borders
+            for rid in allowed_ids:
+                try:
+                    widgets_dict[rid][-1].configure(border_width=0)
+                except:
+                    pass
+
+            if len(allowed_ids) <= 1:
+                return
+
+            # Find drop target
+            cursor_y = event.y_root
+            target_id = None
+            for rid in allowed_ids:
+                rf = widgets_dict[rid][-1]
+                try:
+                    ry = rf.winfo_rooty()
+                    rh = rf.winfo_height()
+                    if ry <= cursor_y <= ry + rh:
+                        target_id = rid
+                        break
+                except:
+                    continue
+
+            if not target_id or target_id == row_id:
+                return
+
+            # Compute new full order: swap positions within the full ordered_ids list
+            src_idx = ordered_ids.index(row_id)
+            dst_idx = ordered_ids.index(target_id)
+            ordered_ids.pop(src_idx)
+            ordered_ids.insert(dst_idx, row_id)
+
+            # Re-pack all children in new order
+            for rid in ordered_ids:
+                widgets_dict[rid][-1].pack_forget()
+            for rid in ordered_ids:
+                widgets_dict[rid][-1].pack(fill="x", pady=(self.p, 0))
+
+            if on_reorder_callback:
+                on_reorder_callback()
+
+        handle.bind("<ButtonPress-1>", _on_press)
+        handle.bind("<B1-Motion>", _on_motion)
+        handle.bind("<ButtonRelease-1>", _on_release)
 
     def create_section_header(self, parent, text, row=0, colspan=1, pack=True, pady=None):
         """Section header in a lighter label (Packed)"""
@@ -861,7 +1399,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         exh_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
         exh_sub.grid(row=0, column=4, sticky="nsew", padx=2)
         exh_sub.columnconfigure(0, weight=1)
-        ctk.CTkLabel(exh_sub, text="Exh 😩", font=("Roboto", 11, "bold")).pack(pady=(0, 2))
+        ctk.CTkLabel(exh_sub, text="Exh 😩", font=("Roboto", 12)).pack(pady=(0, 2))
         exh_entry = ctk.CTkEntry(exh_sub, font=("Roboto", 12), width=42, justify="center",
                                   fg_color="gray25", border_width=0,
                                   textvariable=self.exhaustion_var)
@@ -872,7 +1410,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         nadv_sub = ctk.CTkFrame(stats_frame, fg_color="transparent")
         nadv_sub.grid(row=0, column=5, sticky="nsew", padx=(0, self.p))
         nadv_sub.columnconfigure(0, weight=1)
-        ctk.CTkLabel(nadv_sub, text="Net Adv", font=("Roboto", 12)).pack()
+        ctk.CTkLabel(nadv_sub, text="Flat Adv", font=("Roboto", 12)).pack()
         self.net_adv_label = ctk.CTkLabel(nadv_sub, text="0", font=("Roboto", 12),
                                            fg_color="gray25", corner_radius=4, width=42, height=28)
         self.net_adv_label.pack()
@@ -885,21 +1423,21 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.active_speed_labels = {}
         for i, speed_type in enumerate(["Walk", "Swim", "Fly", "Climb"]):
             sub = ctk.CTkFrame(movement_frame, fg_color="transparent")
-            sub.grid(row=0, column=i, sticky="nsew", pady=(self.p, 0))
+            sub.grid(row=0, column=i, sticky="nsew")
             sub.columnconfigure(0, weight=1)
             
-            # Active Speed Label
-            act_lbl = ctk.CTkLabel(sub, text="0", font=("Roboto", 12, "bold"))
+            # Speed Name Label
+            ctk.CTkLabel(sub, text=speed_type, font=("Roboto", 12), height=14).pack(pady=(self.p, 0))
+            
+            # Active Speed Label (Total)
+            act_lbl = ctk.CTkLabel(sub, text="0", font=("Roboto", 12, "bold"), height=18)
             act_lbl.pack(pady=0)
             self.active_speed_labels[speed_type] = act_lbl
             
-            # Base Label & Entry
-            b_frame = ctk.CTkFrame(sub, fg_color="transparent")
-            b_frame.pack()
-            ctk.CTkLabel(b_frame, text=f"{speed_type}: ", font=("Roboto", 10)).pack(side="left")
-            b_entry = ctk.CTkEntry(b_frame, font=("Roboto", 11), width=40, justify="center",
+            # Base Entry
+            b_entry = ctk.CTkEntry(sub, font=("Roboto", 12), width=40, height=24, justify="center",
                                    fg_color="gray30", border_width=0, textvariable=self.speed_vars[speed_type])
-            b_entry.pack(side="left")
+            b_entry.pack(pady=(0, self.p))
             b_entry.bind("<KeyRelease>", lambda e: self.update_speeds())
             b_entry.bind("<FocusOut>", self.autosave_roll_configs)
             
@@ -907,17 +1445,17 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         mod_sub = ctk.CTkFrame(movement_frame, fg_color="transparent")
         mod_sub.grid(row=1, column=0, columnspan=4, pady=self.p)
         
-        ctk.CTkLabel(mod_sub, text="Flat:", font=("Roboto", 10)).pack(side="left")
+        ctk.CTkLabel(mod_sub, text="Flat:", font=("Roboto", 12)).pack(side="left")
         flat_mod_spin = IntSpinbox(mod_sub, width=80, height=20, variable=self.speed_flat_mod_var, 
-                                   fg_color="gray30", hover_color="gray40")
+                                   fg_color="gray30", hover_color="gray40", color=self.color)
         flat_mod_spin.pack(side="left", padx=(self.p, 0))
         self.speed_flat_mod_var.trace_add("write", lambda *args: self.update_speeds(True))
         
-        ctk.CTkLabel(mod_sub, text="Mult:", font=("Roboto", 10)).pack(side="left", padx=(self.p, 0))
+        ctk.CTkLabel(mod_sub, text="Mult:", font=("Roboto", 12)).pack(side="left", padx=(self.p, 0))
         mult_menu = ctk.CTkOptionMenu(mod_sub, variable=self.speed_mult_var, 
                                       values=["x0.25", "x0.5", "x1", "x2", "x3"],
-                                      font=("Roboto", 10), width=60, height=20,
-                                      fg_color="gray30", button_color="gray35", button_hover_color="gray40",
+                                      font=("Roboto", 12), width=60, height=20,
+                                      fg_color="gray30", button_color="gray35", button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                       command=lambda e: self.update_speeds(True))
         mult_menu.pack(side="left", padx=self.p)
 
@@ -932,7 +1470,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         for i, stat in enumerate(["Mind", "Soul", "Senses", "Body"]):
             # Create a vertical card for each save
             s_card = ctk.CTkFrame(saves_frame, fg_color="gray25", corner_radius=6)
-            s_card.grid(row=0, column=i, sticky="nsew", padx=(0, self.p))
+            s_card.grid(row=0, column=i, sticky="nsew", padx=(0, self.p if i < 3 else 0))
             s_card.columnconfigure(0, weight=1) # Center content
             
             # 1) Stat Name
@@ -959,7 +1497,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             prof_seg.pack(pady=(self.p, 0))
             
             # 4) Total
-            total_lbl = ctk.CTkLabel(s_card, text="+0", font=("Roboto", 12), width=30, fg_color="gray30", corner_radius=6)
+            total_lbl = ctk.CTkLabel(s_card, text="+0", font=("Roboto", 12), width=35, fg_color="gray30", corner_radius=6)
             total_lbl.pack(pady=(self.p, 0))
             
             # 5) Advantage
@@ -969,7 +1507,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             adv_var = StringVar(value="0")
             adv_menu = ctk.CTkOptionMenu(adv_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
                                           font=("Roboto", 12), width=50, height=20,
-                                          fg_color="gray30", bg_color="gray25", button_color="gray35", button_hover_color="gray40")
+                                          fg_color="gray30", bg_color="gray25", button_color="gray35", button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color)
             adv_menu.pack(side="left", padx=self.p)
             
             self.save_widgets[stat] = (prof_var, adv_var, total_lbl)
@@ -1053,14 +1591,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         row_frame.columnconfigure(1, weight=0, minsize=30)  # Val
         row_frame.columnconfigure(2, weight=0, minsize=82)  # Prof (Reduced from 110)
         row_frame.columnconfigure(3, weight=0, minsize=30)  # Total
+        row_frame.columnconfigure(3, weight=0, minsize=35)  # Total
         row_frame.columnconfigure(4, weight=0, minsize=75)  # Adv
 
         ctk.CTkLabel(row_frame, text=aspect_name, font=("Roboto", 12), anchor="w").grid(
             row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="w")
         
-        # Base value entry
-        val_entry = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, justify="center",
-                                  fg_color="gray30", border_width=0, corner_radius=4)
+        # Val Entry
+        val_entry = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=35, justify="center",
+                                  fg_color="gray30", border_width=1, border_color="gray35")
         val_entry.grid(row=0, column=1, padx=(0, self.p), pady=self.p, sticky="ew")
         val_entry.bind("<KeyRelease>", lambda e: self.update_aspect_total(aspect_name))
         val_entry.bind("<FocusOut>", self.autosave_roll_configs)
@@ -1087,19 +1626,19 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             spacer.grid(row=0, column=2, padx=(0, self.p), pady=self.p, sticky="ew")
 
         # Total Label
-        total_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=30,
-                                  fg_color="gray30", corner_radius=6)
-        total_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p, sticky="ew")
+        val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=35,
+                                fg_color="gray30", corner_radius=6)
+        val_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p, sticky="ew")
         
         # Advantage: option menu with valid values
         adv_var = StringVar(value="0")
         adv_menu = ctk.CTkOptionMenu(row_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
                                       font=("Roboto", 12), width=75, height=24,
-                                      fg_color="gray30", bg_color="gray25", button_color="gray35", button_hover_color="gray40",
-                                      dropdown_fg_color="gray25")
+                                      fg_color="gray30", button_color="gray35", button_hover_color="gray40",
+                                      dropdown_fg_color="gray30", dropdown_hover_color=self.color)
         adv_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p, sticky="ew")
         
-        self.aspect_widgets[aspect_name] = (val_entry, prof_var, adv_var, total_lbl)
+        self.aspect_widgets[aspect_name] = (val_entry, prof_var, adv_var, val_lbl)
         self._prof_state[aspect_name] = "-"
 
 
@@ -1115,7 +1654,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Content Container to hold grid items
         content_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        content_frame.pack(fill="x", padx=self.p, pady=(0, self.p))
+        content_frame.pack(fill="x", pady=(0, self.p))
         content_frame.columnconfigure(0, weight=1)
         
         # Column headers
@@ -1124,18 +1663,18 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # MATCHING Configuration to `create_aspect_row`
         hdr_frame.columnconfigure(0, weight=1, minsize=180) # Name match
-        hdr_frame.columnconfigure(1, weight=0, minsize=30)  # Val match
+        hdr_frame.columnconfigure(1, weight=0, minsize=35)  # Val match
         hdr_frame.columnconfigure(2, weight=0, minsize=82)  # Prof match
-        hdr_frame.columnconfigure(3, weight=0, minsize=30)  # Total match
+        hdr_frame.columnconfigure(3, weight=0, minsize=35)  # Total match
         hdr_frame.columnconfigure(4, weight=0, minsize=75)  # Adv match
 
         ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), anchor="w").grid(
-            row=0, column=0, padx=(self.p, 0), sticky="w")
-        ctk.CTkLabel(hdr_frame, text="Val", font=("Roboto", 12), width=30).grid(
+            row=0, column=0, sticky="w", padx=(self.p, 0))
+        ctk.CTkLabel(hdr_frame, text="Val", font=("Roboto", 12), width=35).grid(
             row=0, column=1, padx=(0, self.p), sticky="ew")
         ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=82).grid(
             row=0, column=2, padx=(0, self.p), sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30).grid(
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=35).grid(
             row=0, column=3, padx=(0, self.p), sticky="ew")
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=75).grid(
             row=0, column=4, padx=(0, self.p), sticky="ew")
@@ -1151,7 +1690,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         for category, aspects in aspects_by_category:
             # Revert to standard divider look
             ctk.CTkLabel(content_frame, text=f"─ {category} ─", font=("Roboto", 12), text_color="gray50").grid(
-                row=row, column=0, padx=self.p, pady=(self.p, 0), sticky="ew")
+                row=row, column=0, pady=(self.p, 0), sticky="ew")
             row += 1
             for aspect in aspects:
                 self.create_aspect_row(content_frame, aspect, row)
@@ -1193,7 +1732,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             row=0, column=1, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), width=140, anchor="center").grid(
             row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30, anchor="center").grid(
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=35, anchor="center").grid(
             row=0, column=3, padx=(0, self.p))
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=60, anchor="center").grid(
             row=0, column=4, padx=(0, self.p))
@@ -1219,12 +1758,19 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                                command=lambda _, f=field: self.update_knowledge_fields())
             prof_seg.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
             
-            ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", font=("Roboto", 12), text_color="gray90", 
-                         fg_color="gray30", corner_radius=6, width=140, anchor="center").grid(
+            linked_aspect_var = StringVar(value=linked_aspect)
+            aspect_names = ["Dexterity", "Performance", "Awareness", "Investigation",
+                            "Convincing", "Simulation", "Meditation", "Trustworthiness",
+                            "Acrobatics", "Athletics", "Constitution", "Concentration"]
+            ctk.CTkOptionMenu(row_frame, variable=linked_aspect_var, values=aspect_names,
+                              font=("Roboto", 12), width=140, height=24,
+                              fg_color="gray30", button_color="gray35", button_hover_color="gray40",
+                              dropdown_fg_color="gray30", dropdown_hover_color=self.color,
+                              command=lambda _: self.update_knowledge_fields()).grid(
                 row=0, column=2, padx=(0, self.p), pady=self.p)
             
             # Calculated Value Label
-            val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=30,
+            val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=35,
                                    fg_color="gray30", corner_radius=6)
             val_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
             
@@ -1233,10 +1779,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             adv_menu = ctk.CTkOptionMenu(row_frame, variable=adv_var, values=[str(v) for v in self.ADV_VALUES],
                                           font=("Roboto", 12), width=60, height=24,
                                           fg_color="gray30", button_color="gray35", button_hover_color="gray40",
-                                          dropdown_fg_color="gray25")
+                                          dropdown_fg_color="gray30", dropdown_hover_color=self.color)
             adv_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
             
-            self.knowledge_widgets[field] = (prof_var, val_lbl, linked_aspect, adv_var)
+            self.knowledge_widgets[field] = (prof_var, val_lbl, linked_aspect_var, adv_var)
         
         # Extra bottom padding on last row
         # Extra bottom padding on last row
@@ -1266,17 +1812,17 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         hdr_frame.columnconfigure(4, weight=0)
         hdr_frame.columnconfigure(5, weight=0)
         ctk.CTkLabel(hdr_frame, text="Tool", font=("Roboto", 12), anchor="w").grid(
-            row=0, column=0, padx=(self.p, 0), sticky="ew")
+            row=0, column=0, padx=(self.p, 0), pady=(self.p, 0), sticky="ew")
         ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=70, anchor="center").grid(
-            row=0, column=1, padx=(0, self.p))
+            row=0, column=1, padx=(0, self.p), pady=(self.p, 0))
         ctk.CTkLabel(hdr_frame, text="Linked aspect", font=("Roboto", 12), width=140, anchor="center").grid(
-            row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=30, anchor="center").grid(
-            row=0, column=3, padx=(0, self.p))
+            row=0, column=2, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=35, anchor="center").grid(
+            row=0, column=3, padx=(0, self.p), pady=(self.p, 0))
         ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=60, anchor="center").grid(
-            row=0, column=4, padx=(0, self.p))
+            row=0, column=4, padx=(0, self.p), pady=(self.p, 0))
         # Spacer for × button column
-        ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=5, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="", width=28).grid(row=0, column=5, padx=(0, self.p), pady=(self.p, 0))
         
         # Container for dynamic tool rows
         self.tools_container = ctk.CTkFrame(content_frame, fg_color="transparent", height=0)
@@ -1291,24 +1837,24 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                           values=self.TOOL_SET_OPTIONS,
                           font=("Roboto", 12), width=130, height=24,
                           fg_color="gray25", button_color="gray30",
-                          button_hover_color="gray35", dropdown_fg_color="gray20",
-                          command=lambda v: self._add_tool_item(v, "Dexterity", self._tool_set_var, "Add Tool Set...")).pack(side="left", padx=(0, self.p))
+                          button_hover_color="gray35", dropdown_fg_color="gray25", dropdown_hover_color=self.color,
+                          command=lambda v: self._add_tool_item(v, self.TOOL_DEFAULT_ASPECTS.get(v, "Dexterity"), self._tool_set_var, "Add Tool Set...")).pack(side="left", padx=(0, self.p))
         
         self._instrument_var = StringVar(value="Add Instrument...")
         ctk.CTkOptionMenu(add_footer, variable=self._instrument_var,
                           values=self.INSTRUMENT_OPTIONS,
                           font=("Roboto", 12), width=130, height=24,
                           fg_color="gray25", button_color="gray30",
-                          button_hover_color="gray35", dropdown_fg_color="gray20",
-                          command=lambda v: self._add_tool_item(v, "Performance", self._instrument_var, "Add Instrument...")).pack(side="left", padx=(0, self.p))
+                          button_hover_color="gray35", dropdown_fg_color="gray25", dropdown_hover_color=self.color,
+                          command=lambda v: self._add_tool_item(v, self.TOOL_DEFAULT_ASPECTS.get(v, "Performance"), self._instrument_var, "Add Instrument...")).pack(side="left", padx=(0, self.p))
         
         self._gaming_var = StringVar(value="Add Gaming Set...")
         ctk.CTkOptionMenu(add_footer, variable=self._gaming_var,
                           values=self.GAMING_SET_OPTIONS,
                           font=("Roboto", 12), width=130, height=24,
                           fg_color="gray25", button_color="gray30",
-                          button_hover_color="gray35", dropdown_fg_color="gray20",
-                          command=lambda v: self._add_tool_item(v, "Awareness", self._gaming_var, "Add Gaming Set...")).pack(side="left", padx=(0, self.p))
+                          button_hover_color="gray35", dropdown_fg_color="gray25", dropdown_hover_color=self.color,
+                          command=lambda v: self._add_tool_item(v, self.TOOL_DEFAULT_ASPECTS.get(v, "Simulation"), self._gaming_var, "Add Gaming Set...")).pack(side="left", padx=(0, self.p))
         
         # Separator
         ctk.CTkLabel(add_footer, text="|", font=("Roboto", 12), text_color="gray50").pack(side="left", padx=(0, self.p))
@@ -1328,7 +1874,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                           values=aspect_names,
                           font=("Roboto", 12), width=110, height=24,
                           fg_color="gray25", button_color="gray30",
-                          button_hover_color="gray35", dropdown_fg_color="gray20").pack(side="left", padx=(0, self.p))
+                          button_hover_color="gray35", dropdown_fg_color="gray25", dropdown_hover_color=self.color).pack(side="left", padx=(0, self.p))
         
         ctk.CTkButton(add_footer, text="Add", font=("Roboto", 12), width=40, height=24,
                       fg_color="gray25", hover_color="gray35",
@@ -1363,11 +1909,18 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                            command=lambda _: self.update_tool_fields())
         prof_seg.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
         
-        ctk.CTkLabel(row_frame, text=f"→ {linked_aspect}", fg_color="gray30", font=("Roboto", 12),
-                     text_color="gray90", corner_radius=6, width=140, anchor="center").grid(
+        linked_aspect_var = StringVar(value=linked_aspect)
+        aspect_names = ["Dexterity", "Performance", "Awareness", "Investigation",
+                        "Convincing", "Simulation", "Meditation", "Trustworthiness",
+                        "Acrobatics", "Athletics", "Constitution", "Concentration"]
+        ctk.CTkOptionMenu(row_frame, variable=linked_aspect_var, values=aspect_names,
+                          font=("Roboto", 12), width=140, height=24,
+                          fg_color="gray30", button_color="gray35", button_hover_color="gray40",
+                          dropdown_fg_color="gray30", dropdown_hover_color=self.color,
+                          command=lambda _: self.update_tool_fields()).grid(
             row=0, column=2, padx=(0, self.p), pady=self.p)
         
-        val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=30,
+        val_lbl = ctk.CTkLabel(row_frame, text="-6", font=("Roboto", 12), width=35,
                                fg_color="gray30", corner_radius=6)
         val_lbl.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
         
@@ -1376,7 +1929,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                       font=("Roboto", 12), width=60, height=24,
                                       fg_color="gray30", button_color="gray35",
                                       button_hover_color="gray40", dropdown_hover_color=self.color,
-                                      dropdown_fg_color="gray25")
+                                      dropdown_fg_color="gray30")
         adv_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
         
         del_btn = ctk.CTkButton(row_frame, text="×", width=24, height=24, 
@@ -1386,7 +1939,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                 command=lambda n=name, f=row_frame: self._remove_tool_item(n, f))
         del_btn.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
         
-        self.tool_widgets[name] = (prof_var, val_lbl, linked_aspect, adv_var)
+        self.tool_widgets[name] = (prof_var, val_lbl, linked_aspect_var, adv_var)
         self.update_tool_fields()
 
     def _remove_tool_item(self, name, row_frame):
@@ -1525,7 +2078,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         armor_menu = ctk.CTkOptionMenu(controls_frame, values=armor_types, variable=self.armor_settings["type"],
                                         width=120, height=24, font=("Roboto", 12),
                                         fg_color="gray30", button_color="gray35",
-                                        button_hover_color="gray40", dropdown_hover_color=self.color,
+                                        button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                         command=lambda _: self.update_aa())
         armor_menu.pack(side="left", padx=(0, self.p))
         
@@ -1535,7 +2088,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         aspect_menu = ctk.CTkOptionMenu(controls_frame, values=["Resilience", "Mobility", "Dexterity", "Acrobatics"], variable=self.armor_settings["aspect"],
                                          width=100, height=24, font=("Roboto", 12),
                                          fg_color="gray30", button_color="gray35",
-                                         button_hover_color="gray40", dropdown_hover_color=self.color,
+                                         button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                          command=lambda _: self.update_aa())
         aspect_menu.pack(side="left", padx=(0, self.p))
         
@@ -1580,7 +2133,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.aa_extra_adv = ctk.CTkOptionMenu(controls_frame, values=adv_values, variable=self.aa_extra_adv_var,
                                               width=50, height=22, font=("Roboto", 12),
                                               fg_color="gray30", button_color="gray35",
-                                              button_hover_color="gray40", dropdown_hover_color=self.color,
+                                              button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                               command=lambda _: self.update_aa()) # Trigger update on change
         self.aa_extra_adv.pack(side="left", padx=(0, self.p))
         
@@ -1588,28 +2141,38 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Column Headers for Weapons (Moved BEFORE items container)
         hdr_frame = ctk.CTkFrame(content_frame, fg_color="transparent", height=20)
         hdr_frame.pack(fill="x", padx=self.p)
-        hdr_frame.columnconfigure(0, weight=1) # Name
+        hdr_frame.columnconfigure(1, weight=1) # Name (col 0 = drag handle)
         
-        ctk.CTkLabel(hdr_frame, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=self.p, sticky="ew")
-        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), width=140, anchor="center").grid(row=0, column=1, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Type", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=3, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="+", font=("Roboto", 12), width=35, anchor="center").grid(row=0, column=4, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=50, anchor="center").grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=65, anchor="center").grid(row=0, column=6, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
-        ctk.CTkLabel(hdr_frame, text="", width=22).grid(row=0, column=8, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="", width=18).grid(row=0, column=0, padx=(self.p, 0))
+        ctk.CTkLabel(hdr_frame, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=1, padx=(0, self.p), sticky="ew")
+        ctk.CTkLabel(hdr_frame, text="Aspect", font=("Roboto", 12), width=140, anchor="center").grid(row=0, column=2, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Prof", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=3, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Type", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=4, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="+", font=("Roboto", 12), width=35, anchor="center").grid(row=0, column=5, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Adv", font=("Roboto", 12), width=50, anchor="center").grid(row=0, column=6, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Total", font=("Roboto", 12), width=65, anchor="center").grid(row=0, column=7, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=8, padx=(0, self.p))
+        ctk.CTkLabel(hdr_frame, text="", width=22).grid(row=0, column=9, padx=(0, self.p))
 
         # Items List
         self.items_container = ctk.CTkFrame(content_frame, fg_color="transparent", height=0)
         self.items_container.pack(fill="x")
         self.items_container.columnconfigure(0, weight=1)
         
-        add_btn = ctk.CTkButton(content_frame, text="Add Weapon/Spell/Feature", font=("Roboto", 12),
-                                 fg_color="gray25", hover_color="gray35",
+        btn_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(self.p, 0))
+        
+        inv_btn = ctk.CTkButton(btn_frame, text="🎒 Backpack", font=("Roboto", 12, "bold"),
+                                 fg_color="gray25", hover_color="gray30", width=100,
+                                 border_width=2, border_color=self.color,
+                                 command=lambda: self._open_grid_inventory())
+        inv_btn.pack(side="left")
+        
+        add_btn = ctk.CTkButton(btn_frame, text="Add Weapon/Spell/Feature", font=("Roboto", 12),
+                                 fg_color="gray25", hover_color="gray30",
                                  border_width=2, border_color=self.color,
                                  command=self._add_weapon_row)
-        add_btn.pack(pady=(self.p, 0))
+        add_btn.pack(side="right")
 
     def _add_weapon_row(self, name="", linked_aspect="Precision", prof=False, roll_type="Atk", extra_const="", extra_adv="", desc=""):
         """Add a dynamic weapon/item row with Atk/AS toggle and extra modifiers"""
@@ -1620,14 +2183,17 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             row_id = "0"
             
         row_frame = ctk.CTkFrame(self.items_container, fg_color="gray25", corner_radius=6)
-        row_frame.pack(fill="x", padx=self.p, pady=(self.p, 0))
-        row_frame.columnconfigure(0, weight=1) # Name
+        row_frame.pack(fill="x", pady=(self.p, 0))
+        row_frame.columnconfigure(1, weight=1) # Name (col 0 = drag handle)
+        
+        # Drag Handle
+        drag_handle = self._make_drag_handle(row_frame, column=0)
         
         # Name Entry
         name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, placeholder_text="Name",
                                 fg_color="gray30", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
-        name_ent.grid(row=0, column=0, padx=self.p, pady=self.p, sticky="ew")
+        name_ent.grid(row=0, column=1, padx=self.p, pady=self.p, sticky="ew")
         name_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Aspect Menu
@@ -1636,14 +2202,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         asp_menu = ctk.CTkOptionMenu(row_frame, values=aspects, variable=asp_var,
                                       width=140, height=22, font=("Roboto", 12),
                                       fg_color="gray30", button_color="gray35", dynamic_resizing=False,
-                                      button_hover_color="gray40", dropdown_hover_color=self.color,
+                                      button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                       command=lambda _: self.update_weapon_bonuses())
-        asp_menu.grid(row=0, column=1, padx=(0, self.p), pady=self.p)
+        asp_menu.grid(row=0, column=2, padx=(0, self.p), pady=self.p)
         
         # prof toggle
         p_frame = ctk.CTkFrame(row_frame, width=30, height=22, fg_color="transparent")
         p_frame.pack_propagate(False)
-        p_frame.grid(row=0, column=2, padx=(0, self.p), pady=self.p)
+        p_frame.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
         p_var = BooleanVar(value=prof)
         p_cb = ctk.CTkCheckBox(p_frame, text="", variable=p_var, font=("Roboto", 12),
                                 checkbox_width=16, checkbox_height=16, width=16,
@@ -1656,53 +2222,55 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         type_menu = ctk.CTkOptionMenu(row_frame, values=["Atk", "AS"], variable=type_var,
                                        width=60, height=22, font=("Roboto", 12),
                                        fg_color="gray30", button_color="gray35",
-                                       button_hover_color="gray40", dropdown_hover_color=self.color,
+                                       button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                        command=lambda _: self.update_weapon_bonuses())
-        type_menu.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
+        type_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
 
         # Extra Const
         extra_const_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=35, height=22, placeholder_text="+",
                                        justify="center", fg_color="gray30", border_width=0, corner_radius=6)
         extra_const_ent.insert(0, extra_const)
-        extra_const_ent.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
+        extra_const_ent.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
         extra_const_ent.bind("<KeyRelease>", self.update_weapon_bonuses)
         extra_const_ent.bind("<FocusOut>", self.autosave_roll_configs)
 
         # Extra Adv (Dropdown)
         adv_values = ["-3", "-2", "-1", "", "1", "2", "3"]
-        extra_adv_var = StringVar(value=extra_adv if extra_adv in adv_values else "") # Validate loaded value
-        # If loaded value is "0" (str), convert to ""? Or keep?
-        # Logic in standard Adv lists is usually "" for 0.
+        extra_adv_var = StringVar(value=extra_adv if extra_adv in adv_values else "")
         
         extra_adv_menu = ctk.CTkOptionMenu(row_frame, values=adv_values, variable=extra_adv_var,
                                            width=50, height=22, font=("Roboto", 12),
                                            fg_color="gray30", button_color="gray35",
-                                           button_hover_color="gray40", dropdown_hover_color=self.color,
+                                           button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color,
                                            command=lambda _: self.update_weapon_bonuses())
-        extra_adv_menu.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
-        # Note: we store the Var in the widget list to get() it later
+        extra_adv_menu.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
         
         # Total Label
         bonus_lbl = ctk.CTkLabel(row_frame, text="+0", font=("Roboto", 12), width=65,
                                  fg_color="gray30", corner_radius=6)
-        bonus_lbl.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
+        bonus_lbl.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
         
         # Description button
         desc_data = [desc]
         desc_btn = ctk.CTkButton(row_frame, text="📝", width=30, height=22, fg_color="gray30", hover_color="gray35",
                                   border_color=self.color, border_width=2,
                                   command=lambda: self._open_feature_description(name_ent, desc_data))
-        desc_btn.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
+        desc_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
         
         # Remove button
         rem_btn = ctk.CTkButton(row_frame, text="×", width=22, height=22,
                                  fg_color="gray30", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  command=lambda: self._remove_weapon_row(row_id))
-        rem_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
+        rem_btn.grid(row=0, column=9, padx=(0, self.p), pady=self.p)
         
         self.weapon_widgets[row_id] = (name_ent, asp_var, p_var, type_var, extra_const_ent, extra_adv_var, bonus_lbl, desc_data, row_frame)
         self.update_weapon_bonuses()
+        
+        # Setup drag reorder
+        self._setup_drag_reorder(drag_handle, row_frame, self.items_container,
+                                 self.weapon_widgets, row_id,
+                                 on_reorder_callback=self.autosave_roll_configs)
 
     def _remove_weapon_row(self, row_id):
         if row_id in self.weapon_widgets:
@@ -1760,7 +2328,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             values=[str(i) for i in range(0, 20)],
             width=60, height=22, font=("Roboto", 12),
             fg_color="gray25", button_color="gray30",
-            button_hover_color="gray35", dropdown_hover_color=self.color,
+            button_hover_color="gray35", dropdown_fg_color="gray25", dropdown_hover_color=self.color,
             command=self._update_shards_calculations
         )
         self.caster_level_dropdown.pack(side="left", padx=(0, self.p))
@@ -1773,7 +2341,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             values=[str(i) for i in range(0, 20)],
             width=60, height=22, font=("Roboto", 12),
             fg_color="gray25", button_color="gray30",
-            button_hover_color="gray35", dropdown_hover_color=self.color,
+            button_hover_color="gray35", dropdown_fg_color="gray25", dropdown_hover_color=self.color,
             command=self._update_shards_calculations
         )
         self.warlock_level_dropdown.pack(side="left")
@@ -2082,17 +2650,18 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Header Row (Hidden by default)
         self.features_header_frame = ctk.CTkFrame(frame, fg_color="transparent")
         # Don't pack immediately
-        self.features_header_frame.columnconfigure(0, weight=1) # Name
+        self.features_header_frame.columnconfigure(1, weight=1) # Name (col 0 = drag handle)
         
-        ctk.CTkLabel(self.features_header_frame, text="Feature name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
-        ctk.CTkLabel(self.features_header_frame, text="Uses", font=("Roboto", 12), width=80, anchor="center").grid(row=0, column=1, padx=(self.p, 0))
-        ctk.CTkLabel(self.features_header_frame, text="/", font=("Roboto", 12), width=10, anchor="center").grid(row=0, column=2)
-        ctk.CTkLabel(self.features_header_frame, text="Max", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=3, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Reset", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=4, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Use", font=("Roboto", 12), width=28, anchor="center").grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Rst", font=("Roboto", 12), width=28, anchor="center").grid(row=0, column=6, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
-        ctk.CTkLabel(self.features_header_frame, text="", width=28).grid(row=0, column=8, padx=(0, self.p))
+        ctk.CTkLabel(self.features_header_frame, text="", width=18).grid(row=0, column=0, padx=(self.p, 0), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="Feature name", font=("Roboto", 12), anchor="w").grid(row=0, column=1, padx=(self.p, 0), pady=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(self.features_header_frame, text="Uses", font=("Roboto", 12), width=80, anchor="center").grid(row=0, column=2, padx=(self.p, 0), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="/", font=("Roboto", 12), width=10, anchor="center").grid(row=0, column=3, pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="Max", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=4, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="Reset", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=5, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="Use", font=("Roboto", 12), width=28, anchor="center").grid(row=0, column=6, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="Rst", font=("Roboto", 12), width=28, anchor="center").grid(row=0, column=7, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=8, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.features_header_frame, text="", width=28).grid(row=0, column=9, padx=(0, self.p), pady=(self.p, 0))
         
         # Features Container
         self.features_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
@@ -2118,13 +2687,16 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             
         row_frame = ctk.CTkFrame(self.features_container, fg_color="gray25", corner_radius=6)
         row_frame.pack(fill="x", pady=(self.p, 0))
-        row_frame.columnconfigure(0, weight=1)
+        row_frame.columnconfigure(1, weight=1)  # col 0 = drag handle
+        
+        # Drag Handle
+        drag_handle = self._make_drag_handle(row_frame, column=0)
         
         # Name
         name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, placeholder_text="Name",
                                 fg_color="gray30", border_width=1, border_color=self.color)
         name_ent.insert(0, name)
-        name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
+        name_ent.grid(row=0, column=1, padx=(self.p, 0), pady=self.p, sticky="ew")
         name_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Uses (Current)
@@ -2132,24 +2704,24 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         cur_ent = IntSpinbox(row_frame, variable=cur_var,
                              fg_color="gray30", hover_color="gray35",
                              color=self.color, from_=0, to_=999)
-        cur_ent.grid(row=0, column=1, padx=(self.p, 0), pady=self.p)
+        cur_ent.grid(row=0, column=2, padx=(self.p, 0), pady=self.p)
         
-        ctk.CTkLabel(row_frame, text="/", font=("Roboto", 12), width=10).grid(row=0, column=2)
+        ctk.CTkLabel(row_frame, text="/", font=("Roboto", 12), width=10).grid(row=0, column=3)
         
         # Max Uses
         max_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, height=22, justify="center",
                                fg_color="gray30", border_width=0)
         max_ent.insert(0, max_uses)
-        max_ent.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
+        max_ent.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
         max_ent.bind("<FocusOut>", self.autosave_roll_configs)
         
         # Reset Type
         reset_var = StringVar(value=reset)
         reset_menu = ctk.CTkOptionMenu(row_frame, values=["-", "SR", "LR", "Dawn", "Dusk"], variable=reset_var,
                                        width=60, height=22, font=("Roboto", 12),
-                                       fg_color="gray30", button_color="gray35",
+                                       fg_color="gray30", button_color="gray35", dropdown_fg_color="gray30",
                                        button_hover_color="gray40", dropdown_hover_color=self.color)
-        reset_menu.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
+        reset_menu.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
 
         def _enforce_limits(*args):
             try:
@@ -2186,7 +2758,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         used_cb = ctk.CTkCheckBox(row_frame, text="", variable=used_var, command=toggle_used,
                                    width=28, height=22, checkbox_width=18, checkbox_height=18,
                                    fg_color=self.color, border_color=self.color, hover_color=self.color)
-        used_cb.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
+        used_cb.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
         if used and reset != "-":
             used_cb.configure(state="disabled")
 
@@ -2206,7 +2778,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                    fg_color="gray30", hover_color="gray35",
                                    border_color=self.color, border_width=2,
                                    command=_manual_reset)
-        reset_btn.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
+        reset_btn.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
         
         self.after(50, _enforce_limits)
         
@@ -2216,16 +2788,21 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                                   fg_color="gray30", hover_color="gray35",
                                   border_color=self.color, border_width=2,
                                   command=lambda: self._open_feature_description(name_ent, desc_data))
-        desc_btn.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
+        desc_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
         
         # Remove
         rem_btn = ctk.CTkButton(row_frame, text="×", width=22, height=22,
                                  fg_color="gray30", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  command=lambda: self._remove_feature_row(row_id))
-        rem_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
+        rem_btn.grid(row=0, column=9, padx=(0, self.p), pady=self.p)
         
         self.feature_widgets[row_id] = (name_ent, cur_ent, max_ent, reset_var, used_var, used_cb, desc_data, row_frame)
+        
+        # Setup drag reorder
+        self._setup_drag_reorder(drag_handle, row_frame, self.features_container,
+                                 self.feature_widgets, row_id,
+                                 on_reorder_callback=self.autosave_roll_configs)
 
     def _remove_feature_row(self, row_id):
         if row_id in self.feature_widgets:
@@ -2253,7 +2830,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             top.destroy()
             
         btn = ctk.CTkButton(top, text="Save Description", font=("Roboto", 12),
-                            fg_color=self.color, hover_color="gray30",
+                            fg_color="gray20", hover_color="gray25",
                             border_width=2, border_color=self.color,
                             command=save_desc)
         btn.pack(pady=(0, self.p))
@@ -2346,15 +2923,16 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Column Headers Grid
         hdr = ctk.CTkFrame(frame, fg_color="transparent", height=20)
         hdr.pack(fill="x", padx=self.p)
-        # Cols: K(20), P(20), A(20), M(20), Sym(24), Name(exp), Src(30), Gear(24), X(24)
-        hdr.columnconfigure(5, weight=1)
+        # Cols: Handle(0), K(1), P(2), A(3), R(4), Sym(5), Name(6), Src(7), Gear(8), X(9)
+        hdr.columnconfigure(6, weight=1)
         
-        labels = [("K", 0), ("P", 1), ("A", 2), ("R", 3)]
+        ctk.CTkLabel(hdr, text="", width=18).grid(row=0, column=0, padx=(self.p, 0), pady=(self.p, 0))
+        labels = [("K", 1), ("P", 2), ("A", 3), ("R", 4)]
         for txt, col in labels:
             ctk.CTkLabel(hdr, text=txt, font=("Roboto", 12), width=20, text_color="gray90").grid(row=0, column=col, pady=(self.p, 0), padx=(self.p, 0))
         
-        ctk.CTkLabel(hdr, text="", font=("Roboto", 12), width=24).grid(row=0, column=4, pady=(self.p, 0), padx=(self.p, 0)) # Symbol column header
-        ctk.CTkLabel(hdr, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=5, pady=(self.p, 0), padx=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(hdr, text="", font=("Roboto", 12), width=24).grid(row=0, column=5, pady=(self.p, 0), padx=(self.p, 0)) # Symbol column header
+        ctk.CTkLabel(hdr, text="Name", font=("Roboto", 12), anchor="w").grid(row=0, column=6, pady=(self.p, 0), padx=(self.p, 0), sticky="ew")
         
         # Container for Spell Levels (height=0 to collapse when empty)
         self.spells_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
@@ -2417,14 +2995,33 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             if not spells and lvl > 0: continue 
             if not spells and lvl == 0 and not self.spells: continue 
 
-            # Sort spells within level: Always > Prepared > Known > Ritual > Name
-            spells.sort(key=lambda s: (
-                0 if s.get("always", False) else 1,
-                0 if s.get("prepared", False) else 1,
-                0 if s.get("known", True) else 1,
-                0 if s.get("ritual", False) else 1,
-                s.get("name", "").lower()
-            ))
+            # Sort spells within level: Always > Prepared > Known > Ritual > preserve user order
+            spell_ids = [id(s) for s in self.spells]
+            
+            def get_sort_key(s):
+                is_known = s.get("known", True)
+                # Use index as tie-breaker for deterministic sorting
+                try:
+                    order_idx = spell_ids.index(id(s))
+                except ValueError:
+                    order_idx = 999
+                
+                if lvl == 0:
+                    # Cantrips ignore Always/Prepared/Ritual as they are hidden/auto-managed
+                    return (
+                        0 if is_known else 1,
+                        order_idx
+                    )
+                else:
+                    return (
+                        0 if s.get("always", False) else 1,
+                        0 if s.get("prepared", False) else 1,
+                        0 if is_known else 1,
+                        0 if s.get("ritual", False) else 1,
+                        order_idx
+                    )
+
+            spells.sort(key=get_sort_key)
             
             # Level Header
             lbl_text = "Cantrips (0)" if lvl == 0 else f"Level {lvl}"
@@ -2445,18 +3042,20 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Header Row (Hidden by default)
         self.pets_header_frame = ctk.CTkFrame(frame, fg_color="transparent")
         # Don't pack immediately
-        self.pets_header_frame.columnconfigure(0, weight=1)
+        self.pets_header_frame.columnconfigure(1, weight=1)  # col 0 = drag handle
         
         # Match the widths and padding from _add_pet_row
-        ctk.CTkLabel(self.pets_header_frame, text="Pet name", font=("Roboto", 12), anchor="w").grid(row=0, column=0, padx=(self.p, 0), sticky="ew")
-        ctk.CTkLabel(self.pets_header_frame, text="Type", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=1, padx=self.p)
-        ctk.CTkLabel(self.pets_header_frame, text="PCN", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=2, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="/", font=("Roboto", 12), width=10, anchor="center").grid(row=0, column=3)
-        ctk.CTkLabel(self.pets_header_frame, text="Max", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=4, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="AA", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=5, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="Spd", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=6, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p))
-        ctk.CTkLabel(self.pets_header_frame, text="", width=22).grid(row=0, column=8, padx=(0, self.p))
+        ctk.CTkLabel(self.pets_header_frame, text="", width=18).grid(row=0, column=0, padx=(self.p, 0), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="Pet name", font=("Roboto", 12), anchor="w").grid(row=0, column=1, padx=(self.p, 0), pady=(self.p, 0), sticky="ew")
+        ctk.CTkLabel(self.pets_header_frame, text="Type", font=("Roboto", 12), width=60, anchor="center").grid(row=0, column=2, padx=self.p, pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="PCN", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=3, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="/", font=("Roboto", 12), width=10, anchor="center").grid(row=0, column=4, pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="Max", font=("Roboto", 12), width=40, anchor="center").grid(row=0, column=5, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="AA", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=6, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="Spd", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=7, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="Desc", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=8, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="Inv", font=("Roboto", 12), width=30, anchor="center").grid(row=0, column=9, padx=(0, self.p), pady=(self.p, 0))
+        ctk.CTkLabel(self.pets_header_frame, text="", width=22).grid(row=0, column=10, padx=(0, self.p), pady=(self.p, 0))
         
         # Pets Container
         self.pets_container = ctk.CTkFrame(frame, fg_color="transparent", height=0)
@@ -2487,27 +3086,30 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         row_id = str(uuid.uuid4())
         row_frame = ctk.CTkFrame(self.pets_container, fg_color="gray25", corner_radius=6)
         row_frame.pack(fill="x", pady=(self.p, 0))
-        row_frame.columnconfigure(0, weight=1)
+        row_frame.columnconfigure(1, weight=1)  # col 0 = drag handle
+        
+        # Drag Handle
+        drag_handle = self._make_drag_handle(row_frame, column=0)
         
         name_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), height=22, fg_color="gray30", border_width=1, border_color=self.color)
-        name_ent.insert(0, name); name_ent.grid(row=0, column=0, padx=(self.p, 0), pady=self.p, sticky="ew")
+        name_ent.insert(0, name); name_ent.grid(row=0, column=1, padx=(self.p, 0), pady=self.p, sticky="ew")
         
         type_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=60, height=22, fg_color="gray30", border_width=0)
-        type_ent.insert(0, type_); type_ent.grid(row=0, column=1, padx=self.p, pady=self.p)
+        type_ent.insert(0, type_); type_ent.grid(row=0, column=2, padx=self.p, pady=self.p)
         
         pcn_cur = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=40, height=22, justify="center", fg_color="gray30", border_width=0)
-        pcn_cur.insert(0, cur_pcn); pcn_cur.grid(row=0, column=2, padx=(0, self.p), pady=self.p)
+        pcn_cur.insert(0, cur_pcn); pcn_cur.grid(row=0, column=3, padx=(0, self.p), pady=self.p)
         
-        ctk.CTkLabel(row_frame, text="/", width=10).grid(row=0, column=3)
+        ctk.CTkLabel(row_frame, text="/", width=10).grid(row=0, column=4)
         
         pcn_max = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=40, height=22, justify="center", fg_color="gray30", border_width=0)
-        pcn_max.insert(0, max_pcn); pcn_max.grid(row=0, column=4, padx=(0, self.p), pady=self.p)
+        pcn_max.insert(0, max_pcn); pcn_max.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
         
         aa_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, height=22, justify="center", fg_color="gray30", border_width=0)
-        aa_ent.insert(0, aa); aa_ent.grid(row=0, column=5, padx=(0, self.p), pady=self.p)
+        aa_ent.insert(0, aa); aa_ent.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
         
         spd_ent = ctk.CTkEntry(row_frame, font=("Roboto", 12), width=30, height=22, justify="center", fg_color="gray30", border_width=0)
-        spd_ent.insert(0, spd); spd_ent.grid(row=0, column=6, padx=(0, self.p), pady=self.p)
+        spd_ent.insert(0, spd); spd_ent.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
         
         # Bind all entries for autosave
         for e in [name_ent, type_ent, pcn_cur, pcn_max, aa_ent, spd_ent]:
@@ -2517,15 +3119,25 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         desc_btn = ctk.CTkButton(row_frame, text="📝", width=30, height=22, fg_color="gray30", hover_color="gray35",
                                   border_color=self.color, border_width=2,
                                   command=lambda: self._open_feature_description(name_ent, desc_data))
-        desc_btn.grid(row=0, column=7, padx=(0, self.p), pady=self.p)
+        desc_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
+        
+        inv_btn = ctk.CTkButton(row_frame, text="🎒", width=30, height=22, fg_color="gray30", hover_color="gray35",
+                                 border_color=self.color, border_width=2,
+                                 command=lambda n=name_ent, pid=row_id: self._open_grid_inventory(pet_id=pid, title=n.get()))
+        inv_btn.grid(row=0, column=9, padx=(0, self.p), pady=self.p)
         
         rem_btn = ctk.CTkButton(row_frame, text="×", width=22, height=22, fg_color="gray30", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  command=lambda: self._remove_pet_row(row_id))
-        rem_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
+        rem_btn.grid(row=0, column=10, padx=(0, self.p), pady=self.p)
         
         self.pet_widgets[row_id] = (name_ent, type_ent, pcn_cur, pcn_max, aa_ent, spd_ent, desc_data, row_frame)
         self.autosave_roll_configs()
+        
+        # Setup drag reorder
+        self._setup_drag_reorder(drag_handle, row_frame, self.pets_container,
+                                 self.pet_widgets, row_id,
+                                 on_reorder_callback=self.autosave_roll_configs)
 
     def _import_monster_stat_block_popup(self):
         """Popup to paste a monster stat block for automatic row creation"""
@@ -2637,12 +3249,15 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self.autosave_roll_configs()
 
     def _render_spell_row(self, spell, first_row=False):
-        """Renders a single spell row with 4 columns (K, P, A, F)"""
+        """Renders a single spell row with drag handle and 4 columns (K, P, A, R)"""
         row = ctk.CTkFrame(self.spells_container, fg_color="gray25", corner_radius=6)
         row.pack(fill="x", pady=(self.p if not first_row else 0, 0))
         
-        # Grid layout: K(0) P(1) A(2) R(3) Sym(4) Name(5) Src(6) Gear(7) Del(8)
-        row.columnconfigure(5, weight=1) # Name entry expands
+        # Grid layout: Handle(0) K(1) P(2) A(3) R(4) Sym(5) Name(6) Src(7) Gear(8) Del(9)
+        row.columnconfigure(6, weight=1) # Name entry expands
+        
+        # Drag Handle
+        drag_handle = self._make_drag_handle(row, column=0)
         
         def create_cb(col, key, default=False, visible=True):
             # Enforce a strict 20px width element regardless of visibility to keep alignment
@@ -2669,16 +3284,16 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         is_leveled = lvl > 0
         
         # 1. Known (K) - Always vis
-        create_cb(0, "known", True, True)
+        create_cb(1, "known", True, True)
         
         # 2. Prepared (P) - Leveled only
-        create_cb(1, "prepared", False, is_leveled)
+        create_cb(2, "prepared", False, is_leveled)
         
         # 3. Always (A) - Leveled only
-        create_cb(2, "always", False, is_leveled)
+        create_cb(3, "always", False, is_leveled)
         
         # 4. Ritual (R) - Leveled only
-        create_cb(3, "ritual", False, is_leveled)
+        create_cb(4, "ritual", False, is_leveled)
         
         # School Symbol Label
         school_name = spell.get("school", "Unknown")
@@ -2687,7 +3302,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Standardize width to ensure alignment
         sym_container = ctk.CTkFrame(row, width=24, height=24, fg_color="transparent")
         sym_container.pack_propagate(False)
-        sym_container.grid(row=0, column=4, padx=(self.p, 0), pady=self.p)
+        sym_container.grid(row=0, column=5, padx=(self.p, 0), pady=self.p)
         
         sym_lbl = ctk.CTkLabel(sym_container, text=school_sym, font=("Roboto", 12))
         sym_lbl.place(relx=0.5, rely=0.5, anchor="center")
@@ -2695,7 +3310,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         # Name Entry
         name_ent = ctk.CTkEntry(row, font=("Roboto", 12), height=24, border_width=1, fg_color="gray30", border_color="gray35")
         name_ent.insert(0, spell.get("name", ""))
-        name_ent.grid(row=0, column=5, sticky="ew", padx=self.p, pady=self.p)
+        name_ent.grid(row=0, column=6, sticky="ew", padx=self.p, pady=self.p)
         def _update_name(e=None):
             spell["name"] = name_ent.get()
             self.autosave_roll_configs()
@@ -2710,23 +3325,105 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         # Source Label (Mini)
         src_lbl = ctk.CTkLabel(row, text=spell.get("source", "")[:3], font=("Roboto", 12), text_color="gray90", width=30)
-        src_lbl.grid(row=0, column=6, pady=self.p)
+        src_lbl.grid(row=0, column=7, pady=self.p)
         
         # Details Button
         edit_btn = ctk.CTkButton(row, text="⚙", width=24, height=24, fg_color="gray30", hover_color="gray35",
                                   border_color=self.color, border_width=2,
                                   font=("Roboto", 12), command=lambda s=spell: self._open_spell_details(s))
-        edit_btn.grid(row=0, column=7, padx=self.p, pady=self.p)
+        edit_btn.grid(row=0, column=8, padx=self.p, pady=self.p)
         
         # Delete Button
         del_btn = ctk.CTkButton(row, text="×", width=24, height=24, fg_color="gray30", hover_color="gray35",
                                  border_color=self.color, border_width=2,
                                  text_color="gray90", command=lambda s=spell: self._delete_spell(s))
-        del_btn.grid(row=0, column=8, padx=(0, self.p), pady=self.p)
+        del_btn.grid(row=0, column=9, padx=(0, self.p), pady=self.p)
         
         spell_id = spell.get("id", str(uuid.uuid4()))
         if "id" not in spell: spell["id"] = spell_id
         self.spell_widgets[spell_id] = (row, None, name_ent, src_lbl)
+        
+        # ── Spell drag reorder (constrained to same level + state group) ──
+        def _spell_group_key(s):
+            return (int(s.get("level", 0)),
+                    bool(s.get("always", False)),
+                    bool(s.get("prepared", False)),
+                    bool(s.get("known", True)),
+                    bool(s.get("ritual", False)))
+        
+        my_group = _spell_group_key(spell)
+        drag_state = {"active": False}
+        
+        def _spell_drag_press(event):
+            drag_state["active"] = True
+        
+        def _spell_drag_motion(event):
+            if not drag_state["active"]:
+                return
+            cursor_y = event.y_root
+            for sid, sw in self.spell_widgets.items():
+                if sid == spell_id:
+                    continue
+                other_spell = None
+                for s in self.spells:
+                    if s.get("id") == sid:
+                        other_spell = s
+                        break
+                if other_spell is None or _spell_group_key(other_spell) != my_group:
+                    continue
+                rf = sw[0]
+                try:
+                    ry = rf.winfo_rooty()
+                    rh = rf.winfo_height()
+                    if ry <= cursor_y <= ry + rh:
+                        rf.configure(border_width=2, border_color=self.color)
+                    else:
+                        rf.configure(border_width=0)
+                except:
+                    pass
+        
+        def _spell_drag_release(event):
+            if not drag_state["active"]:
+                return
+            drag_state["active"] = False
+            
+            for sid, sw in self.spell_widgets.items():
+                try:
+                    sw[0].configure(border_width=0)
+                except:
+                    pass
+            
+            cursor_y = event.y_root
+            target_spell = None
+            for s in self.spells:
+                sid = s.get("id")
+                if sid == spell_id or sid not in self.spell_widgets:
+                    continue
+                if _spell_group_key(s) != my_group:
+                    continue
+                rf = self.spell_widgets[sid][0]
+                try:
+                    ry = rf.winfo_rooty()
+                    rh = rf.winfo_height()
+                    if ry <= cursor_y <= ry + rh:
+                        target_spell = s
+                        break
+                except:
+                    continue
+            
+            if target_spell is None:
+                return
+            
+            src_idx = self.spells.index(spell)
+            dst_idx = self.spells.index(target_spell)
+            self.spells.pop(src_idx)
+            self.spells.insert(dst_idx, spell)
+            self._update_spell_list()
+            self.autosave_roll_configs()
+        
+        drag_handle.bind("<ButtonPress-1>", _spell_drag_press)
+        drag_handle.bind("<B1-Motion>", _spell_drag_motion)
+        drag_handle.bind("<ButtonRelease-1>", _spell_drag_release)
 
     def _delete_spell(self, spell):
         if spell in self.spells:
@@ -2761,7 +3458,7 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         sch_var = StringVar(value=spell.get("school", "Unknown"))
         sch_dropdown = ctk.CTkOptionMenu(f, variable=sch_var, values=list(self.SCHOOL_SYMBOLS.keys()),
                                          font=("Roboto", 12), fg_color="gray30", button_color="gray35",
-                                         button_hover_color="gray40", dropdown_hover_color=self.color)
+                                         button_hover_color="gray40", dropdown_fg_color="gray30", dropdown_hover_color=self.color)
         sch_dropdown.grid(row=2, column=1, pady=(0, self.p), sticky="ew")
         
         src_ent = add_field(f, "Source:", "source", 3)
@@ -2945,14 +3642,14 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         type_var = StringVar(value=source_type)
         ctk.CTkOptionMenu(top, variable=type_var, values=["Class", "Feat", "Item", "Racial", "Other"],
                           font=("Roboto", 12), width=75, height=24,
-                          fg_color="gray30", button_color="gray35",
+                          fg_color="gray30", button_color="gray35", dropdown_fg_color="gray30",
                           button_hover_color="gray40", dropdown_hover_color=self.color).pack(side="left", padx=(0, 5))
                           
         # Shard Type
         shard_type_var = StringVar(value=shard_type)
         menu = ctk.CTkOptionMenu(top, variable=shard_type_var, values=["Normal", "Pact"],
                                   font=("Roboto", 12), width=75, height=24,
-                                  fg_color="gray30", button_color="gray35",
+                                  fg_color="gray30", button_color="gray35", dropdown_fg_color="gray30",
                                   button_hover_color="gray40", dropdown_hover_color=self.color,
                                   command=lambda _: self._update_pact_visibility())
         menu.pack(side="left", padx=(0, self.p))
@@ -2978,29 +3675,29 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         
         total_ent = ctk.CTkEntry(bot, font=("Roboto", 12), width=40, height=24, justify="center",
                                   fg_color="gray30", border_width=0)
-        total_ent.pack(side="left", padx=(0, 15))
+        total_ent.pack(side="left", padx=(0, self.p))
         total_ent.insert(0, total)
         
         # Max Output
         ctk.CTkLabel(bot, text="MaxOut:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
         max_out_ent = ctk.CTkEntry(bot, font=("Roboto", 12), width=35, height=24, justify="center",
                                     fg_color="gray30", border_width=0)
-        max_out_ent.pack(side="left", padx=(0, 15))
+        max_out_ent.pack(side="left", padx=(0, self.p))
         max_out_ent.insert(0, max_output)
         
         # Arcane rest
         arcane_var = BooleanVar(value=arcane_rest)
-        ctk.CTkCheckBox(bot, text="Arc. rest", variable=arcane_var,
+        ctk.CTkCheckBox(bot, text="Arc. rest", variable=arcane_var, width=75,
                          font=("Roboto", 12), checkbox_width=18, checkbox_height=18,
                          hover_color=self.color, fg_color=self.color,
                          border_color=self.color).pack(side="left", padx=(0, self.p))
         
         # rest Type
-        ctk.CTkLabel(bot, text="Rest:", font=("Roboto", 12), text_color="gray90").pack(side="left", padx=(0, 5))
+        ctk.CTkLabel(bot, text="Rest: ", font=("Roboto", 12), text_color="gray90").pack(side="left")
         rest_var = StringVar(value=rest_type)
         ctk.CTkOptionMenu(bot, variable=rest_var, values=["Long", "Short"],
                            font=("Roboto", 12), width=70, height=24,
-                           fg_color="gray30", button_color="gray35",
+                           fg_color="gray30", button_color="gray35", dropdown_fg_color="gray30",
                            button_hover_color="gray40", dropdown_hover_color=self.color).pack(side="left")
         
         self.shard_widgets[row_id] = (source_ent, type_var, shard_type_var,
@@ -3409,7 +4106,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         print(f"DEBUG: Updating Knowledge Fields (PB={pb})")
         print(f"DEBUG: Aspect Keys: {list(self.aspect_widgets.keys())}")
         
-        for field, (prof_var, val_lbl, linked_aspect, adv_var) in self.knowledge_widgets.items():
+        for field, (prof_var, val_lbl, linked_aspect_var, adv_var) in self.knowledge_widgets.items():
+            linked_aspect = linked_aspect_var.get()
             # Get linked aspect's effective value (base + aspect's own prof bonus)
             if linked_aspect in self.aspect_widgets:
                 entry, aspect_prof_var, _, _ = self.aspect_widgets[linked_aspect]
@@ -3440,7 +4138,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         """Recalculate all tool field values (same rules as knowledge fields)"""
         pb = self.get_prof_bonus()
         
-        for tool, (prof_var, val_lbl, linked_aspect, adv_var) in self.tool_widgets.items():
+        for tool, (prof_var, val_lbl, linked_aspect_var, adv_var) in self.tool_widgets.items():
+            linked_aspect = linked_aspect_var.get()
             # Get linked aspect's effective value (base + aspect's own prof bonus)
             if linked_aspect in self.aspect_widgets:
                 entry, aspect_prof_var, _, _ = self.aspect_widgets[linked_aspect]
@@ -3466,6 +4165,16 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         self.autosave_roll_configs()
 
     def gather_data(self):
+        def get_ordered_data(container, widgets_dict, unpack_fn):
+            ordered = []
+            frame_to_id = {id(w[-1]): rid for rid, w in widgets_dict.items()}
+            # Use pack_slaves() to get the actual visual order
+            for child in container.pack_slaves():
+                if id(child) in frame_to_id:
+                    rid = frame_to_id[id(child)]
+                    ordered.append(unpack_fn(widgets_dict[rid]))
+            return ordered
+
         return {
             "portrait": self.portrait_path,
             "name": self.name_entry.get(),
@@ -3477,12 +4186,12 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             "stats": {k: v.get() for k, v in self.stat_entries.items()},
             "combat": {k: v.get() for k, v in self.combat_entries.items()},
             "aspects": {k: (e.get(), p.get(), a.get()) for k, (e, p, a, _) in self.aspect_widgets.items()},
-            "knowledge": {k: (pv.get(), av.get()) for k, (pv, _, _, av) in self.knowledge_widgets.items()},
-            "tools": {k: (pv.get(), av.get(), la) for k, (pv, _, la, av) in self.tool_widgets.items()},
+            "knowledge": {k: (pv.get(), av.get(), la.get()) for k, (pv, _, la, av) in self.knowledge_widgets.items()},
+            "tools": {k: (pv.get(), av.get(), la.get()) for k, (pv, _, la, av) in self.tool_widgets.items()},
             "saves": {k: (pv.get(), av.get(), self.save_entries[k].get() if k in self.save_entries else "0") 
                       for k, (pv, av, _) in self.save_widgets.items()},
-            "weapons": [(n.get(), a.get(), p.get(), t.get(), ec.get(), ea.get(), d[0]) 
-                        for _, (n, a, p, t, ec, ea, _, d, _) in self.weapon_widgets.items()],
+            "weapons": get_ordered_data(self.items_container, self.weapon_widgets, 
+                                        lambda w: (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[4].get(), w[5].get(), w[7][0])),
             "armor": {
                 "type": self.armor_settings["type"].get(),
                 "aspect": self.armor_settings["aspect"].get(),
@@ -3496,10 +4205,8 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             "speeds": {k: v.get() for k, v in self.speed_vars.items()},
             "speed_flat_mod": self.speed_flat_mod_var.get(),
             "speed_mult": self.speed_mult_var.get(),
-            "shards": [
-                (src.get(), st.get(), sht.get(), cur.get(), tot.get(), mo.get(), ar.get(), rt.get())
-                for _, (src, st, sht, cur, tot, mo, ar, rt, _) in self.shard_widgets.items()
-            ],
+            "shards": get_ordered_data(self.shards_container, self.shard_widgets,
+                                       lambda w: (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[4].get(), w[5].get(), w[6].get(), w[7].get())),
             "resonance_saturation": [e.get() for e in self.resonance_saturation_entries],
             "resonance_counts": [e.get() for e in self.resonance_count_entries],
             "pact_resonance_saturation": [e.get() for e in self.pact_saturation_entries],
@@ -3510,20 +4217,18 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 w[0].get(): {"current": w[1].get(), "max": w[2].get()}
                 for _, w in self.spell_tracking_widgets.items()
             },
-            "features": [
-                (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[6][0], w[4].get())
-                for _, w in self.feature_widgets.items()
-            ],
+            "features": get_ordered_data(self.features_container, self.feature_widgets,
+                                         lambda w: (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[6][0], w[4].get())),
             "spells": self.spells,
             "quick_prep_used": self.quick_prep_used.get(),
             "hit_dice": {d: [v[0].get(), v[1].get()] for d, v in self.hit_dice_vars.items()},
             "background": self.background_entry.get(),
             "languages": self.languages_entry.get(),
             "conditions": {c: v.get() for c, v in self.conditions_vars.items()},
-            "pets": [
-                (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[4].get(), w[5].get(), w[6][0])
-                for _, w in self.pet_widgets.items()
-            ]
+            "pets": get_ordered_data(self.pets_container, self.pet_widgets,
+                                     lambda w: (w[0].get(), w[1].get(), w[2].get(), w[3].get(), w[4].get(), w[5].get(), w[6][0])),
+            "inventory_data": self.inventory_data,
+            "pet_inventories": self.pet_inventories
         }
 
     def load_data(self, data):
@@ -3573,29 +4278,39 @@ class CharacterSheetWindow(ctk.CTkToplevel):
                 k = "Religion/Occultism"
             
             if k in self.knowledge_widgets:
-                prof_var, _, _, adv_var = self.knowledge_widgets[k]
+                prof_var, _, la_var, adv_var = self.knowledge_widgets[k]
                 if isinstance(v, tuple):
                     prof_var.set(v[0])
-                    adv_var.set(v[1])
+                    if len(v) > 1:
+                        adv_var.set(v[1])
+                    if len(v) > 2:
+                        la_var.set(v[2])
                 else:
                     prof_var.set(v)  # backwards compat with old saves
         self.update_knowledge_fields()
         
+        # Clear existing tools
+        self.tool_widgets.clear()
+        for child in self.tools_container.winfo_children():
+            child.destroy()
+
         for k, v in data.get("tools", {}).items():
             if isinstance(v, tuple) and len(v) == 3:
                 prof, adv, linked_aspect = v
                 self._add_tool_item(k, linked_aspect)
                 if k in self.tool_widgets:
-                    pv, _, _, av = self.tool_widgets[k]
+                    pv, _, la_var, av = self.tool_widgets[k]
                     pv.set(prof)
                     av.set(adv)
+                    la_var.set(linked_aspect)
             elif isinstance(v, tuple): # compat
                 prof, adv, linked_aspect = v[0], v[1], self._guess_linked_aspect(k) # Guess linked aspect for old format
                 self._add_tool_item(k, linked_aspect)
                 if k in self.tool_widgets:
-                    pv, _, _, av = self.tool_widgets[k]
+                    pv, _, la_var, av = self.tool_widgets[k]
                     pv.set(prof)
                     av.set(adv)
+                    la_var.set(linked_aspect)
         self.update_tool_fields()
         
         # Load Spells
@@ -3731,6 +4446,10 @@ class CharacterSheetWindow(ctk.CTkToplevel):
         for pet_data in data.get("pets", []):
             if len(pet_data) == 7:
                 self._add_pet_row(*pet_data)
+                
+        # Load Inventories
+        self.inventory_data = data.get("inventory_data", {"override_squares": 0, "items": []})
+        self.pet_inventories = data.get("pet_inventories", {})
 
         # Trigger regeneration of roll configs to ensure metadata (like aspect) is up to date
         self.generate_roll_configs()
@@ -3874,18 +4593,22 @@ class CharacterSheetWindow(ctk.CTkToplevel):
 
         # 3. Knowledge Fields
         for name, (pv, tl, la, av) in self.knowledge_widgets.items():
-            process_mod(name, tl.cget("text"), av.get(), aspect=la)
+            process_mod(name, tl.cget("text"), av.get(), aspect=la.get())
 
         # 4. Tools
         for name, (pv, tl, la, av) in self.tool_widgets.items():
-            process_mod(name, tl.cget("text"), av.get(), aspect=la)
+            process_mod(name, tl.cget("text"), av.get(), aspect=la.get())
 
         # 5. Equipment (Weapons, Spells, Features)
         # 5. Equipment (Weapons, Spells, Features)
         for wid, widgets in self.weapon_widgets.items():
             try:
                 # Robust unpacking to handle potential legacy/mixed widgets
-                if len(widgets) == 8:
+                if len(widgets) == 9:
+                    # Current format: (name_ent, asp_var, p_var, type_var, const_ent, adv_ent, bonus_lbl, desc_data, row_frame)
+                    name_ent, asp_var, p_var, type_var, const_ent, adv_ent, bonus_lbl, _, _ = widgets
+                    extra_const_val = 0 # Handled by bonus_lbl text
+                elif len(widgets) == 8:
                     name_ent, asp_var, p_var, type_var, const_ent, adv_ent, bonus_lbl, _ = widgets
                     extra_const_val = 0 # Handled by bonus_lbl text
                 elif len(widgets) == 6: # Legacy widget fallback
@@ -3993,6 +4716,29 @@ class CharacterSheetWindow(ctk.CTkToplevel):
             self.generate_roll_configs()
             self.lift()
             self.focus_force()
+
+    def _open_grid_inventory(self, pet_id=None, title="Backpack"):
+        """Spawn the Grid Inventory Popup, calculating 1Square = 5LBS logic."""
+        
+        def get_res(aspects_dict):
+            # Parse Res from aspect tuple (val, prof, adv)
+            try: return int(aspects_dict.get("Resilience", ("0", "0", "0"))[0] or 0)
+            except: return 0
+
+        if pet_id is None:
+            # Main Character
+            data_ref = self.inventory_data
+            res = get_res(self.gather_data().get("aspects", {}))
+            default_stat = res
+        else:
+            # Pet
+            if pet_id not in self.pet_inventories:
+                self.pet_inventories[pet_id] = {"override_squares": 0, "cols": 5, "items": []}
+            data_ref = self.pet_inventories[pet_id]
+            default_stat = 0 # Default body stat equivalent for pets 
+            
+        # Spawn the custom UI engine instance
+        GridInventoryWindow(self, data_ref, default_stat, title_text=title)
 
     def load_character(self):
         filepath = filedialog.askopenfilename(filetypes=[("Character File", "*.pkl")])
@@ -4301,11 +5047,13 @@ class GUI(ctk.CTk):
                 files = sorted([f for f in os.listdir(self.roll_configs_dir) if f.endswith(".pkl")])
                 for i, filename in enumerate(files):
                     name = os.path.splitext(filename)[0]
+                    filepath = os.path.join(self.roll_configs_dir, filename)
+                    p_color = self.players[i % len(self.players)]['color'] if getattr(self, 'players', None) else "gray50"
                     
                     btn = ctk.CTkButton(self.sidebaroll, 
                                         text=name, 
                                         fg_color="gray25", hover_color="gray30",
-                                        border_color=self.players[i]['color'], border_width=2,
+                                        border_color=p_color, border_width=2,
                                         font=("Roboto", 12),
                                         anchor="w",
                                         command=lambda f=filepath: self.openfile(f))
@@ -6740,78 +7488,126 @@ class GUI(ctk.CTk):
                 prob=interval*(1-prob_old)/(prob_old*(1-interval)+(1-prob_old)*interval)
             return (bol, prob)
 
+        def get_die_pmf(self, sides, modifiers):
+            pmf = {x: 1 for x in range(1, sides + 1)}
+            
+            for mod_name, mod_val in modifiers:
+                mod_name = mod_name.lower()
+                if mod_name == 'rr':
+                    val = mod_val if mod_val is not None else 1
+                    total = sum(pmf.values())
+                    if total > 0:
+                        probs = {x: w / total for x, w in pmf.items()}
+                    else:
+                        probs = {x: 1/sides for x in range(1, sides+1)}
+                    
+                    reroll_prob = sum(probs[x] for x in probs if x <= val)
+                    new_probs = {}
+                    for x in range(1, sides + 1):
+                        p_keep = probs[x] if x > val else 0
+                        p_reroll = reroll_prob * (1 / sides)
+                        new_probs[x] = p_keep + p_reroll
+                    pmf = new_probs
+
+                elif mod_name == 'ru':
+                    val = mod_val if mod_val is not None else 1
+                    val = min(val, sides - 1)  # Prevent infinite loops (e.g. 1d6ru6)
+                    
+                    total = sum(pmf.values())
+                    if total > 0:
+                        probs = {x: w / total for x, w in pmf.items()}
+                    else:
+                        probs = {x: 1/sides for x in range(1, sides+1)}
+                        
+                    keep_prob = sum(probs[x] for x in probs if x > val)
+                    new_probs = {}
+                    for x in range(1, sides + 1):
+                        if x <= val:
+                            new_probs[x] = 0
+                        else:
+                            new_probs[x] = probs[x] / keep_prob if keep_prob > 0 else 1 / (sides - val)
+                    pmf = new_probs
+
+                elif mod_name == 'mi':
+                    val = mod_val if mod_val is not None else 1
+                    new_pmf = {x: 0 for x in range(1, sides + 1)}
+                    for x, w in pmf.items():
+                        if x < val:
+                            new_pmf[val] += w
+                        else:
+                            new_pmf[x] += w
+                    pmf = new_pmf
+                    
+                elif mod_name == 'ma':
+                    val = mod_val if mod_val is not None else sides
+                    new_pmf = {x: 0 for x in range(1, sides + 1)}
+                    for x, w in pmf.items():
+                        if x > val:
+                            new_pmf[val] += w
+                        else:
+                            new_pmf[x] += w
+                    pmf = new_pmf
+
+            total = sum(pmf.values())
+            if total > 0:
+                return {x: w / total for x, w in pmf.items()}
+            else:
+                return {x: 1/sides for x in range(1, sides+1)}
+
         def rec(self, tot, num, dice_list, index):
-                if index!=len(dice_list)-1:
-                    if dice_list[index][1]>1:
-                        dic={}
-                        number=abs(dice_list[index][0])
-                        sgn=np.sign(dice_list[index][0])
-                        sides = dice_list[index][1]
+            if index != len(dice_list):
+                if dice_list[index][1] > 1:
+                    dic = {}
+                    multiplier = dice_list[index][0]
+                    number = abs(multiplier)
+                    sgn = np.sign(multiplier)
+                    sides = dice_list[index][1]
+                    modifiers = dice_list[index][2]
+                    
+                    pmf = self.get_die_pmf(sides, modifiers)
+                    keep_mods = [m for m in modifiers if m[0].lower() in ['kh', 'kl', 'dh', 'dl']]
+                    
+                    tt_aux = math.factorial(number)
+                    for k in list(itertools.combinations_with_replacement([i for i in range(1, sides+1)], number)):
+                        tt = tt_aux
+                        prob_comb = 1.0
+                        for i in range(1, sides+1):
+                            count = k.count(i)
+                            tt /= math.factorial(count)
+                            if count > 0:
+                                prob_comb *= (pmf[i] ** count)
                         
-                        # Extract keep/drop info if present
-                        k_type = dice_list[index][2] if len(dice_list[index]) > 2 else None
-                        k_num = dice_list[index][3] if len(dice_list[index]) > 3 else number
+                        if prob_comb == 0:
+                            continue
+                            
+                        kept_values = list(k)
+                        for mod_name, mod_val in keep_mods:
+                            mod_name = mod_name.lower()
+                            val = mod_val if mod_val is not None else 1
+                            if len(kept_values) == 0: break
+                            if mod_name == 'kh':
+                                kept_values = kept_values[-val:] if val > 0 else []
+                            elif mod_name == 'kl':
+                                kept_values = kept_values[:val] if val > 0 else []
+                            elif mod_name == 'dh':
+                                kept_values = kept_values[:-val] if val < len(kept_values) else []
+                            elif mod_name == 'dl':
+                                kept_values = kept_values[val:] if val < len(kept_values) else []
                         
-                        tt_aux=math.factorial(number)
-                        for k in list(itertools.combinations_with_replacement([i for i in range(1, sides+1)], number)):
-                            # Apply keep/drop logic to sorted combination k
-                            if k_type == 'kh':
-                                current_sum = sum(k[-k_num:]) if k_num > 0 else 0
-                            elif k_type == 'kl':
-                                current_sum = sum(k[:k_num]) if k_num > 0 else 0
-                            elif k_type == 'dh':
-                                current_sum = sum(k[:-k_num]) if k_num < number else 0
-                            elif k_type == 'dl':
-                                current_sum = sum(k[k_num:]) if k_num < number else 0
+                        current_sum = sum(kept_values)
+                        new_num = num * tt * prob_comb
+                        
+                        dic_aux = self.rec(tot + sgn * current_sum, new_num, dice_list, index + 1)
+                        for i in dic_aux.keys():
+                            if i in dic.keys():
+                                dic[i] += dic_aux[i]
                             else:
-                                current_sum = sum(k)
-                                
-                            tt=tt_aux
-                            for i in range(1, sides+1):
-                                tt/=math.factorial(k.count(i))
-                            dic_aux=self.rec(tot+sgn*current_sum, num+tt, dice_list, index+1)
-                            for i in dic_aux.keys():
-                                if i in dic.keys():
-                                    dic[i]+=dic_aux[i]
-                                else:
-                                    dic[i]=dic_aux[i]
-                        return dic
-                    else:
-                        return self.rec(tot+dice_list[index][0], num, dice_list, index+1)
+                                dic[i] = dic_aux[i]
+                    return dic
                 else:
-                    if dice_list[index][1]>1:
-                        dic={}
-                        number=abs(dice_list[index][0])
-                        sgn=np.sign(dice_list[index][0])
-                        sides = dice_list[index][1]
-                        
-                        k_type = dice_list[index][2] if len(dice_list[index]) > 2 else None
-                        k_num = dice_list[index][3] if len(dice_list[index]) > 3 else number
-                        
-                        tt_aux=math.factorial(number)
-                        for k in list(itertools.combinations_with_replacement([i for i in range(1, sides+1)], number)):
-                            if k_type == 'kh':
-                                current_sum = sum(k[-k_num:]) if k_num > 0 else 0
-                            elif k_type == 'kl':
-                                current_sum = sum(k[:k_num]) if k_num > 0 else 0
-                            elif k_type == 'dh':
-                                current_sum = sum(k[:-k_num]) if k_num < number else 0
-                            elif k_type == 'dl':
-                                current_sum = sum(k[k_num:]) if k_num < number else 0
-                            else:
-                                current_sum = sum(k)
-                                
-                            aux=sgn*current_sum
-                            tt=tt_aux
-                            for i in range(1, sides+1):
-                                tt/=math.factorial(k.count(i))
-                            if tot+aux in dic.keys():
-                                dic[tot+aux]+=num+tt
-                            else:
-                                dic[tot+aux]=num+tt
-                        return dic
-                    else:
-                        return {tot+dice_list[index][0]: num}
+                    return self.rec(tot + dice_list[index][0], num, dice_list, index + 1)
+            else:
+                return {tot: num}
                     
         def rolldic(self, stri):
             try:
@@ -6819,101 +7615,100 @@ class GUI(ctk.CTk):
                 if not dice_match:
                     return
                 dice_str = dice_match.group()
-                stri=dice_str.replace("'","").replace(' ', '')
-                # Find all parts (dice or constants) in order
+                stri = dice_str.replace("'", "").replace(' ', '')
                 stri_con = re.findall(r'[+-]?[^+-]+', stri)
-                dice_list=[]
-                roll=0
+                dice_list = []
+                roll = 0
                 breakdown_parts = []
                 for i in stri_con:
                     if 'd' in i:
-                        m = re.match(r"([+-]?\d*)d(\d+)([kKdD][hHlL])?(\d+)?", i)
+                        m = re.match(r"([+-]?\d*)d(\d+)((?:[kKdD][hHlL]\d*|mi\d+|ma\d+|rr\d+|ru\d+)*)", i, re.IGNORECASE)
                         if m:
-                            count_str, sides_str, k_type, k_num_str = m.groups()
+                            count_str, sides_str, modifiers_str = m.groups()
                             
-                            # Count
-                            if count_str == '' or count_str == '+':
-                                count = 1
-                            elif count_str == '-':
-                                count = -1
-                            else:
-                                count = int(count_str)
+                            if count_str == '' or count_str == '+': count = 1
+                            elif count_str == '-': count = -1
+                            else: count = int(count_str)
                                 
-                            # Sides
                             sides = int(sides_str)
                             
-                            # Keep type/num
-                            keep_type = k_type.lower() if k_type else None
-                            # Default to 1 if kh/kl present but no number, else default to all dice
-                            if keep_type:
-                                keep_num = int(k_num_str) if k_num_str else 1
-                            else:
-                                keep_num = abs(count)
+                            modifiers = []
+                            if modifiers_str:
+                                mod_matches = re.findall(r"([kKdD][hHlL]|mi|ma|rr|ru)(\d*)", modifiers_str, re.IGNORECASE)
+                                for mod_name, mod_val_str in mod_matches:
+                                    mod_val = int(mod_val_str) if mod_val_str else None
+                                    modifiers.append((mod_name.lower(), mod_val))
                             
-                            # Simulation for initial result
                             sgn = np.sign(count)
                             num_dice = abs(count)
-                            rolls_data = [random.randint(1, sides) for _ in range(num_dice)]
                             
-                            # Individual rolls for breakdown
-                            raw_rolls = rolls_data.copy()
+                            raw_rolls = [random.randint(1, sides) for _ in range(num_dice)]
+                            current_rolls = raw_rolls.copy()
                             
-                            rolls_data.sort() # non-decreasing for keep/drop logic
-                            
-                            if keep_type == 'kh':
-                                kept_values = rolls_data[-keep_num:] if keep_num > 0 else []
-                            elif keep_type == 'kl':
-                                kept_values = rolls_data[:keep_num] if keep_num > 0 else []
-                            elif keep_type == 'dh':
-                                kept_values = rolls_data[:-keep_num] if keep_num < num_dice else []
-                            elif keep_type == 'dl':
-                                kept_values = rolls_data[keep_num:] if keep_num < num_dice else []
-                            else:
-                                kept_values = rolls_data
-                                
+                            for mod_name, mod_val in modifiers:
+                                if mod_name == 'rr':
+                                    val = mod_val if mod_val is not None else 1
+                                    current_rolls = [random.randint(1, sides) if r <= val else r for r in current_rolls]
+                                elif mod_name == 'ru':
+                                    val = mod_val if mod_val is not None else 1
+                                    val = min(val, sides - 1)  # Prevent infinite loops mathematically
+                                    current_rolls = [random.randint(val + 1, sides) if r <= val else r for r in current_rolls]
+                                elif mod_name == 'mi':
+                                    val = mod_val if mod_val is not None else 1
+                                    current_rolls = [max(val, r) for r in current_rolls]
+                                elif mod_name == 'ma':
+                                    val = mod_val if mod_val is not None else sides
+                                    current_rolls = [min(val, r) for r in current_rolls]
+                                    
+                            kept_values = sorted(current_rolls)
+                            for mod_name, mod_val in modifiers:
+                                if mod_name in ['kh', 'kl', 'dh', 'dl']:
+                                    val = mod_val if mod_val is not None else 1
+                                    if len(kept_values) == 0: break
+                                    if mod_name == 'kh':
+                                        kept_values = kept_values[-val:] if val > 0 else []
+                                    elif mod_name == 'kl':
+                                        kept_values = kept_values[:val] if val > 0 else []
+                                    elif mod_name == 'dh':
+                                        kept_values = kept_values[:-val] if val < len(kept_values) else []
+                                    elif mod_name == 'dl':
+                                        kept_values = kept_values[val:] if val < len(kept_values) else []
+                                        
                             roll += sgn * sum(kept_values)
-                            dice_list.append((count, sides, keep_type, keep_num))
+                            dice_list.append((count, sides, modifiers))
                             
-                            # Build breakdown with highlighting for dropped dice
                             temp_kept = kept_values.copy()
                             formatted_parts = []
-                            for idx, r in enumerate(raw_rolls):
+                            for idx, r in enumerate(current_rolls):
                                 is_kept = False
                                 if r in temp_kept:
                                     is_kept = True
                                     temp_kept.remove(r)
                                 
-                                if idx > 0 or sgn < 0:
-                                    op = "+" if sgn > 0 else "-"
-                                    if is_kept:
-                                        formatted_parts.append(f"{op}{r}")
-                                    else:
-                                        formatted_parts.append(rf"\s{op}{r}\s")
+                                op = "+" if sgn > 0 else "-"
+                                if idx == 0 and sgn > 0: op = ""
+                                    
+                                if is_kept:
+                                    formatted_parts.append(f"{op}{r}")
                                 else:
-                                    if is_kept:
-                                        formatted_parts.append(f"{r}")
-                                    else:
-                                        formatted_parts.append(rf"\s{r}\s")
+                                    formatted_parts.append(rf"\s{op}{r}\s")
                             
                             rolls_str = "".join(formatted_parts)
                             breakdown_parts.append(f"{i}({rolls_str})")
                     else:
-                        # Constant
                         try:
                             val = int(i)
                             roll += val
-                            dice_list.append((val, 1))
+                            dice_list.append((val, 1, []))
                             breakdown_parts.append(f"{i}")
                         except:
                             pass
                 
-                # Combine breakdown parts
                 breakdown_full = "".join(breakdown_parts)
-                # Cleanup: if it starts with "+", remove it
                 if breakdown_full.startswith("+"):
                     breakdown_full = breakdown_full[1:]
 
-                dice_list=sorted(dice_list, key=lambda tup: abs(tup[0]))
+                dice_list = sorted(dice_list, key=lambda tup: abs(tup[0]))
 
                 # Send result notice to server
                 result_msg = msg(['broadcast_roll_result'], f"{self.name} rolled {dice_str} -> {breakdown_full}={roll}.")
@@ -6924,39 +7719,44 @@ class GUI(ctk.CTk):
                 if self.rolldic_style.get() == "None":
                     return
 
-                tot=0
-                num=0
-                mini=0
-                maxi=0
+                tot = 0
+                num = 1.0
+                mini = 0
+                maxi = 0
                 for i in dice_list:
                     multiplier = i[0]
                     sides = i[1]
-                    k_type = i[2] if len(i) > 2 else None
-                    k_num = i[3] if len(i) > 3 else abs(multiplier)
+                    modifiers = i[2]
                     
                     num_dice = abs(multiplier)
                     sgn = np.sign(multiplier)
                     
                     if sides > 1:
-                        # Effective count for bounds
-                        if k_type in ['kh', 'kl']:
-                            eff_count = k_num
-                        elif k_type in ['dh', 'dl']:
-                            eff_count = max(0, num_dice - k_num)
-                        else:
-                            eff_count = num_dice
-                            
+                        eff_count = num_dice
+                        eff_min = 1
+                        eff_max = sides
+                        
+                        for mod_name, mod_val in modifiers:
+                            if mod_name == 'mi':
+                                eff_min = max(eff_min, mod_val if mod_val is not None else 1)
+                            elif mod_name == 'ma':
+                                eff_max = min(eff_max, mod_val if mod_val is not None else sides)
+                            elif mod_name in ['kh', 'kl']:
+                                eff_count = min(eff_count, mod_val if mod_val is not None else 1)
+                            elif mod_name in ['dh', 'dl']:
+                                eff_count = max(0, eff_count - (mod_val if mod_val is not None else 1))
+                                
                         if sgn > 0:
-                            mini += eff_count
-                            maxi += eff_count * sides
+                            mini += eff_count * eff_min
+                            maxi += eff_count * eff_max
                         else:
-                            mini += eff_count * sides * sgn
-                            maxi += eff_count * 1 * sgn
+                            mini += eff_count * eff_max * sgn
+                            maxi += eff_count * eff_min * sgn
                     else:
-                        # Constant
                         mini += multiplier
                         maxi += multiplier
-                dic=OrderedDict(sorted(self.rec(tot, num, dice_list, 0).items(), reverse=True))
+                        
+                dic = OrderedDict(sorted(self.rec(tot, num, dice_list, 0).items(), reverse=True))
                 total=sum(dic.values())
                 
                 # PMF (Probability Mass Function) - individual probability of each result
@@ -7051,16 +7851,18 @@ class GUI(ctk.CTk):
                 self.possi.focus()
                 
                 if style == 'Cumulative':
-                    rolls=[random.randint(mini, maxi)]
-
-                    # More animation frames (15 to 25 rolls)
-                    for i in range(random.randint(15, 25)):
-                        c=random.randint(mini, maxi)
-                        while c==rolls[-1]:
+                    if mini == maxi:
+                        rolls = [roll]
+                    else:
+                        rolls=[random.randint(mini, maxi)]
+                        # More animation frames (15 to 25 rolls)
+                        for i in range(random.randint(15, 25)):
                             c=random.randint(mini, maxi)
-                        rolls.append(c)
-                    if rolls[-1]!=roll:
-                        rolls.append(roll)
+                            while c==rolls[-1]:
+                                c=random.randint(mini, maxi)
+                            rolls.append(c)
+                        if rolls[-1]!=roll:
+                            rolls.append(roll)
                     
                     # Setup animation state
                     self.anim_rolls = rolls
@@ -7121,7 +7923,13 @@ class GUI(ctk.CTk):
                 
                 if self.anim_index == len(self.anim_rolls) - 1:
                     # Final state
-                    res_text = 'r='+str(self.anim_roll)+', p(r)='+"{:.1e}".format(self.anim_dic[self.anim_roll]/self.anim_total)+', p(x>=r)='+"{:.1e}".format(self.anim_values[self.anim_mini-self.anim_roll-1])
+                    keys_list = list(self.anim_dic.keys())
+                    try:
+                        bar_idx = keys_list.index(self.anim_roll)
+                        p_geq = self.anim_values[bar_idx]
+                    except ValueError:
+                        p_geq = 1.0
+                    res_text = 'r='+str(self.anim_roll)+', p(r)='+"{:.1e}".format(self.anim_dic[self.anim_roll]/self.anim_total)+', p(x>=r)='+"{:.1e}".format(p_geq)
                     self.rolldic_res_label.configure(text=res_text)
                     self.anim_canvas.draw()
                     return
@@ -7245,4 +8053,3 @@ finally:
             shutil.rmtree(g.user_past_configs_dir, ignore_errors=True)
         except:
             pass
-

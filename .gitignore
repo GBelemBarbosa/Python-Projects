@@ -1,0 +1,53 @@
+# Ignore everything
+*
+
+# Allow directories
+!*/
+
+# Allow Python files
+!*.py
+!ClientRPG/*.py
+
+# EXCEPT Specific Python scripts to ignore
+char_test.py
+create_char.py
+create_druid_savant.py
+ClientRPG/char_test.py
+ClientRPG/create_char.py
+ClientRPG/create_druid_savant.py
+
+# Allow main character sheets
+!*.pkl
+!ClientRPG/*.pkl
+!ClientRPG/Char configs/*.pkl
+
+# Allow image files
+!*.jpg
+!*.jpeg
+!*.png
+!*.webp
+!*.gif
+
+# EXCEPT specific profile pictures to ignore
+prof2.png
+prof4.png
+prof6.png
+prof8.png
+prof10.png
+prof12.png
+
+# Ignore cache and garbage
+test.jl
+ClientRPG/test.jl
+roll_configs/
+ClientRPG/roll_configs/
+ClientRPG/Roll configs/
+__pycache__/
+ClientRPG/__pycache__/
+
+# Allow configuration and documentation
+!.gitignore
+!README.md
+!task.md
+!walkthrough.md
+!implementation_plan.md

@@ -71,7 +71,7 @@ def translate_monster(stat):
     
     if aux:
         scores=[int(x) for x in re.findall("-?\d+", aux.group())]
-        scores2=[int((scores[0]+scores[4]+1)/2)-10, scores[2]-10, int((scores[6]+scores[10]+1)/2)-10, int((scores[8]+scores[10]+1)/2)-10,0]
+        scores2=[int((scores[0]+scores[4]+1)/2)-10, scores[2]-10, int((scores[6]+scores[10]+1)/2)-10, int((scores[8]+scores[10]+1)/2)-10, 0]
         bloqueto=str(int((scores[0]+scores[4]+1)/2))+' ('+str(scores2[0])+") "+str(scores[2])+' ('+str(scores2[1])+") "+str(int((scores[6]+scores[10]+1)/2))+' ('+str(scores2[2])+") "+str(int((scores[8]+scores[10]+1)/2))+' ('+str(scores2[3])+") "+str(scores[5])
         
         # Determine if we need a trailing newline based on what follows
